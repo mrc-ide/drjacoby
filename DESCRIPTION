@@ -19,3 +19,4 @@ SystemRequirements: C++11
 Suggests: 
     testthat,
     covr
+BugReports: https://github.com/mrc-ide/drjacoby/issues
