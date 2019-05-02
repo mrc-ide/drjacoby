@@ -4,3 +4,5 @@
 
 # drjacoby
 Flexible Markov chain monte carlo via reparameterization
+
+Full details can be found on the drjacoby [website](https://mrc-ide.github.io/drjacoby/).
