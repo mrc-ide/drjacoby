@@ -18,5 +18,8 @@ Imports:
 SystemRequirements: C++11
 Suggests: 
     testthat,
-    covr
+    covr,
+    knitr,
+    rmarkdown
 BugReports: https://github.com/mrc-ide/drjacoby/issues
+VignetteBuilder: knitr
