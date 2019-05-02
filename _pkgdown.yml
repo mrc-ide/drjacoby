@@ -3,3 +3,12 @@ title: drjacoby
 template:
   params:
     bootswatch: flatly
+    
+navbar:
+  title: "drjacoby"
+  left:
+    - text: "Functions"
+      href: reference/index.html
+  right:
+   - icon: fa-github
+     href: https://github.com/mrc-ide/drjacoby
