@@ -6,7 +6,7 @@ Author: Bob Verity, Pete Winskill
 Maintainer: Bob Verity <r.verity@imperial.ac.uk>
 Description: Flexible Markov chain monte carlo via
      reparameterization using the Jacobean matrix.
-License: GPL-3
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
