@@ -7,6 +7,10 @@ template:
 navbar:
   title: "drjacoby"
   left:
+    - text: "Vignettes"
+      menu:
+        - text: "Installation"
+          href: articles/installation.html
     - text: "Functions"
       href: reference/index.html
   right:
