@@ -1,15 +1,7 @@
 
 #------------------------------------------------
-#' @title Replace with default values
-#'
-#' @description If NULL then replace with chosen value, otherwise keep original
-#'   value.
-#'
-#' @param x object to define default.
-#' @param default default value.
-#'
-#' @export
-
+# If NULL then replace with chosen value, otherwise keep original value
+#' @noRd
 define_default <- function(x, default) {
   if (is.null(x)) {
     return(default)
@@ -81,19 +73,33 @@ geweke_pvalue <- function(x) {
 #' @importFrom coda mcmc
 #' @noRd
 test_convergence <- function(x, n, alpha = 0.01) {
+  # fail if n = 1
   if (n == 1) {
     return(FALSE)
   }
+  
+  # fail if ESS too small
+  ESS <- try(coda::effectiveSize(x[1:n]), silent = TRUE)
+  if (class(ESS) == "try-error") {
+    return(FALSE)
+  }
+  if (ESS < 10) {
+    return(FALSE)
+  }
+  
+  # fail if geweke p-value < threshold
   g <- geweke_pvalue(mcmc(x[1:n]))
   ret <- (g > alpha)
   if (is.na(ret)) {
-    ret <- TRUE
+    ret <- FALSE;
   }
+  
+  # return
   return(ret)
 }
 
 #------------------------------------------------
-# update progress bar.
+# update progress bar
 # pb_list = list of progress bar objects
 # name = name of this progress bar
 # i = new value of bar
@@ -105,4 +111,15 @@ update_progress <- function(pb_list, name, i, max_i) {
   if (i == max_i) {
     close(pb_list[[name]])
   }
+}
+
+# -----------------------------------
+# ask user a yes/no question. Return TRUE/FALSE.
+#' @noRd
+user_yes_no <- function(x = "continue? (Y/N): ") {
+  user_choice <- NA
+  while (!user_choice %in% c("Y", "y" ,"N", "n")) {
+    user_choice <- readline(x)
+  }
+  return(user_choice %in% c("Y", "y"))
 }
