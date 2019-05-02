@@ -7,3 +7,4 @@
 ^\.Rproj\.user$
 ignore/
 R_ignore/
+^index.md

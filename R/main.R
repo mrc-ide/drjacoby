@@ -1,6 +1,21 @@
+
+#------------------------------------------------
+# link to Rcpp
 #' @useDynLib drjacoby, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 NULL
+
+#------------------------------------------------
+#' @title Check that drjacoby package has loaded successfully
+#'
+#' @description Simple function to check that drjacoby package has loaded 
+#'   successfully. Prints "drjacoby loaded successfully!" if so.
+#'
+#' @export
+
+check_drjacoby_loaded <- function() {
+  message("drjacoby loaded successfully!")
+}
 
 #------------------------------------------------
 #' @title Dummy function
