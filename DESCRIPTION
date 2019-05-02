@@ -16,3 +16,6 @@ Imports:
     Rcpp,
     coda
 SystemRequirements: C++11
+Suggests: 
+    testthat,
+    covr
