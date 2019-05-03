@@ -22,10 +22,10 @@ check_drjacoby_loaded <- function() {
 #'
 #' @description Run MCMC.
 #'
+#' @param data TODO.
 #' @param df_params a dataframe of parameters.
 #' @param loglike TODO.
 #' @param logprior TODO.
-#' @param data TODO.
 #' @param burnin the number of burn-in iterations.
 #' @param samples the number of sampling iterations.
 #' @param chains the number of independent replicates of the MCMC chain to run.
@@ -52,10 +52,10 @@ check_drjacoby_loaded <- function() {
 #' @importFrom utils txtProgressBar
 #' @export
 
-run_mcmc <- function(df_params,
+run_mcmc <- function(data,
+                     df_params,
                      loglike,
                      logprior,
-                     data,
                      burnin = 1e3,
                      samples = 1e4,
                      chains = 1,

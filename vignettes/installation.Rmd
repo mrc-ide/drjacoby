@@ -1,6 +1,6 @@
 ---
 title: "Installing drjacoby"
-author: "Vignette Author"
+author: "Bob Verity and Pete Winskill"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >

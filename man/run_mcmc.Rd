@@ -4,19 +4,19 @@
 \alias{run_mcmc}
 \title{Run MCMC}
 \usage{
-run_mcmc(df_params, loglike, logprior, data, burnin = 1000,
+run_mcmc(data, df_params, loglike, logprior, burnin = 1000,
   samples = 10000, chains = 1, rungs = 11, GTI_pow = 3,
   autoconverge_on = TRUE, converge_test = 100, coupling_on = FALSE,
   cluster = NULL, pb_markdown = FALSE, silent = FALSE)
 }
 \arguments{
+\item{data}{TODO.}
+
 \item{df_params}{a dataframe of parameters.}
 
 \item{loglike}{TODO.}
 
 \item{logprior}{TODO.}
-
-\item{data}{TODO.}
 
 \item{burnin}{the number of burn-in iterations.}
 
