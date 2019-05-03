@@ -58,7 +58,7 @@ df_params <- data.frame(name = c("mu", "sigma"),
 print(df_params)
 ```
 
-Next we need a likelihood function. This *must* have two input arguments: 1) a vector of parameters, 2) a vector of data. It also *must* return a single value for the likelihood *in log space*.
+Next we need a likelihood function. This *must* have two input arguments: 1) a vector of parameters, 2) a vector of data. It also *must* return a single value for the likelihood *in log space*. This could be written in R:
 
 ```{r}
 # define loglikelihood function
@@ -67,7 +67,21 @@ loglike <- function(theta, x) {
 }
 ```
 
-Finall, we need a prior function. This *must* take a single vector of parameters as input, and return a single value for the prior probability of those parameters *in log space*.
+Or, for greater efficiency c++:
+
+```{r}
+Rcpp::cppFunction('
+  double loglike_cpp(std::vector<double> theta, std::vector<double> x){
+    double out;
+    for(unsigned int i = 0; i < x.size(); i++){
+      out += R::dnorm(x[i], theta[0], theta[1], 1);
+    }
+  return out;
+  }
+')
+```
+
+Finall, we need a prior function. This *must* take a single vector of parameters as input, and return a single value for the prior probability of those parameters *in log space*. In R:
 
 ```{r}
 # define logprior function
@@ -75,6 +89,19 @@ logprior <- function(theta) {
   dnorm(theta[1], mean = 0, sd = 10, log = TRUE) +
     dlnorm(theta[2], meanlog = 0, sdlog = 1, log = TRUE)
 }
+```
+
+or c++:
+
+```{r}
+Rcpp::cppFunction('
+  double logprior_cpp(std::vector<double> theta){
+    double out = 
+      R::dnorm(theta[0], 0, 10, 1) +
+        R::dlnorm(theta[1], 0, 1, 1);
+  return out;
+  }
+')
 ```
 
 ## Running the MCMC
