@@ -4,10 +4,52 @@
 \alias{run_mcmc}
 \title{Run MCMC}
 \usage{
-run_mcmc(df_params)
+run_mcmc(df_params, loglike, logprior, data, burnin = 1000,
+  samples = 10000, chains = 1, rungs = 11, GTI_pow = 3,
+  autoconverge_on = TRUE, converge_test = 100, coupling_on = FALSE,
+  cluster = NULL, pb_markdown = FALSE, silent = FALSE)
 }
 \arguments{
 \item{df_params}{a dataframe of parameters.}
+
+\item{loglike}{TODO.}
+
+\item{logprior}{TODO.}
+
+\item{data}{TODO.}
+
+\item{burnin}{the number of burn-in iterations.}
+
+\item{samples}{the number of sampling iterations.}
+
+\item{chains}{the number of independent replicates of the MCMC chain to run.
+If a \code{cluster} object is defined then these chains are run in
+parallel, otherwise they are run in serial.}
+
+\item{rungs}{the number of temperature rungs.}
+
+\item{GTI_pow}{the power used in the generalised thermodynamic integration 
+method. Must be greater than 1.1.}
+
+\item{autoconverge_on}{whether convergence should be assessed automatically
+every \code{converge_test} iterations, leading to termination of the
+burn-in phase. If \code{FALSE} then the full \code{burnin} iterations are
+used.}
+
+\item{converge_test}{test for convergence every \code{convergence_test} 
+iterations if \code{auto_converge} is being used.}
+
+\item{coupling_on}{whether to implement Metropolis-coupling over temperature 
+rungs.}
+
+\item{cluster}{option to pass in a cluster environment, allowing chains to be
+run in parallel (see package "parallel").}
+
+\item{pb_markdown}{whether to run progress bars in markdown mode, meaning
+they are only updated when they reach 100% to avoid large amounts of output
+being printed to markdown files.}
+
+\item{silent}{whether to suppress all console output.}
 }
 \description{
 Run MCMC.
