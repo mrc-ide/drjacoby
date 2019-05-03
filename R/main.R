@@ -104,10 +104,10 @@ run_mcmc <- function(df_params,
   # ---------- pre-processing ----------
   
   # calculate transformation type for each parameter
-  # 0 = [-Inf,Inf] -> (none)
-  # 1 = [-Inf,a]   -> log(a - x)
-  # 2 = [a,Inf]    -> log(x - a)
-  # 3 = [a,b]      -> log((x - a)/(b-x))
+  # 0 = [-Inf,Inf] -> phi = theta
+  # 1 = [-Inf,b]   -> phi = log(b - theta)
+  # 2 = [a,Inf]    -> phi = log(theta - a)
+  # 3 = [a,b]      -> phi = log((theta - a)/(b - theta))
   df_params$trans_type <- 2*is.finite(df_params$min) + is.finite(df_params$max)
   
   
@@ -115,7 +115,9 @@ run_mcmc <- function(df_params,
   
   # parameters to pass to C++
   args_params <- list(x = x,
-                      init = df_params$init,
+                      theta_init = df_params$init,
+                      theta_min = df_params$min,
+                      theta_max = df_params$max,
                       trans_type = df_params$trans_type,
                       burnin = burnin,
                       samples = samples,
@@ -161,12 +163,21 @@ run_mcmc <- function(df_params,
     output_raw <- lapply(parallel_args, run_mcmc_cpp)
   }
   
-  
   # ---------- process output ----------
   
+  # define processed output list
+  output_processed <- replicate(chains, list())
+  names(output_processed) <- sprintf("chain%s", 1:chains)
+  
+  # loop through chains
+  for (c in 1:chains) {
+    
+    # get theta values
+    output_processed[[c]]$theta <- rcpp_to_matrix(output_raw[[c]]$theta)
+  }
+  
   # TODO - save output as custom class
-  ret <- output_raw
   
   # return
-  return(ret)
+  return(output_processed)
 }

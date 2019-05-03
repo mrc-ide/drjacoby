@@ -3,4 +3,4 @@
 
 //------------------------------------------------
 // Example function
-Rcpp::List dummy1_cpp(Rcpp::List args);
+Rcpp::List run_mcmc_cpp(Rcpp::List args);

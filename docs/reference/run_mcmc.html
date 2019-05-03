@@ -116,7 +116,10 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>run_mcmc</span>(<span class='no'>df_params</span>)</pre>
+    <pre class="usage"><span class='fu'>run_mcmc</span>(<span class='no'>df_params</span>, <span class='no'>loglike</span>, <span class='no'>logprior</span>, <span class='no'>data</span>, <span class='kw'>burnin</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
+  <span class='kw'>samples</span> <span class='kw'>=</span> <span class='fl'>10000</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>rungs</span> <span class='kw'>=</span> <span class='fl'>11</span>, <span class='kw'>GTI_pow</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>autoconverge_on</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>converge_test</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>coupling_on</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>cluster</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pb_markdown</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -124,6 +127,73 @@
     <tr>
       <th>df_params</th>
       <td><p>a dataframe of parameters.</p></td>
+    </tr>
+    <tr>
+      <th>loglike</th>
+      <td><p>TODO.</p></td>
+    </tr>
+    <tr>
+      <th>logprior</th>
+      <td><p>TODO.</p></td>
+    </tr>
+    <tr>
+      <th>data</th>
+      <td><p>TODO.</p></td>
+    </tr>
+    <tr>
+      <th>burnin</th>
+      <td><p>the number of burn-in iterations.</p></td>
+    </tr>
+    <tr>
+      <th>samples</th>
+      <td><p>the number of sampling iterations.</p></td>
+    </tr>
+    <tr>
+      <th>chains</th>
+      <td><p>the number of independent replicates of the MCMC chain to run.
+If a <code>cluster</code> object is defined then these chains are run in
+parallel, otherwise they are run in serial.</p></td>
+    </tr>
+    <tr>
+      <th>rungs</th>
+      <td><p>the number of temperature rungs.</p></td>
+    </tr>
+    <tr>
+      <th>GTI_pow</th>
+      <td><p>the power used in the generalised thermodynamic integration 
+method. Must be greater than 1.1.</p></td>
+    </tr>
+    <tr>
+      <th>autoconverge_on</th>
+      <td><p>whether convergence should be assessed automatically
+every <code>converge_test</code> iterations, leading to termination of the
+burn-in phase. If <code>FALSE</code> then the full <code>burnin</code> iterations are
+used.</p></td>
+    </tr>
+    <tr>
+      <th>converge_test</th>
+      <td><p>test for convergence every <code>convergence_test</code> 
+iterations if <code>auto_converge</code> is being used.</p></td>
+    </tr>
+    <tr>
+      <th>coupling_on</th>
+      <td><p>whether to implement Metropolis-coupling over temperature 
+rungs.</p></td>
+    </tr>
+    <tr>
+      <th>cluster</th>
+      <td><p>option to pass in a cluster environment, allowing chains to be
+run in parallel (see package "parallel").</p></td>
+    </tr>
+    <tr>
+      <th>pb_markdown</th>
+      <td><p>whether to run progress bars in markdown mode, meaning
+they are only updated when they reach 100<!-- % to avoid large amounts of output -->
+being printed to markdown files.</p></td>
+    </tr>
+    <tr>
+      <th>silent</th>
+      <td><p>whether to suppress all console output.</p></td>
     </tr>
     </table>
     

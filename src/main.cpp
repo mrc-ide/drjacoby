@@ -2,6 +2,7 @@
 #include "main.h"
 #include "misc_v4.h"
 #include "probability.h"
+#include "Particle.h"
 
 #include <unistd.h>  // TODO - delete when not sleeping
 
@@ -19,8 +20,11 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   
   // extract inputs from Rcpp format to base C++ format
   vector<double> x = rcpp_to_vector_double(args_params["x"]);
-  vector<double> theta_init = rcpp_to_vector_double(args_params["init"]);
+  vector<double> theta_init = rcpp_to_vector_double(args_params["theta_init"]);
+  vector<double> theta_min = rcpp_to_vector_double(args_params["theta_min"]);
+  vector<double> theta_max = rcpp_to_vector_double(args_params["theta_max"]);
   vector<int> trans_type = rcpp_to_vector_int(args_params["trans_type"]);
+  int d = theta_init.size();
   int burnin = rcpp_to_int(args_params["burnin"]);
   int samples = rcpp_to_int(args_params["samples"]);
   int rungs = rcpp_to_int(args_params["rungs"]);
@@ -30,15 +34,19 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   bool silent = rcpp_to_bool(args_params["silent"]);
   
   // extract R functions
-  Rcpp::Function loglike = args_functions["loglike"];
+  Rcpp::Function get_loglike = args_functions["loglike"];
+  Rcpp::Function get_logprior = args_functions["logprior"];
   Rcpp::Function test_convergence = args_functions["test_convergence"];
   Rcpp::Function update_progress = args_functions["update_progress"];
   
-  //double ll = rcpp_to_double(loglike(theta_init, x));
-  
   // initialise vector of particles
+  vector<Particle> particle_vec(rungs);
+  for (int r=0; r<rungs; ++r) {
+    particle_vec[r].init(x, theta_init, theta_min, theta_max, trans_type, 1.0, get_loglike, get_logprior);
+  }
   
-  
+  // objects for storing results
+  vector<vector<double>> theta_store(burnin+samples, vector<double>(d));
   
   // ---------- burn-in MCMC ----------
   
@@ -51,7 +59,13 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   // loop through burn-in iterations
   for (int rep=0; rep<burnin; ++rep) {
     
-    usleep(1000);
+    // update particles
+    for (int r=0; r<rungs; ++r) {
+      particle_vec[r].update(get_loglike, get_logprior);
+    }
+    
+    // store results
+    theta_store[rep] = particle_vec[0].theta;
     
     // update progress bars
     if (!silent) {
@@ -72,9 +86,15 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   }
   
   // loop through sampling iterations
-  for (int rep=0; rep<samples; ++rep) {
+  for (int rep=burnin; rep<(burnin+samples); ++rep) {
     
-    usleep(1000);
+    // update particles
+    for (int r=0; r<rungs; ++r) {
+      particle_vec[r].update(get_loglike, get_logprior);
+    }
+    
+    // store results
+    theta_store[rep] = particle_vec[0].theta;
     
     // update progress bars
     if (!silent) {
@@ -90,6 +110,6 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   // ---------- return ----------
   
   // return as Rcpp list
-  Rcpp::List ret = Rcpp::List::create(Rcpp::Named("bar") = trans_type);
+  Rcpp::List ret = Rcpp::List::create(Rcpp::Named("theta") = theta_store);
   return ret;
 }
