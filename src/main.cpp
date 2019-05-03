@@ -4,7 +4,7 @@
 #include "probability.h"
 #include "Particle.h"
 
-#include <unistd.h>  // TODO - delete when not sleeping
+#include <chrono>
 
 using namespace std;
 
@@ -12,6 +12,9 @@ using namespace std;
 // Dummy function to test Rcpp working as expected
 // [[Rcpp::export]]
 Rcpp::List run_mcmc_cpp(Rcpp::List args) {
+  
+  // start timer
+  chrono::high_resolution_clock::time_point t1 = chrono::high_resolution_clock::now();
   
   // split argument lists
   Rcpp::List args_params = args["args_params"];
@@ -29,6 +32,7 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   int samples = rcpp_to_int(args_params["samples"]);
   int rungs = rcpp_to_int(args_params["rungs"]);
   bool autoconverge_on = rcpp_to_bool(args_params["autoconverge_on"]);
+  int converge_test = rcpp_to_int(args_params["converge_test"]);
   bool coupling_on = rcpp_to_bool(args_params["coupling_on"]);
   bool pb_markdown = rcpp_to_bool(args_params["pb_markdown"]);
   bool silent = rcpp_to_bool(args_params["silent"]);
@@ -46,7 +50,19 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   }
   
   // objects for storing results
+  vector<vector<double>> loglike_store(rungs, vector<double>(burnin+samples));
   vector<vector<double>> theta_store(burnin+samples, vector<double>(d));
+  
+  // specify stored values at first iteration
+  for (int r=0; r<rungs; ++r) {
+    loglike_store[r][0] = particle_vec[r].loglike;
+  }
+  theta_store[0] = particle_vec[0].theta;
+  
+  // store if convergence reached in each rung, and overall
+  vector<bool> convergence_reached(rungs, false);
+  bool all_convergence_reached = false;
+  
   
   // ---------- burn-in MCMC ----------
   
@@ -57,11 +73,16 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   }
   
   // loop through burn-in iterations
-  for (int rep=0; rep<burnin; ++rep) {
+  for (int rep=1; rep<burnin; ++rep) {
     
-    // update particles
+    // loop through rungs
     for (int r=0; r<rungs; ++r) {
+      
+      // update particles
       particle_vec[r].update(get_loglike, get_logprior);
+      
+      // store results
+      loglike_store[r][rep] = particle_vec[r].loglike;
     }
     
     // store results
@@ -75,7 +96,35 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
       }
     }
     
+    // check for convergence
+    if (autoconverge_on && (rep % converge_test) == 0) {
+      
+      // check for convergence of all rungs
+      all_convergence_reached = true;
+      for (int r=0; r<rungs; r++) {
+        if (!convergence_reached[r]) {
+          convergence_reached[r] = rcpp_to_bool(test_convergence(loglike_store[r], rep+1));
+          if (!convergence_reached[r]) {
+            all_convergence_reached = false;
+          }
+        }
+      }
+      if (all_convergence_reached) {
+        if (!silent) {
+          update_progress(args_progress, "pb_burnin", burnin, burnin);
+          print("   converged within", rep, "iterations");
+        }
+        break;
+      }
+      
+    }  // end check for convergence
+    
   }  // end burn-in MCMC loop
+  
+  // warning if still not converged
+  if (!all_convergence_reached && !silent) {
+    print("   Warning: convergence still not reached within", burnin, "iterations");
+  }
   
   
   // ---------- sampling MCMC ----------
@@ -88,9 +137,14 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   // loop through sampling iterations
   for (int rep=burnin; rep<(burnin+samples); ++rep) {
     
-    // update particles
+    // loop through rungs
     for (int r=0; r<rungs; ++r) {
+      
+      // update particles
       particle_vec[r].update(get_loglike, get_logprior);
+      
+      // store results
+      loglike_store[r][rep] = particle_vec[r].loglike;
     }
     
     // store results
@@ -109,7 +163,15 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   
   // ---------- return ----------
   
+  // end timer
+  chrono::high_resolution_clock::time_point t2 = chrono::high_resolution_clock::now();
+  chrono::duration<double> time_span = chrono::duration_cast< chrono::duration<double> >(t2-t1);
+  if (!silent) {
+    print("   completed in", time_span.count(), "seconds\n");
+  }
+  
   // return as Rcpp list
-  Rcpp::List ret = Rcpp::List::create(Rcpp::Named("theta") = theta_store);
+  Rcpp::List ret = Rcpp::List::create(Rcpp::Named("loglike") = loglike_store,
+                                      Rcpp::Named("theta") = theta_store);
   return ret;
 }

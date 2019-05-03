@@ -93,6 +93,7 @@ run_mcmc <- function(data,
   assert_single_pos(GTI_pow)
   assert_gr(GTI_pow, 1.1)
   assert_single_logical(autoconverge_on)
+  assert_single_pos_int(converge_test, zero_allowed = FALSE)
   assert_single_logical(coupling_on)
   if (!is.null(cluster)) {
     assert_custom_class(cluster, "cluster")
@@ -123,6 +124,7 @@ run_mcmc <- function(data,
                       samples = samples,
                       rungs = rungs,
                       autoconverge_on = autoconverge_on,
+                      converge_test = converge_test,
                       coupling_on = coupling_on,
                       pb_markdown = pb_markdown,
                       silent = silent)
@@ -171,6 +173,9 @@ run_mcmc <- function(data,
   
   # loop through chains
   for (c in 1:chains) {
+    
+    # get loglikelihoods
+    output_processed[[c]]$loglike <- t(rcpp_to_matrix(output_raw[[c]]$loglike))
     
     # get theta values
     output_processed[[c]]$theta <- rcpp_to_matrix(output_raw[[c]]$theta)
