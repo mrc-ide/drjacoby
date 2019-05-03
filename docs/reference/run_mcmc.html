@@ -79,6 +79,9 @@
     <li>
       <a href="../articles/installation.html">Installation</a>
     </li>
+    <li>
+      <a href="../articles/example.html">Example MCMC implementation</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -116,7 +119,7 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>run_mcmc</span>(<span class='no'>df_params</span>, <span class='no'>loglike</span>, <span class='no'>logprior</span>, <span class='no'>data</span>, <span class='kw'>burnin</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
+    <pre class="usage"><span class='fu'>run_mcmc</span>(<span class='no'>data</span>, <span class='no'>df_params</span>, <span class='no'>loglike</span>, <span class='no'>logprior</span>, <span class='kw'>burnin</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
   <span class='kw'>samples</span> <span class='kw'>=</span> <span class='fl'>10000</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>rungs</span> <span class='kw'>=</span> <span class='fl'>11</span>, <span class='kw'>GTI_pow</span> <span class='kw'>=</span> <span class='fl'>3</span>,
   <span class='kw'>autoconverge_on</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>converge_test</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>coupling_on</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>cluster</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pb_markdown</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
@@ -124,6 +127,10 @@
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>data</th>
+      <td><p>TODO.</p></td>
+    </tr>
     <tr>
       <th>df_params</th>
       <td><p>a dataframe of parameters.</p></td>
@@ -134,10 +141,6 @@
     </tr>
     <tr>
       <th>logprior</th>
-      <td><p>TODO.</p></td>
-    </tr>
-    <tr>
-      <th>data</th>
       <td><p>TODO.</p></td>
     </tr>
     <tr>
