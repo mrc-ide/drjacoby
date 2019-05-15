@@ -88,7 +88,7 @@ mcmc_out <- run_mcmc(data = x,
                      loglike = loglike,
                      logprior = logprior,
                      burnin = 1e2,
-                     samples = 1e4,
+                     samples = 1e3,
                      chains = 1,
                      pb_markdown = TRUE)
 ```
@@ -97,9 +97,9 @@ We can produce simple trace plots of output
 
 ```{r, fig.width=8, fig.height=4}
 # extract posterior parameter draws
-theta <- mcmc_out$chain1$theta
-mu <- theta[,1]
-sigma <- theta[,2]
+theta <- mcmc_out$chain1$theta_sampling$rung1
+mu <- theta$mu
+sigma <- theta$sigma
 
 # produce trace plots
 plot(mu)

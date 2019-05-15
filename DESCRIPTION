@@ -14,7 +14,8 @@ LinkingTo:
     Rcpp
 Imports: 
     Rcpp,
-    coda
+    coda,
+    parallel
 SystemRequirements: C++11
 Suggests: 
     testthat,

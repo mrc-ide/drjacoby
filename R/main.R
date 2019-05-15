@@ -41,19 +41,10 @@ check_drjacoby_loaded <- function() {
 #'   proposal bandwidth is updated in the first burn-in phase, followed by two
 #'   burn-in phases in which both the proposal bandwidth and covariance are
 #'   updated. The complete list of arguments that can be specified separately
-#'   for each burn-in phase is: \code{burnin}, \code{autoconverge_on},
-#'   \code{converge_test}, \code{bw_update}, \code{cov_update},
-#'   \code{coupling_on}. Each of these arguments can be specified as a vector of
-#'   length \code{burnin_phases}, or as a single value in which case the same
-#'   value applies over every phase.
-#' @param autoconverge_on whether convergence should be assessed automatically.
-#'   If \code{TRUE} then convergence is assesed via Geweke's diagnostic every
-#'   \code{converge_test} iterations, leading to termination of the burn-in
-#'   phase if \eqn{p < 0.05}. If \code{FALSE} then the full \code{burnin}
-#'   iterations are used. See also \code{burnin_phases}.
-#' @param converge_test test for convergence every \code{convergence_test}
-#'   iterations if \code{auto_converge} is being used (see also
-#'   \code{burnin_phases}).
+#'   for each burn-in phase is: \code{burnin}, \code{bw_update},
+#'   \code{cov_update}, \code{coupling_on}. Each of these arguments can be
+#'   specified as a vector of length \code{burnin_phases}, or as a single value
+#'   in which case the same value applies over every phase.
 #' @param bw_update whether the proposal bandwidth should be updated dynamically
 #'   via Robbins-Monro (see also \code{burnin_phases}).
 #' @param cov_update whether the proposal covariance matrix should be updated
@@ -80,11 +71,9 @@ run_mcmc <- function(data,
                      samples = 1e4,
                      rungs = 11,
                      chains = 1,
-                     burnin_phases = 2,
-                     autoconverge_on = TRUE,
-                     converge_test = 1e2,
+                     burnin_phases = 3,
                      bw_update = TRUE,
-                     cov_update = c(FALSE,TRUE),
+                     cov_update = c(FALSE, TRUE, TRUE),
                      coupling_on = TRUE,
                      GTI_pow = 3,
                      cluster = NULL,
@@ -116,8 +105,6 @@ run_mcmc <- function(data,
   assert_single_pos_int(samples, zero_allowed = FALSE)
   assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_pos_int(rungs, zero_allowed = FALSE)
-  assert_logical(autoconverge_on)
-  assert_pos_int(converge_test, zero_allowed = FALSE)
   assert_logical(bw_update)
   assert_logical(cov_update)
   assert_logical(coupling_on)
@@ -134,13 +121,11 @@ run_mcmc <- function(data,
   # any arguments that can be defined either as single values or as vectors are
   # forced to vectors by repeating the same single value
   burnin <- force_vector(burnin, burnin_phases)
-  autoconverge_on <- force_vector(autoconverge_on, burnin_phases)
-  converge_test <- force_vector(converge_test, burnin_phases)
   bw_update <- force_vector(bw_update, burnin_phases)
   cov_update <- force_vector(cov_update, burnin_phases)
   coupling_on <- force_vector(coupling_on, burnin_phases)
   assert_length(burnin, burnin_phases)
-  assert_same_length_multiple(burnin, autoconverge_on, converge_test, bw_update, cov_update, coupling_on)
+  assert_same_length_multiple(burnin, bw_update, cov_update, coupling_on)
   
   # ---------- pre-processing ----------
   
@@ -155,7 +140,7 @@ run_mcmc <- function(data,
   # ---------- define argument lists ----------
   
   # parameters to pass to C++
-  args_params <- list(x = x,
+  args_params <- list(x = data,
                       theta_init = df_params$init,
                       theta_min = df_params$min,
                       theta_max = df_params$max,
@@ -164,8 +149,6 @@ run_mcmc <- function(data,
                       samples = samples,
                       rungs = rungs,
                       burnin_phases = burnin_phases,
-                      autoconverge_on = autoconverge_on,
-                      converge_test = converge_test,
                       bw_update = bw_update,
                       cov_update = cov_update,
                       coupling_on = coupling_on,
@@ -180,8 +163,10 @@ run_mcmc <- function(data,
                          update_progress = update_progress)
   
   # progress bars
-  # TODO - need multiple burnin bars
-  pb_burnin <- txtProgressBar(min = 0, max = burnin[1], initial = NA, style = 3)
+  pb_burnin <- list()
+  for (i in 1:burnin_phases) {
+    pb_burnin[[i]] <- txtProgressBar(min = 0, max = burnin[i], initial = NA, style = 3)
+  }
   pb_samples <- txtProgressBar(min = 0, max = samples, initial = NA, style = 3)
   args_progress <- list(pb_burnin = pb_burnin,
                         pb_samples = pb_samples)
@@ -193,7 +178,9 @@ run_mcmc <- function(data,
   
   # replicate arguments over chains
   parallel_args <- replicate(chains, args, simplify = FALSE)
-  
+  for (i in 1:chains) {
+    parallel_args[[i]]$args_params$chain <- i
+  }
   
   # ---------- run MCMC ----------
   
@@ -201,29 +188,65 @@ run_mcmc <- function(data,
   if (!is.null(cluster)) {
     
     # run in parallel
-    clusterEvalQ(cluster, library(drjacoby))
-    output_raw <- clusterApplyLB(cl = cluster, parallel_args, run_mcmc_cpp)
+    parallel::clusterEvalQ(cluster, library(drjacoby))
+    output_raw <- parallel::clusterApplyLB(cl = cluster, parallel_args, run_mcmc_cpp)
     
   } else {
     
     # run in serial
     output_raw <- lapply(parallel_args, run_mcmc_cpp)
   }
-  return(output_raw)
+  
   # ---------- process output ----------
+  
+  # define names
+  chain_names <- sprintf("chain%s", 1:chains)
+  phase_names <- sprintf("phase%s", 1:burnin_phases)
+  rung_names <- sprintf("rung%s", 1:rungs)
+  param_names <- df_params$name
   
   # define processed output list
   output_processed <- replicate(chains, list())
-  names(output_processed) <- sprintf("chain%s", 1:chains)
+  names(output_processed) <- chain_names
   
   # loop through chains
   for (c in 1:chains) {
     
-    # get loglikelihoods
-    output_processed[[c]]$loglike <- t(rcpp_to_matrix(output_raw[[c]]$loglike))
+    # get burnin loglikelihoods
+    loglike_burnin <- mapply(function(x) {
+      ret <- as.data.frame(t(rcpp_to_matrix(x)))
+      names(ret) <- rung_names
+      ret
+    }, output_raw[[c]]$loglike_burnin, SIMPLIFY = FALSE)
+    names(loglike_burnin) <- phase_names
     
-    # get theta values
-    output_processed[[c]]$theta <- rcpp_to_matrix(output_raw[[c]]$theta)
+    # get sampling loglikelihoods
+    loglike_sampling <- as.data.frame(t(rcpp_to_matrix(output_raw[[c]]$loglike_sampling)))
+    names(loglike_sampling) <- rung_names
+    
+    # function for extracting theta into list of matrices over rungs
+    get_theta_rungs <- function(theta_list) {
+      ret <- mapply(function(x) {
+        ret <- as.data.frame(rcpp_to_matrix(x))
+        names(ret) <- param_names
+        ret
+      }, theta_list, SIMPLIFY = FALSE)
+      names(ret) <- rung_names
+      ret
+    }
+    
+    # get burnin theta
+    theta_burnin <- mapply(get_theta_rungs, output_raw[[c]]$theta_burnin, SIMPLIFY = FALSE)
+    names(theta_burnin) <- phase_names
+    
+    # get sampling theta
+    theta_sampling <- get_theta_rungs(output_raw[[c]]$theta_sampling)
+    
+    # store in processed output list
+    output_processed[[c]]$loglike_burnin <- loglike_burnin
+    output_processed[[c]]$loglike_sampling <- loglike_sampling
+    output_processed[[c]]$theta_burnin <- theta_burnin
+    output_processed[[c]]$theta_sampling <- theta_sampling
   }
   
   # TODO - save output as custom class

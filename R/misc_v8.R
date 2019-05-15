@@ -115,11 +115,12 @@ test_convergence <- function(x, n, alpha = 0.01) {
 # name = name of this progress bar
 # i = new value of bar
 # max_i = max value of bar (close when reach this value)
+# close = whether to close when reach end
 #' @importFrom utils setTxtProgressBar
 #' @noRd
-update_progress <- function(pb_list, name, i, max_i) {
+update_progress <- function(pb_list, name, i, max_i, close = TRUE) {
   setTxtProgressBar(pb_list[[name]], i)
-  if (i == max_i) {
+  if (i == max_i & close) {
     close(pb_list[[name]])
   }
 }
@@ -133,4 +134,38 @@ user_yes_no <- function(x = "continue? (Y/N): ") {
     user_choice <- readline(x)
   }
   return(user_choice %in% c("Y", "y"))
+}
+
+#------------------------------------------------
+# recursive function for converting nested list (of any depth) to single string.
+# Each list is enclosed in "{}" each element within a list is separated with
+# ",", and values in a vector are separated with " ".
+#' @noRd
+list_to_text <- function(x, s = NULL) {
+  s <- paste0(s, "{")
+  for (i in 1:length(x)) {
+    if (i > 1) {
+      s <- paste0(s, ",")
+    }
+    if (is.list(x[[i]])) {
+      s <- list_to_text(x[[i]], s)
+    } else {
+      s <- paste0(s, paste(x[[i]], collapse = " "))
+    }
+  }
+  s <- paste0(s, "}")
+  return(s)
+}
+
+#------------------------------------------------
+# write a list x to file. See list_to_text() for string format
+#' @noRd
+write_text_list <- function(x, file_path) {
+  
+  # convert list to single string
+  s <- list_to_text(x)
+  
+  # write to file
+  writeLines(s, file_path)
+  
 }

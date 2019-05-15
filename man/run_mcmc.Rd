@@ -5,42 +5,55 @@
 \title{Run MCMC}
 \usage{
 run_mcmc(data, df_params, loglike, logprior, burnin = 1000,
-  samples = 10000, chains = 1, rungs = 11, GTI_pow = 3,
-  autoconverge_on = TRUE, converge_test = 100, coupling_on = FALSE,
-  cluster = NULL, pb_markdown = FALSE, silent = FALSE)
+  samples = 10000, rungs = 11, chains = 1, burnin_phases = 3,
+  bw_update = TRUE, cov_update = c(FALSE, TRUE, TRUE),
+  coupling_on = TRUE, GTI_pow = 3, cluster = NULL,
+  pb_markdown = FALSE, silent = FALSE)
 }
 \arguments{
 \item{data}{TODO.}
 
-\item{df_params}{a dataframe of parameters.}
+\item{df_params}{a dataframe of parameters. Must contain the following
+elements: TODO}
 
 \item{loglike}{TODO.}
 
 \item{logprior}{TODO.}
 
-\item{burnin}{the number of burn-in iterations.}
+\item{burnin}{the number of burn-in iterations (see also \code{burnin_phases}).}
 
 \item{samples}{the number of sampling iterations.}
+
+\item{rungs}{the number of temperature rungs used in Metropolis coupling (see
+\code{coupling_on}).}
 
 \item{chains}{the number of independent replicates of the MCMC chain to run.
 If a \code{cluster} object is defined then these chains are run in
 parallel, otherwise they are run in serial.}
 
-\item{rungs}{the number of temperature rungs.}
+\item{burnin_phases}{the number of times a burn-in should be carried out
+prior to entering the sampling phase. Several parameters can be defined
+separately for each phase of the burn-in, giving greater control over which
+tuning methods are applied, and in which order. For example, by default the
+proposal bandwidth is updated in the first burn-in phase, followed by two
+burn-in phases in which both the proposal bandwidth and covariance are
+updated. The complete list of arguments that can be specified separately
+for each burn-in phase is: \code{burnin}, \code{bw_update},
+\code{cov_update}, \code{coupling_on}. Each of these arguments can be
+specified as a vector of length \code{burnin_phases}, or as a single value
+in which case the same value applies over every phase.}
+
+\item{bw_update}{whether the proposal bandwidth should be updated dynamically
+via Robbins-Monro (see also \code{burnin_phases}).}
+
+\item{cov_update}{whether the proposal covariance matrix should be updated
+dynamically from the posterior draws (see also \code{burnin_phases}).}
+
+\item{coupling_on}{whether to implement Metropolis-coupling over temperature 
+rungs (see also \code{burnin_phases}).}
 
 \item{GTI_pow}{the power used in the generalised thermodynamic integration 
 method. Must be greater than 1.1.}
-
-\item{autoconverge_on}{whether convergence should be assessed automatically
-every \code{converge_test} iterations, leading to termination of the
-burn-in phase. If \code{FALSE} then the full \code{burnin} iterations are
-used.}
-
-\item{converge_test}{test for convergence every \code{convergence_test} 
-iterations if \code{auto_converge} is being used.}
-
-\item{coupling_on}{whether to implement Metropolis-coupling over temperature 
-rungs.}
 
 \item{cluster}{option to pass in a cluster environment, allowing chains to be
 run in parallel (see package "parallel").}
