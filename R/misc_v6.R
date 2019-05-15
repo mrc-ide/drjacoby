@@ -1,10 +1,21 @@
 
 #------------------------------------------------
-# If NULL then replace with chosen value, otherwise keep original value
+# if NULL then replace with chosen value, otherwise keep original value
 #' @noRd
 define_default <- function(x, default) {
   if (is.null(x)) {
     return(default)
+  } else {
+    return(x)
+  }
+}
+
+#------------------------------------------------
+# if a single value is provided then expand to a vector of length n
+#' @noRd
+force_vector <- function(x, n) {
+  if (length(x) == 1) {
+    return(rep(x,n))
   } else {
     return(x)
   }

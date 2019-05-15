@@ -28,12 +28,15 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   vector<double> theta_max = rcpp_to_vector_double(args_params["theta_max"]);
   vector<int> trans_type = rcpp_to_vector_int(args_params["trans_type"]);
   int d = theta_init.size();
-  int burnin = rcpp_to_int(args_params["burnin"]);
+  vector<int> burnin = rcpp_to_vector_int(args_params["burnin"]);
   int samples = rcpp_to_int(args_params["samples"]);
   int rungs = rcpp_to_int(args_params["rungs"]);
-  bool autoconverge_on = rcpp_to_bool(args_params["autoconverge_on"]);
-  int converge_test = rcpp_to_int(args_params["converge_test"]);
-  bool coupling_on = rcpp_to_bool(args_params["coupling_on"]);
+  int burnin_phases = rcpp_to_int(args_params["burnin_phases"]);
+  vector<bool> autoconverge_on = rcpp_to_vector_bool(args_params["autoconverge_on"]);
+  vector<bool> converge_test = rcpp_to_vector_bool(args_params["converge_test"]);
+  vector<bool> bw_update = rcpp_to_vector_bool(args_params["bw_update"]);
+  vector<bool> cov_update = rcpp_to_vector_bool(args_params["cov_update"]);
+  vector<bool> coupling_on = rcpp_to_vector_bool(args_params["coupling_on"]);
   bool pb_markdown = rcpp_to_bool(args_params["pb_markdown"]);
   bool silent = rcpp_to_bool(args_params["silent"]);
   
@@ -46,22 +49,25 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   // initialise vector of particles
   vector<Particle> particle_vec(rungs);
   for (int r=0; r<rungs; ++r) {
-    particle_vec[r].init(x, theta_init, theta_min, theta_max, trans_type, 1.0, get_loglike, get_logprior);
+    double beta_raised = 1.0;  // TODO - define value per rung
+    particle_vec[r].init(x, theta_init, theta_min, theta_max, trans_type, beta_raised, get_loglike, get_logprior);
   }
   
-  // objects for storing results
-  vector<vector<double>> loglike_store(rungs, vector<double>(burnin+samples));
-  vector<vector<double>> theta_store(burnin+samples, vector<double>(d));
+  // store loglikelihood and theta values
+  vector<vector<vector<double>>> loglike_burnin(burnin_phases);
+  vector<vector<vector<vector<double>>>> theta_burnin(burnin_phases);
+  for (int i=0; i<burnin_phases; ++i) {
+    loglike_burnin[i] = vector<vector<double>>(rungs, vector<double>(burnin[i]));
+    theta_burnin[i] = vector<vector<vector<double>>>(rungs, vector<vector<double>>(burnin[i], vector<double>(d)));
+  }
+  vector<vector<double>> loglike_sampling(rungs, vector<double>(samples));
+  vector<vector<vector<double>>> theta_sampling(rungs, vector<vector<double>>(samples, vector<double>(d)));
   
   // specify stored values at first iteration
   for (int r=0; r<rungs; ++r) {
-    loglike_store[r][0] = particle_vec[r].loglike;
+    loglike_burnin[0][r][0] = particle_vec[r].loglike;
+    theta_burnin[0][r][0] = particle_vec[r].theta;
   }
-  theta_store[0] = particle_vec[0].theta;
-  
-  // store if convergence reached in each rung, and overall
-  vector<bool> convergence_reached(rungs, false);
-  bool all_convergence_reached = false;
   
   
   // ---------- burn-in MCMC ----------
@@ -72,61 +78,74 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
     print("Burn-in phase");
   }
   
-  // loop through burn-in iterations
-  for (int rep=1; rep<burnin; ++rep) {
+  // loop through burn-in phases
+  for (int phase=0; phase<burnin_phases; ++phase) {
     
-    // loop through rungs
-    for (int r=0; r<rungs; ++r) {
+    // store if convergence reached in each rung, and overall
+    vector<bool> convergence_reached(rungs, false);
+    bool all_convergence_reached = false;
+    
+    // loop through burn-in iterations
+    for (int rep=0; rep<burnin[phase]; ++rep) {
       
-      // update particles
-      particle_vec[r].update(get_loglike, get_logprior);
-      
-      // store results
-      loglike_store[r][rep] = particle_vec[r].loglike;
-    }
-    
-    // store results
-    theta_store[rep] = particle_vec[0].theta;
-    
-    // update progress bars
-    if (!silent) {
-      int remainder = rep % int(ceil(double(burnin)/100));
-      if ((remainder==0 && !pb_markdown) || ((rep+1) == burnin)) {
-        update_progress(args_progress, "pb_burnin", rep+1, burnin);
+      // skip over if first iteration of first phase, so that user-defined
+      // initial values are the first stored values
+      if (phase == 0 && rep == 0) {
+        continue;
       }
-    }
-    
-    // check for convergence
-    if (autoconverge_on && (rep % converge_test) == 0) {
       
-      // check for convergence of all rungs
-      all_convergence_reached = true;
-      for (int r=0; r<rungs; r++) {
-        if (!convergence_reached[r]) {
-          convergence_reached[r] = rcpp_to_bool(test_convergence(loglike_store[r], rep+1));
+      // loop through rungs
+      for (int r=0; r<rungs; ++r) {
+        
+        // update particles
+        particle_vec[r].update(get_loglike, get_logprior);
+        
+        // store results
+        loglike_burnin[phase][r][rep] = particle_vec[r].loglike;
+        theta_burnin[phase][r][rep] = particle_vec[r].theta;
+      }
+      
+      // update progress bars
+      if (!silent) {
+        int remainder = rep % int(ceil(double(burnin[phase])/100));
+        if ((remainder == 0 && !pb_markdown) || ((rep+1) == burnin[phase])) {
+          update_progress(args_progress, "pb_burnin", rep+1, burnin[phase]);
+        }
+      }
+      
+      // check for convergence
+      if (autoconverge_on[phase] && (rep % converge_test[phase]) == 0) {
+        
+        // check for convergence of all rungs
+        all_convergence_reached = true;
+        for (int r=0; r<rungs; ++r) {
           if (!convergence_reached[r]) {
-            all_convergence_reached = false;
+            convergence_reached[r] = rcpp_to_bool(test_convergence(loglike_burnin[phase][r], rep+1));
+            if (!convergence_reached[r]) {
+              all_convergence_reached = false;
+            }
           }
         }
-      }
-      if (all_convergence_reached) {
-        if (!silent) {
-          update_progress(args_progress, "pb_burnin", burnin, burnin);
-          print("   converged within", rep, "iterations");
+        if (all_convergence_reached) {
+          if (!silent) {
+            update_progress(args_progress, "pb_burnin", burnin[phase], burnin[phase]);
+            print("   converged within", rep, "iterations");
+          }
+          break;
         }
-        break;
-      }
+        
+      }  // end check for convergence
       
-    }  // end check for convergence
+    }  // end burn-in MCMC loop
     
-  }  // end burn-in MCMC loop
+    // warning if still not converged
+    if (!all_convergence_reached && !silent) {
+      print("   Warning: convergence still not reached within", burnin[phase], "iterations");
+    }
+    
+  }  // end loop over burn-in phases
   
-  // warning if still not converged
-  if (!all_convergence_reached && !silent) {
-    print("   Warning: convergence still not reached within", burnin, "iterations");
-  }
-  
-  
+  /*
   // ---------- sampling MCMC ----------
   
   // print message to console
@@ -135,7 +154,7 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   }
   
   // loop through sampling iterations
-  for (int rep=burnin; rep<(burnin+samples); ++rep) {
+  for (int rep=0; rep<samples; ++rep) {
     
     // loop through rungs
     for (int r=0; r<rungs; ++r) {
@@ -144,11 +163,11 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
       particle_vec[r].update(get_loglike, get_logprior);
       
       // store results
-      loglike_store[r][rep] = particle_vec[r].loglike;
+      //loglike_store[r][rep] = particle_vec[r].loglike;
     }
     
     // store results
-    theta_store[rep] = particle_vec[0].theta;
+    //theta_store[rep] = particle_vec[0].theta;
     
     // update progress bars
     if (!silent) {
@@ -169,9 +188,11 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   if (!silent) {
     print("   completed in", time_span.count(), "seconds\n");
   }
-  
+  */
+  Rcpp::List ret = Rcpp::List::create(Rcpp::Named("loglike") = -9);
+    
   // return as Rcpp list
-  Rcpp::List ret = Rcpp::List::create(Rcpp::Named("loglike") = loglike_store,
-                                      Rcpp::Named("theta") = theta_store);
+  //Rcpp::List ret = Rcpp::List::create(Rcpp::Named("loglike") = loglike_store,
+  //                                    Rcpp::Named("theta") = theta_store);
   return ret;
 }
