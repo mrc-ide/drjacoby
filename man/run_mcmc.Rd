@@ -4,11 +4,11 @@
 \alias{run_mcmc}
 \title{Run MCMC}
 \usage{
-run_mcmc(data, df_params, loglike, logprior, burnin = 1000,
-  samples = 10000, rungs = 11, chains = 1, burnin_phases = 3,
-  bw_update = TRUE, cov_update = c(FALSE, TRUE, TRUE),
-  coupling_on = TRUE, GTI_pow = 3, cluster = NULL,
-  pb_markdown = FALSE, silent = FALSE)
+run_mcmc(data, df_params, input_type = 1, r_loglike, r_logprior,
+  c_loglike, c_logprior, cpp_loglike, cpp_logprior, burnin = 1000,
+  samples = 10000, rungs = 11, chains = 1, burnin_phases = 1,
+  bw_update = TRUE, cov_update = FALSE, coupling_on = TRUE,
+  GTI_pow = 3, cluster = NULL, pb_markdown = FALSE, silent = FALSE)
 }
 \arguments{
 \item{data}{TODO.}
@@ -16,9 +16,20 @@ run_mcmc(data, df_params, loglike, logprior, burnin = 1000,
 \item{df_params}{a dataframe of parameters. Must contain the following
 elements: TODO}
 
-\item{loglike}{TODO.}
+\item{input_type}{switch between different methods of injecting likelihood
+and prior.}
 
-\item{logprior}{TODO.}
+\item{r_loglike}{TODO.}
+
+\item{r_logprior}{TODO.}
+
+\item{c_loglike}{TODO.}
+
+\item{c_logprior}{TODO.}
+
+\item{cpp_loglike}{TODO.}
+
+\item{cpp_logprior}{TODO.}
 
 \item{burnin}{the number of burn-in iterations (see also \code{burnin_phases}).}
 

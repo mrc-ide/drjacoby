@@ -77,7 +77,7 @@
       <h1>Example MCMC implementation</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2019-05-03</h4>
+            <h4 class="date">2019-05-16</h4>
       
       
       <div class="hidden name"><code>example.Rmd</code></div>
@@ -131,38 +131,32 @@ logprior &lt;-<span class="st"> </span><span class="cf">function</span>(theta) {
 <h2 class="hasAnchor">
 <a href="#running-the-mcmc" class="anchor"></a>Running the MCMC</h2>
 <p>Once we have all the elements above, it is straightforward to run the main MCMC. When running the MCMC in R markdown we can use the option <code>pb_markdown = TRUE</code> to avoid progress bars printing at every iteration, but when running in ordinary R this should be omitted.</p>
+</div>
+<div id="note---code-evalfalse-past-this-point-as-still-fiddling-with-input-types" class="section level2">
+<h2 class="hasAnchor">
+<a href="#note---code-evalfalse-past-this-point-as-still-fiddling-with-input-types" class="anchor"></a>NOTE - code eval=FALSE past this point, as still fiddling with input types</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC</span>
 mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
                      <span class="dt">df_params =</span> df_params,
-                     <span class="dt">loglike =</span> loglike,
-                     <span class="dt">logprior =</span> logprior,
+                     <span class="dt">input_type =</span> <span class="dv">1</span>,
+                     <span class="dt">r_loglike =</span> loglike,
+                     <span class="dt">r_logprior =</span> logprior,
                      <span class="dt">burnin =</span> <span class="fl">1e2</span>,
-                     <span class="dt">samples =</span> <span class="fl">1e4</span>,
+                     <span class="dt">samples =</span> <span class="fl">1e3</span>,
                      <span class="dt">chains =</span> <span class="dv">1</span>,
-                     <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
-<span class="co">#&gt; running MCMC</span>
-<span class="co">#&gt; Burn-in phase</span>
-<span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                       </span>
-<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; Sampling phase</span>
-<span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                       </span>
-<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%</code></pre></div>
+                     <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)</code></pre></div>
 <p>We can produce simple trace plots of output</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># extract posterior parameter draws</span>
-theta &lt;-<span class="st"> </span>mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta
-mu &lt;-<span class="st"> </span>theta[,<span class="dv">1</span>]
-sigma &lt;-<span class="st"> </span>theta[,<span class="dv">2</span>]
+theta &lt;-<span class="st"> </span>mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1
+mu &lt;-<span class="st"> </span>theta<span class="op">$</span>mu
+sigma &lt;-<span class="st"> </span>theta<span class="op">$</span>sigma
 
 <span class="co"># produce trace plots</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(mu)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/abline">abline</a></span>(<span class="dt">h =</span> mu_true, <span class="dt">col =</span> <span class="dv">2</span>)</code></pre></div>
-<p><img src="example_files/figure-html/unnamed-chunk-7-1.png" width="768"></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/abline">abline</a></span>(<span class="dt">h =</span> mu_true, <span class="dt">col =</span> <span class="dv">2</span>)
+
 <span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(sigma)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/abline">abline</a></span>(<span class="dt">h =</span> sigma_true, <span class="dt">col =</span> <span class="dv">2</span>)</code></pre></div>
-<p><img src="example_files/figure-html/unnamed-chunk-7-2.png" width="768"></p>
 </div>
   </div>
 
@@ -173,6 +167,7 @@ sigma &lt;-<span class="st"> </span>theta[,<span class="dv">2</span>]
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#setup">Setup</a></li>
       <li><a href="#running-the-mcmc">Running the MCMC</a></li>
+      <li><a href="#note---code-evalfalse-past-this-point-as-still-fiddling-with-input-types">NOTE - code eval=FALSE past this point, as still fiddling with input types</a></li>
       </ul>
 </div>
       </div>

@@ -40,18 +40,33 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   bool pb_markdown = rcpp_to_bool(args_params["pb_markdown"]);
   bool silent = rcpp_to_bool(args_params["silent"]);
   int chain = rcpp_to_int(args_params["chain"]);
+  int input_type = rcpp_to_int(args_params["input_type"]);
   
   // extract R functions
-  Rcpp::Function get_loglike = args_functions["loglike"];
-  Rcpp::Function get_logprior = args_functions["logprior"];
+  Rcpp::Function r_get_loglike = args_functions["r_loglike"];
+  Rcpp::Function r_get_logprior = args_functions["r_logprior"];
   Rcpp::Function test_convergence = args_functions["test_convergence"];
   Rcpp::Function update_progress = args_functions["update_progress"];
+  
+  // extract C functions
+  pattern_c_loglike* c_get_loglike = (pattern_c_loglike*) R_ExternalPtrAddrFn(args_functions["c_loglike"]);
+  pattern_c_logprior* c_get_logprior = (pattern_c_logprior*) R_ExternalPtrAddrFn(args_functions["c_logprior"]);
+  
+  // extract C++ functions
+  SEXP cpp_loglike = args_functions["cpp_loglike"];
+  pattern_cpp_loglike cpp_get_loglike = *Rcpp::XPtr<pattern_cpp_loglike>(cpp_loglike);
+  
+  SEXP cpp_logprior = args_functions["cpp_logprior"];
+  pattern_cpp_logprior cpp_get_logprior = *Rcpp::XPtr<pattern_cpp_logprior>(cpp_logprior);
+  
   
   // initialise vector of particles
   vector<Particle> particle_vec(rungs);
   for (int r=0; r<rungs; ++r) {
     double beta_raised = (rungs == 1) ? 1 : pow((r + 1)/double(rungs), GTI_pow);
-    particle_vec[r].init(x, theta_init, theta_min, theta_max, trans_type, beta_raised, get_loglike, get_logprior);
+    particle_vec[r].init(x, theta_init, theta_min, theta_max, trans_type, beta_raised,
+                         input_type, r_get_loglike, r_get_logprior, c_get_loglike, c_get_logprior,
+                         cpp_get_loglike, cpp_get_logprior);
   }
   
   // store loglikelihood and theta values
@@ -100,7 +115,7 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
       for (int r=0; r<rungs; ++r) {
         
         // update particles
-        particle_vec[r].update(get_loglike, get_logprior);
+        particle_vec[r].update(r_get_loglike, r_get_logprior);
         
         // store results
         loglike_burnin[phase][r][rep] = particle_vec[r].loglike;
@@ -137,7 +152,7 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
     for (int r=0; r<rungs; ++r) {
       
       // update particles
-      particle_vec[r].update(get_loglike, get_logprior);
+      particle_vec[r].update(r_get_loglike, r_get_logprior);
       
       // store results
       loglike_sampling[r][rep] = particle_vec[r].loglike;

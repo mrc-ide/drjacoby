@@ -4,7 +4,7 @@ author: "Bob Verity and Pete Winskill"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{"Example MCMC implementation"}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -81,12 +81,15 @@ logprior <- function(theta) {
 
 Once we have all the elements above, it is straightforward to run the main MCMC. When running the MCMC in R markdown we can use the option `pb_markdown = TRUE` to avoid progress bars printing at every iteration, but when running in ordinary R this should be omitted.
 
-```{r}
+## NOTE - code eval=FALSE past this point, as still fiddling with input types
+
+```{r, eval=FALSE}
 # run MCMC
 mcmc_out <- run_mcmc(data = x,
                      df_params = df_params,
-                     loglike = loglike,
-                     logprior = logprior,
+                     input_type = 1,
+                     r_loglike = loglike,
+                     r_logprior = logprior,
                      burnin = 1e2,
                      samples = 1e3,
                      chains = 1,
@@ -95,7 +98,7 @@ mcmc_out <- run_mcmc(data = x,
 
 We can produce simple trace plots of output
 
-```{r, fig.width=8, fig.height=4}
+```{r, fig.width=8, fig.height=4, eval=FALSE}
 # extract posterior parameter draws
 theta <- mcmc_out$chain1$theta_sampling$rung1
 mu <- theta$mu

@@ -25,8 +25,14 @@ check_drjacoby_loaded <- function() {
 #' @param data TODO.
 #' @param df_params a dataframe of parameters. Must contain the following
 #'   elements: TODO
-#' @param loglike TODO.
-#' @param logprior TODO.
+#' @param input_type switch between different methods of injecting likelihood
+#'   and prior.
+#' @param r_loglike TODO.
+#' @param r_logprior TODO.
+#' @param c_loglike TODO.
+#' @param c_logprior TODO.
+#' @param cpp_loglike TODO.
+#' @param cpp_logprior TODO.
 #' @param burnin the number of burn-in iterations (see also \code{burnin_phases}).
 #' @param samples the number of sampling iterations.
 #' @param rungs the number of temperature rungs used in Metropolis coupling (see
@@ -65,8 +71,13 @@ check_drjacoby_loaded <- function() {
 
 run_mcmc <- function(data,
                      df_params,
-                     loglike,
-                     logprior,
+                     input_type = 1,
+                     r_loglike,
+                     r_logprior,
+                     c_loglike,
+                     c_logprior,
+                     cpp_loglike,
+                     cpp_logprior,
                      burnin = 1e3,
                      samples = 1e4,
                      rungs = 11,
@@ -154,11 +165,16 @@ run_mcmc <- function(data,
                       coupling_on = coupling_on,
                       GTI_pow = GTI_pow,
                       pb_markdown = pb_markdown,
-                      silent = silent)
+                      silent = silent,
+                      input_type = input_type)
   
   # functions to pass to C++
-  args_functions <- list(loglike = loglike,
-                         logprior = logprior,
+  args_functions <- list(r_loglike = r_loglike,
+                         r_logprior = r_logprior,
+                         c_loglike = c_loglike,
+                         c_logprior = c_logprior,
+                         cpp_loglike = cpp_loglike,
+                         cpp_logprior = cpp_logprior,
                          test_convergence = test_convergence,
                          update_progress = update_progress)
   

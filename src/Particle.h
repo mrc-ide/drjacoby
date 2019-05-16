@@ -3,6 +3,14 @@
 
 #include <Rcpp.h>
 
+// specify exact pattern that loglike and logprior function must take in C
+typedef double pattern_c_loglike(const double *theta, const double *x, int n);
+typedef double pattern_c_logprior(const double *theta);
+
+// specify exact pattern that loglike and logprior function must take in C++
+typedef double (*pattern_cpp_loglike)(std::vector<double>, std::vector<double>);
+typedef double (*pattern_cpp_logprior)(std::vector<double>);
+
 //------------------------------------------------
 // class defining MCMC particle
 class Particle {
@@ -19,6 +27,13 @@ public:
   std::vector<double> theta_max;
   std::vector<double> theta_prop;
   int d;  // number of parameters
+  
+  // TODO - delete once chosen best method
+  int input_type;
+  pattern_c_loglike* c_get_loglike;
+  pattern_c_logprior* c_get_logprior;
+  pattern_cpp_loglike cpp_get_loglike;
+  pattern_cpp_logprior cpp_get_logprior;
   
   // the type of transformation applied to each element of theta. See main.R for
   // a key
@@ -60,10 +75,17 @@ public:
             std::vector<double> &theta_max,
             std::vector<int> &trans_type,
             double beta_raised,
+            int input_type,
             Rcpp::Function get_loglike,
-            Rcpp::Function get_logprior);
+            Rcpp::Function get_logprior,
+            pattern_c_loglike* c_get_loglike,
+            pattern_c_logprior* c_get_logprior,
+            pattern_cpp_loglike cpp_get_loglike,
+            pattern_cpp_logprior cpp_get_logprior);
+  
   void update(Rcpp::Function get_loglike,
               Rcpp::Function get_logprior);
+  
   void propose_phi();
   void phi_prop_to_theta_prop();
   void theta_to_phi();

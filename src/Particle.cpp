@@ -13,8 +13,13 @@ void Particle::init(vector<double> &x,
                     vector<double> &theta_max,
                     vector<int> &trans_type,
                     double beta_raised,
-                    Rcpp::Function get_loglike,
-                    Rcpp::Function get_logprior) {
+                    int input_type,
+                    Rcpp::Function r_get_loglike,
+                    Rcpp::Function r_get_logprior,
+                    pattern_c_loglike* c_get_loglike,
+                    pattern_c_logprior* c_get_logprior,
+                    pattern_cpp_loglike cpp_get_loglike,
+                    pattern_cpp_logprior cpp_get_logprior) {
   
   // pointer to data
   x_ptr = &x;
@@ -25,6 +30,13 @@ void Particle::init(vector<double> &x,
   this->theta_max = theta_max;
   d = theta.size();
   theta_prop = vector<double>(d);
+  
+  // TODO - delete once chosen best method
+  this->input_type = input_type;
+  this->c_get_loglike = c_get_loglike;
+  this->c_get_logprior = c_get_logprior;
+  this->cpp_get_loglike = cpp_get_loglike;
+  this->cpp_get_logprior = cpp_get_logprior;
   
   // the type of transformation applied to each element of theta. See main.R for
   // a key
@@ -46,9 +58,9 @@ void Particle::init(vector<double> &x,
   propSD = 1;
   
   // likelihoods and priors
-  loglike = rcpp_to_double(get_loglike(theta, *x_ptr));
+  loglike = rcpp_to_double(r_get_loglike(theta, *x_ptr));
   loglike_prop = 0;
-  logprior = rcpp_to_double(get_logprior(theta));;
+  logprior = rcpp_to_double(r_get_logprior(theta));;
   logprior_prop = 0;
   
   // acceptance rates
@@ -70,10 +82,19 @@ void Particle::update(Rcpp::Function get_loglike, Rcpp::Function get_logprior) {
   get_adjustment();
   
   // calculate loglikelihood of proposed theta
-  loglike_prop = rcpp_to_double(get_loglike(theta_prop, *x_ptr));
+  if (input_type == 1) {
+    loglike_prop = rcpp_to_double(get_loglike(theta_prop, *x_ptr));
+    logprior_prop = rcpp_to_double(get_logprior(theta_prop));
+  } else if (input_type == 2) {
+    loglike_prop = c_get_loglike(&theta_prop[0], &(*x_ptr)[0], int((*x_ptr).size()));
+    logprior_prop = c_get_logprior(&theta_prop[0]);
+  } else {
+    loglike_prop = cpp_get_loglike(theta_prop, *x_ptr);
+    logprior_prop = cpp_get_logprior(theta_prop);
+  }
   
   // calculate logprior of proposed theta
-  logprior_prop = rcpp_to_double(get_logprior(theta_prop));
+  //logprior_prop = rcpp_to_double(get_logprior(theta_prop));
   
   // calculate Metropolis-Hastings ratio
   double MH = (loglike_prop + logprior_prop) - (loglike + logprior) + adj;
