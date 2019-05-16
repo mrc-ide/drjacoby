@@ -11,12 +11,12 @@ default_random_engine generator(rd());
 // draw from continuous uniform distribution on interval [0,1)
 #ifdef RCPP_ACTIVE
 double runif_0_1() {
-  return(R::runif(0,1));
+  return R::runif(0,1);
 }
 #else
 double runif_0_1() {
   uniform_real_distribution<double> uniform_0_1(0.0,1.0);
-  return(uniform_0_1(generator));
+  return uniform_0_1(generator);
 }
 #endif
 
@@ -24,12 +24,12 @@ double runif_0_1() {
 // draw from continuous uniform distribution on interval [a,b)
 #ifdef RCPP_ACTIVE
 double runif1(double a, double b) {
-  return(R::runif(a,b));
+  return R::runif(a,b);
 }
 #else
 double runif1(double a, double b) {
   uniform_real_distribution<double> uniform_a_b(a,b);
-  return(uniform_a_b(generator));
+  return uniform_a_b(generator);
 }
 #endif
 
@@ -78,12 +78,12 @@ vector<int> rmultinom1(int N, const vector<double> &p_vec) {
 // draw from univariate normal distribution
 #ifdef RCPP_ACTIVE
 double rnorm1(double mean, double sd) {
-  return(R::rnorm(mean, sd));
+  return R::rnorm(mean, sd);
 }
 #else
 double rnorm1(double mean, double sd) {
   normal_distribution<double> dist_norm(mean,sd);
-  return(dist_norm(generator));
+  return dist_norm(generator);
 }
 #endif
 
@@ -136,7 +136,7 @@ double rnorm1_interval(double mean, double sd, double a, double b) {
 // probability
 int sample2(int a, int b) {
   int ret = floor(runif1(a, b+1));
-  return(ret);
+  return ret;
 }
 
 //------------------------------------------------
@@ -150,7 +150,7 @@ int sample1(vector<double> &p, double p_sum) {
       return i+1;
     }
   }
-  return(0);
+  return 0;
 }
 int sample1(vector<int> &p, int p_sum) {
   int rand = sample2(1,p_sum);
@@ -161,7 +161,7 @@ int sample1(vector<int> &p, int p_sum) {
       return i+1;
     }
   }
-  return(0);
+  return 0;
 }
 
 //------------------------------------------------
@@ -183,7 +183,7 @@ double rgamma1(double shape, double rate) {
     x = 1.0/UNDERFLO;
   }
   
-  return(x);
+  return x;
 }
 #endif
 
@@ -192,13 +192,13 @@ double rgamma1(double shape, double rate) {
 // draw from beta(shape1,shape2) distribution
 #ifdef RCPP_ACTIVE
 double rbeta1(double shape1, double shape2) {
-  return(R::rbeta(shape1, shape2));
+  return R::rbeta(shape1, shape2);
 }
 #else
 double rbeta1(double shape1, double shape2) {
   double x1 = rgamma1(shape1,1.0);
   double x2 = rgamma1(shape2,1.0);
-  return(x1/double(x1+x2));
+  return x1/double(x1+x2);
 }
 #endif
 
@@ -206,7 +206,7 @@ double rbeta1(double shape1, double shape2) {
 // probability mass of Poisson distribution
 #ifdef RCPP_ACTIVE
 double dpois1(int n, double lambda, bool return_log) {
-  return(R::dpois(n,lambda,return_log));
+  return R::dpois(n,lambda,return_log);
 }
 #else
 double dpois1(int n, double lambda, bool return_log) {
@@ -214,7 +214,7 @@ double dpois1(int n, double lambda, bool return_log) {
   if (!return_log) {
     ret = exp(ret);
   }
-  return(ret);
+  return ret;
 }
 #endif
 
@@ -230,7 +230,7 @@ vector<double> rdirichlet1(double alpha, int n) {
   for (int i=0; i<n; i++) {
     ret[i] /= retSum;
   }
-  return(ret);
+  return ret;
 }
 
 //------------------------------------------------
