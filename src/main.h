@@ -2,5 +2,9 @@
 #include <Rcpp.h>
 
 //------------------------------------------------
-// Example function
-Rcpp::List run_mcmc_cpp(Rcpp::List args);
+// main Rcpp function, deployed from R
+Rcpp::List main_cpp(Rcpp::List args);
+
+//------------------------------------------------
+// run MCMC
+Rcpp::List run_mcmc(Rcpp::List args);

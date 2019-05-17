@@ -29,8 +29,6 @@ check_drjacoby_loaded <- function() {
 #'   and prior.
 #' @param r_loglike TODO.
 #' @param r_logprior TODO.
-#' @param c_loglike TODO.
-#' @param c_logprior TODO.
 #' @param cpp_loglike TODO.
 #' @param cpp_logprior TODO.
 #' @param burnin the number of burn-in iterations (see also \code{burnin_phases}).
@@ -74,8 +72,6 @@ run_mcmc <- function(data,
                      input_type = 1,
                      r_loglike,
                      r_logprior,
-                     c_loglike,
-                     c_logprior,
                      cpp_loglike,
                      cpp_logprior,
                      burnin = 1e3,
@@ -171,8 +167,6 @@ run_mcmc <- function(data,
   # functions to pass to C++
   args_functions <- list(r_loglike = r_loglike,
                          r_logprior = r_logprior,
-                         c_loglike = c_loglike,
-                         c_logprior = c_logprior,
                          cpp_loglike = cpp_loglike,
                          cpp_logprior = cpp_logprior,
                          test_convergence = test_convergence,
@@ -205,12 +199,12 @@ run_mcmc <- function(data,
     
     # run in parallel
     parallel::clusterEvalQ(cluster, library(drjacoby))
-    output_raw <- parallel::clusterApplyLB(cl = cluster, parallel_args, run_mcmc_cpp)
+    output_raw <- parallel::clusterApplyLB(cl = cluster, parallel_args, main_cpp)
     
   } else {
     
     # run in serial
-    output_raw <- lapply(parallel_args, run_mcmc_cpp)
+    output_raw <- lapply(parallel_args, main_cpp)
   }
   
   # ---------- process output ----------

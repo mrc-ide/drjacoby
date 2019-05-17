@@ -16,8 +16,6 @@ void Particle::init(vector<double> &x,
                     int input_type,
                     Rcpp::Function r_get_loglike,
                     Rcpp::Function r_get_logprior,
-                    pattern_c_loglike* c_get_loglike,
-                    pattern_c_logprior* c_get_logprior,
                     pattern_cpp_loglike cpp_get_loglike,
                     pattern_cpp_logprior cpp_get_logprior) {
   
@@ -33,8 +31,6 @@ void Particle::init(vector<double> &x,
   
   // TODO - delete once chosen best method
   this->input_type = input_type;
-  this->c_get_loglike = c_get_loglike;
-  this->c_get_logprior = c_get_logprior;
   this->cpp_get_loglike = cpp_get_loglike;
   this->cpp_get_logprior = cpp_get_logprior;
   
@@ -82,12 +78,10 @@ void Particle::update(Rcpp::Function get_loglike, Rcpp::Function get_logprior) {
   get_adjustment();
   
   // calculate loglikelihood of proposed theta
+  //loglike_prop = get_loglike0(fun);
   if (input_type == 1) {
     loglike_prop = rcpp_to_double(get_loglike(theta_prop, *x_ptr));
     logprior_prop = rcpp_to_double(get_logprior(theta_prop));
-  } else if (input_type == 2) {
-    loglike_prop = c_get_loglike(&theta_prop[0], &(*x_ptr)[0], int((*x_ptr).size()));
-    logprior_prop = c_get_logprior(&theta_prop[0]);
   } else {
     loglike_prop = cpp_get_loglike(theta_prop, *x_ptr);
     logprior_prop = cpp_get_logprior(theta_prop);

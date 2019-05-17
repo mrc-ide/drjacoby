@@ -8,10 +8,17 @@
 
 using namespace std;
 
+typedef SEXP (*pattern_cpp_loglike0)(std::vector<double>, std::vector<double>);
+
+template<class TYPE>
+double template_test(TYPE func, std::vector<double> &theta, std::vector<double> &x) {
+  return Rcpp::as<double>(func(theta, x));
+}
+
 //------------------------------------------------
 // Dummy function to test Rcpp working as expected
 // [[Rcpp::export]]
-Rcpp::List run_mcmc_cpp(Rcpp::List args) {
+Rcpp::List main_cpp(Rcpp::List args) {
   
   // start timer
   chrono::high_resolution_clock::time_point t1 = chrono::high_resolution_clock::now();
@@ -48,10 +55,6 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   Rcpp::Function test_convergence = args_functions["test_convergence"];
   Rcpp::Function update_progress = args_functions["update_progress"];
   
-  // extract C functions
-  pattern_c_loglike* c_get_loglike = (pattern_c_loglike*) R_ExternalPtrAddrFn(args_functions["c_loglike"]);
-  pattern_c_logprior* c_get_logprior = (pattern_c_logprior*) R_ExternalPtrAddrFn(args_functions["c_logprior"]);
-  
   // extract C++ functions
   SEXP cpp_loglike = args_functions["cpp_loglike"];
   pattern_cpp_loglike cpp_get_loglike = *Rcpp::XPtr<pattern_cpp_loglike>(cpp_loglike);
@@ -60,12 +63,27 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
   pattern_cpp_logprior cpp_get_logprior = *Rcpp::XPtr<pattern_cpp_logprior>(cpp_logprior);
   
   
+  
+  
+  pattern_cpp_loglike0 cpp_get_loglike0 = *Rcpp::XPtr<pattern_cpp_loglike0>(cpp_loglike);
+  
+  vector<double> theta_test(5, 1);
+  vector<double> x_test(5, 1.0);
+  //double temp1 = template_test(r_get_loglike, theta_test, x_test);
+  double temp1 = template_test(cpp_get_loglike0, theta_test, x_test);
+  print(temp1);
+  
+  Rcpp::stop("done testing");
+  
+  
+  
+  
   // initialise vector of particles
   vector<Particle> particle_vec(rungs);
   for (int r=0; r<rungs; ++r) {
     double beta_raised = (rungs == 1) ? 1 : pow((r + 1)/double(rungs), GTI_pow);
     particle_vec[r].init(x, theta_init, theta_min, theta_max, trans_type, beta_raised,
-                         input_type, r_get_loglike, r_get_logprior, c_get_loglike, c_get_logprior,
+                         input_type, r_get_loglike, r_get_logprior,
                          cpp_get_loglike, cpp_get_logprior);
   }
   
@@ -191,3 +209,4 @@ Rcpp::List run_mcmc_cpp(Rcpp::List args) {
                                       Rcpp::Named("theta_sampling") = theta_sampling);
   return ret;
 }
+

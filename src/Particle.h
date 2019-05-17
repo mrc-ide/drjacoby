@@ -3,10 +3,6 @@
 
 #include <Rcpp.h>
 
-// specify exact pattern that loglike and logprior function must take in C
-typedef double pattern_c_loglike(const double *theta, const double *x, int n);
-typedef double pattern_c_logprior(const double *theta);
-
 // specify exact pattern that loglike and logprior function must take in C++
 typedef double (*pattern_cpp_loglike)(std::vector<double>, std::vector<double>);
 typedef double (*pattern_cpp_logprior)(std::vector<double>);
@@ -30,8 +26,6 @@ public:
   
   // TODO - delete once chosen best method
   int input_type;
-  pattern_c_loglike* c_get_loglike;
-  pattern_c_logprior* c_get_logprior;
   pattern_cpp_loglike cpp_get_loglike;
   pattern_cpp_logprior cpp_get_logprior;
   
@@ -78,8 +72,6 @@ public:
             int input_type,
             Rcpp::Function get_loglike,
             Rcpp::Function get_logprior,
-            pattern_c_loglike* c_get_loglike,
-            pattern_c_logprior* c_get_logprior,
             pattern_cpp_loglike cpp_get_loglike,
             pattern_cpp_logprior cpp_get_logprior);
   
@@ -90,5 +82,10 @@ public:
   void phi_prop_to_theta_prop();
   void theta_to_phi();
   void get_adjustment();
+  
+  template<class TYPE>
+  double get_loglike0(TYPE func, std::vector<double> &theta, std::vector<double> &x) {
+    return func(theta, x);
+  }
   
 };
