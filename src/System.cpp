@@ -27,7 +27,9 @@ void System::load(Rcpp::List args) {
   samples = rcpp_to_int(args_params["samples"]);
   rungs = rcpp_to_int(args_params["rungs"]);
   burnin_phases = rcpp_to_int(args_params["burnin_phases"]);
+  bw_init = rcpp_to_double(args_params["bw_init"]);
   bw_update = rcpp_to_vector_bool(args_params["bw_update"]);
+  bw_reset = rcpp_to_vector_bool(args_params["bw_reset"]);
   cov_update = rcpp_to_vector_bool(args_params["cov_update"]);
   coupling_on = rcpp_to_vector_bool(args_params["coupling_on"]);
   GTI_pow = rcpp_to_double(args_params["GTI_pow"]);

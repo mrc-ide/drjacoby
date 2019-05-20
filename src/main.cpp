@@ -153,6 +153,18 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       print("burn-in phase", phase+1);
     }
     
+    // reset bandwidth of all rungs
+    if (s.bw_reset[phase]) {
+      for (int r = 0; r < rungs; ++r) {
+        particle_vec[r].propSD = s.bw_init;
+      }
+    }
+    
+    // reset acceptance count of all rungs
+    for (int r = 0; r < rungs; ++r) {
+      particle_vec[r].accept_count = 0;
+    }
+    
     // loop through burn-in iterations
     for (int rep = 0; rep < s.burnin[phase]; ++rep) {
       
@@ -166,7 +178,8 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       for (int r = 0; r < rungs; ++r) {
         
         // update particles
-        particle_vec[r].update(get_loglike, get_logprior);
+        particle_vec[r].update(get_loglike, get_logprior,
+                               rep+1, s.bw_update[phase]);
         
         // store results
         loglike_burnin[phase][r][rep] = particle_vec[r].loglike;
@@ -186,6 +199,12 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       
     }  // end burn-in MCMC loop
     
+    // print phase diagnostics
+    if (!s.silent) {
+      double accept_rate = round(particle_vec[0].accept_count/double(s.burnin[phase]) * 1000)/10.0;
+      Rcpp::Rcout << "bandwidth: " << particle_vec[0].propSD << ", acceptance rate: " << accept_rate << "%\n";
+    }
+    
   }  // end loop over burn-in phases
   
   
@@ -196,6 +215,11 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     print("sampling phase");
   }
   
+  // reset acceptance count of all rungs
+  for (int r = 0; r < rungs; ++r) {
+    particle_vec[r].accept_count = 0;
+  }
+  
   // loop through sampling iterations
   for (int rep = 0; rep < s.samples; ++rep) {
     
@@ -203,7 +227,8 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     for (int r = 0; r < rungs; ++r) {
       
       // update particles
-      particle_vec[r].update(get_loglike, get_logprior);
+      particle_vec[r].update(get_loglike, get_logprior,
+                             rep+1, false);
       
       // store results
       loglike_sampling[r][rep] = particle_vec[r].loglike;
@@ -223,6 +248,12 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     
   }  // end sampling MCMC loop
   
+  // print final diagnostics
+  if (!s.silent) {
+    double accept_rate = round(particle_vec[0].accept_count/double(s.samples) * 1000)/10.0;
+    Rcpp::Rcout << "acceptance rate: " << accept_rate << "%\n";
+  }
+  
   
   // ---------- return ----------
   
@@ -230,7 +261,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   chrono::high_resolution_clock::time_point t2 = chrono::high_resolution_clock::now();
   chrono::duration<double> time_span = chrono::duration_cast< chrono::duration<double> >(t2-t1);
   if (!s.silent) {
-    print("   completed in", time_span.count(), "seconds\n");
+    print("\ncompleted in", time_span.count(), "seconds\n");
   }
   
   // return as Rcpp list

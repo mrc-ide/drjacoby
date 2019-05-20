@@ -36,11 +36,14 @@ check_drjacoby_loaded <- function() {
 #'   burn-in phases in which both the proposal bandwidth and covariance are
 #'   updated. The complete list of arguments that can be specified separately
 #'   for each burn-in phase is: \code{burnin}, \code{bw_update},
-#'   \code{cov_update}, \code{coupling_on}. Each of these arguments can be
-#'   specified as a vector of length \code{burnin_phases}, or as a single value
-#'   in which case the same value applies over every phase.
+#'   \code{bw_reset}, \code{cov_update}, \code{coupling_on}. Each of these
+#'   arguments can be specified as a vector of length \code{burnin_phases}, or
+#'   as a single value in which case the same value applies over every phase.
+#' @param bw_init the initial value used for the proposal bandwidth.
 #' @param bw_update whether the proposal bandwidth should be updated dynamically
 #'   via Robbins-Monro (see also \code{burnin_phases}).
+#' @param bw_reset whether the proposal bandwidth should be reset to the value
+#'   of \code{bw_init} in each burn-in phase  (see also \code{burnin_phases}).
 #' @param cov_update whether the proposal covariance matrix should be updated
 #'   dynamically from the posterior draws (see also \code{burnin_phases}).
 #' @param coupling_on whether to implement Metropolis-coupling over temperature 
@@ -66,7 +69,9 @@ run_mcmc <- function(data,
                      rungs = 1,
                      chains = 1,
                      burnin_phases = 3,
+                     bw_init = 1.0,
                      bw_update = TRUE,
+                     bw_reset = TRUE,
                      cov_update = c(FALSE, TRUE, TRUE),
                      coupling_on = TRUE,
                      GTI_pow = 3,
@@ -102,7 +107,10 @@ run_mcmc <- function(data,
   assert_single_pos_int(samples, zero_allowed = FALSE)
   assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_pos_int(rungs, zero_allowed = FALSE)
+  assert_single_pos(bw_init, zero_allowed = FALSE)
   assert_logical(bw_update)
+  assert_logical(bw_reset)
+  assert_eq(bw_reset[1], TRUE)
   assert_logical(cov_update)
   assert_logical(coupling_on)
   assert_single_pos(GTI_pow)
@@ -119,10 +127,11 @@ run_mcmc <- function(data,
   # forced to vectors by repeating the same single value
   burnin <- force_vector(burnin, burnin_phases)
   bw_update <- force_vector(bw_update, burnin_phases)
+  bw_reset <- force_vector(bw_reset, burnin_phases)
   cov_update <- force_vector(cov_update, burnin_phases)
   coupling_on <- force_vector(coupling_on, burnin_phases)
   assert_length(burnin, burnin_phases)
-  assert_same_length_multiple(burnin, bw_update, cov_update, coupling_on)
+  assert_same_length_multiple(burnin, bw_update, bw_reset, cov_update, coupling_on)
   
   
   # ---------- pre-processing ----------
@@ -153,7 +162,9 @@ run_mcmc <- function(data,
                       samples = samples,
                       rungs = rungs,
                       burnin_phases = burnin_phases,
+                      bw_init = bw_init,
                       bw_update = bw_update,
+                      bw_reset = bw_reset,
                       cov_update = cov_update,
                       coupling_on = coupling_on,
                       GTI_pow = GTI_pow,

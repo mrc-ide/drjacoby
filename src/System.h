@@ -27,7 +27,9 @@ public:
   int samples;
   int rungs;
   int burnin_phases;
+  double bw_init;
   std::vector<bool> bw_update;
+  std::vector<bool> bw_reset;
   std::vector<bool> cov_update;
   std::vector<bool> coupling_on;
   double GTI_pow;

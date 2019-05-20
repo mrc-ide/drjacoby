@@ -23,6 +23,8 @@ Suggests:
     testthat,
     covr,
     knitr,
-    rmarkdown
+    rmarkdown,
+    RcppXPtrUtils,
+    microbenchmark
 BugReports: https://github.com/mrc-ide/drjacoby/issues
 VignetteBuilder: knitr

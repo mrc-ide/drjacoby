@@ -29,8 +29,9 @@ void Particle::init(System &s, double beta_raised) {
   theta_to_phi();
   phi_prop = vector<double>(d);
   
-  // proposal standard deviations
-  propSD = 0.1;
+  // proposal parameters
+  propSD = s_ptr->bw_init;
+  rm_stepsize = 1.0;
   
   // likelihoods and priors
   loglike = 0;
@@ -39,7 +40,7 @@ void Particle::init(System &s, double beta_raised) {
   logprior_prop = 0;
   
   // acceptance rates
-  accept = 0;
+  accept_count = 0;
   
 }
 

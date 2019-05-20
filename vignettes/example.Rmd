@@ -160,15 +160,11 @@ abline(h = sigma_true, col = 2)
 
 Although *drjacoby* is an R package, under the hood it is running C++ through the fantastic [Rcpp package](https://cran.r-project.org/web/packages/Rcpp/index.html). When we pass in an R likelihood function, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This comes with an obvious computational overhead, which can be avoided by specifying functions directly within C++.
 
-First, we need the`Rcpp` and `RcppXPtrUtils` packages installed and attached. These packages allow us to write a C++ function directly within R as simple character string, and then to use the `cppXPtr()` function to convert this string to a function pointer that will be recognised by *drjacoby*. As before, there are some constraints on what this function must look like. First, it **must** take as input a `std::vector<double>` of parameters **followed by** a `std::vector<double>` of data. Note that data must be input as doubles, and so data consisting of integer or boolean values should be dealt with as though they are continuous values (for example `TRUE = 1.0`, `FALSE = 0.0`). Second, the function **must** return an object of class `SEXP`. The easiest way to achieve this is to calculate the raw return value as a double, and to use the `Rcpp::wrap()` function when returning to transform to `SEXP`. As before, the value returned should be the likelihood evaluated in **log space**.
+To use C++ functions within *drjacoby* we need the `Rcpp` and `RcppXPtrUtils` packages installed and attached. These packages allow us to write a C++ function directly within R as simple character string, and then to use the `cppXPtr()` function to convert this string to a function pointer that will be recognised by *drjacoby*. As before, there are some constraints on what this function must look like. First, it **must** take as input a `std::vector<double>` of parameters **followed by** a `std::vector<double>` of data. Note that data must be input as doubles, and so data consisting of integer or boolean values should be dealt with as though they are continuous values (for example `TRUE = 1.0`, `FALSE = 0.0`). Second, the function **must** return an object of class `SEXP`. The easiest way to achieve this is to calculate the raw return value as a double, and to use the `Rcpp::wrap()` function when returning to transform to `SEXP`. As before, the value returned should be the likelihood evaluated in **log space**.
 
 One disadvantage of using C++ functions over R functions is that we do not have access to all R's nice distributions, for example `dnorm()`, and so functions will tend to be mathematically more involved. For example, the `r_loglike()` function defined above can be re-written in C++ as follows:
 
 ```{r}
-# load packages
-library(Rcpp)
-library(RcppXPtrUtils)
-
 # define cpp log-likelihood function as character string
 cpp_loglike_string <- "SEXP loglike(std::vector<double> theta, std::vector<double> x) {
   
@@ -185,7 +181,7 @@ cpp_loglike_string <- "SEXP loglike(std::vector<double> theta, std::vector<doubl
 }"
 
 # convert to a function pointer
-cpp_loglike <- cppXPtr(cpp_loglike_string)
+cpp_loglike <- RcppXPtrUtils::cppXPtr(cpp_loglike_string)
 ```
 
 Similarly, we can define the prior as a C++ function. This function **must** take as input a `std::vector<double>` of parameters, and **must** output a single `SEXP` value representing the prior probability of the parameters in **log space**. The `r_logprior()` function defined above can be re-written in C++ as follows:
@@ -202,7 +198,7 @@ cpp_logprior_string <- "SEXP logprior(std::vector<double> params){
   
   return Rcpp::wrap(ret);
 }"
-cpp_logprior <- cppXPtr(cpp_logprior_string)
+cpp_logprior <- RcppXPtrUtils::cppXPtr(cpp_logprior_string)
 ```
 
 With these two functions defined we can run the MCMC exactly the same as before, passing in the new functions:
@@ -221,32 +217,29 @@ r_mcmc_out <- run_mcmc(data = x,
 You should see that this MCMC runs considerably faster than the previous version that used R functions. We can quantify how much faster using the `microbenchmark` package. In the following we compare the MCMC evaluated using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.
 
 ```{r}
-# load packages
-library(microbenchmark)
-
 # run both R and C++ versions multiple times to compare speed
-bm <- microbenchmark(r_version = run_mcmc(data = x,
-                                          df_params = df_params,
-                                          loglike = r_loglike,
-                                          logprior = r_logprior,
-                                          burnin = 1e3,
-                                          samples = 1e3,
-                                          silent = TRUE),
-                     cpp_version = run_mcmc(data = x,
-                                            df_params = df_params,
-                                            loglike = cpp_loglike,
-                                            logprior = cpp_logprior,
-                                            burnin = 1e3,
-                                            samples = 1e3,
-                                            silent = TRUE),
-                     mixed_version = run_mcmc(data = x,
-                                              df_params = df_params,
-                                              loglike = cpp_loglike,
-                                              logprior = r_logprior,
-                                              burnin = 1e3,
-                                              samples = 1e3,
-                                              silent = TRUE),
-                     times = 10)
+bm <- microbenchmark::microbenchmark(r_version = run_mcmc(data = x,
+                                                          df_params = df_params,
+                                                          loglike = r_loglike,
+                                                          logprior = r_logprior,
+                                                          burnin = 1e3,
+                                                          samples = 1e3,
+                                                          silent = TRUE),
+                                     cpp_version = run_mcmc(data = x,
+                                                            df_params = df_params,
+                                                            loglike = cpp_loglike,
+                                                            logprior = cpp_logprior,
+                                                            burnin = 1e3,
+                                                            samples = 1e3,
+                                                            silent = TRUE),
+                                     mixed_version = run_mcmc(data = x,
+                                                              df_params = df_params,
+                                                              loglike = cpp_loglike,
+                                                              logprior = r_logprior,
+                                                              burnin = 1e3,
+                                                              samples = 1e3,
+                                                              silent = TRUE),
+                                     times = 10)
 summary(bm)
 ```
 

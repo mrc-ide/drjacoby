@@ -6,9 +6,9 @@
 \usage{
 run_mcmc(data, df_params, loglike, logprior, burnin = 1000,
   samples = 10000, rungs = 1, chains = 1, burnin_phases = 3,
-  bw_update = TRUE, cov_update = c(FALSE, TRUE, TRUE),
-  coupling_on = TRUE, GTI_pow = 3, cluster = NULL,
-  pb_markdown = FALSE, silent = FALSE)
+  bw_init = 1, bw_update = TRUE, bw_reset = TRUE,
+  cov_update = c(FALSE, TRUE, TRUE), coupling_on = TRUE, GTI_pow = 3,
+  cluster = NULL, pb_markdown = FALSE, silent = FALSE)
 }
 \arguments{
 \item{data}{TODO.}
@@ -39,12 +39,17 @@ proposal bandwidth is updated in the first burn-in phase, followed by two
 burn-in phases in which both the proposal bandwidth and covariance are
 updated. The complete list of arguments that can be specified separately
 for each burn-in phase is: \code{burnin}, \code{bw_update},
-\code{cov_update}, \code{coupling_on}. Each of these arguments can be
-specified as a vector of length \code{burnin_phases}, or as a single value
-in which case the same value applies over every phase.}
+\code{bw_reset}, \code{cov_update}, \code{coupling_on}. Each of these
+arguments can be specified as a vector of length \code{burnin_phases}, or
+as a single value in which case the same value applies over every phase.}
+
+\item{bw_init}{the initial value used for the proposal bandwidth.}
 
 \item{bw_update}{whether the proposal bandwidth should be updated dynamically
 via Robbins-Monro (see also \code{burnin_phases}).}
+
+\item{bw_reset}{whether the proposal bandwidth should be reset to the value
+of \code{bw_init} in each burn-in phase  (see also \code{burnin_phases}).}
 
 \item{cov_update}{whether the proposal covariance matrix should be updated
 dynamically from the posterior draws (see also \code{burnin_phases}).}

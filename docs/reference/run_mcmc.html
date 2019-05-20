@@ -121,9 +121,9 @@
 
     <pre class="usage"><span class='fu'>run_mcmc</span>(<span class='no'>data</span>, <span class='no'>df_params</span>, <span class='no'>loglike</span>, <span class='no'>logprior</span>, <span class='kw'>burnin</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
   <span class='kw'>samples</span> <span class='kw'>=</span> <span class='fl'>10000</span>, <span class='kw'>rungs</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>burnin_phases</span> <span class='kw'>=</span> <span class='fl'>3</span>,
-  <span class='kw'>bw_update</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>cov_update</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>FALSE</span>, <span class='fl'>TRUE</span>, <span class='fl'>TRUE</span>),
-  <span class='kw'>coupling_on</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>GTI_pow</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>cluster</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>pb_markdown</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+  <span class='kw'>bw_init</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>bw_update</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>bw_reset</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>cov_update</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>FALSE</span>, <span class='fl'>TRUE</span>, <span class='fl'>TRUE</span>), <span class='kw'>coupling_on</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>GTI_pow</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>cluster</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pb_markdown</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -174,14 +174,23 @@ proposal bandwidth is updated in the first burn-in phase, followed by two
 burn-in phases in which both the proposal bandwidth and covariance are
 updated. The complete list of arguments that can be specified separately
 for each burn-in phase is: <code>burnin</code>, <code>bw_update</code>,
-<code>cov_update</code>, <code>coupling_on</code>. Each of these arguments can be
-specified as a vector of length <code>burnin_phases</code>, or as a single value
-in which case the same value applies over every phase.</p></td>
+<code>bw_reset</code>, <code>cov_update</code>, <code>coupling_on</code>. Each of these
+arguments can be specified as a vector of length <code>burnin_phases</code>, or
+as a single value in which case the same value applies over every phase.</p></td>
+    </tr>
+    <tr>
+      <th>bw_init</th>
+      <td><p>the initial value used for the proposal bandwidth.</p></td>
     </tr>
     <tr>
       <th>bw_update</th>
       <td><p>whether the proposal bandwidth should be updated dynamically
 via Robbins-Monro (see also <code>burnin_phases</code>).</p></td>
+    </tr>
+    <tr>
+      <th>bw_reset</th>
+      <td><p>whether the proposal bandwidth should be reset to the value
+of <code>bw_init</code> in each burn-in phase  (see also <code>burnin_phases</code>).</p></td>
     </tr>
     <tr>
       <th>cov_update</th>

@@ -35,8 +35,9 @@ public:
   std::vector<double> phi;
   std::vector<double> phi_prop;
   
-  // proposal standard deviations
+  // proposal parameters
   double propSD;
+  double rm_stepsize;
   
   // likelihoods and priors
   double loglike;
@@ -45,7 +46,7 @@ public:
   double logprior_prop;
   
   // store acceptance rates
-  int accept;
+  int accept_count;
   
   
   // PUBLIC FUNCTIONS
@@ -65,7 +66,7 @@ public:
   
   // update using flexible likelihood function
   template<class TYPE1, class TYPE2>
-  void update(TYPE1 get_loglike, TYPE2 get_logprior) {
+  void update(TYPE1 get_loglike, TYPE2 get_logprior, int t, bool update_bw) {
     
     // generate new phi_prop
     propose_phi();
@@ -94,6 +95,21 @@ public:
       // update likelihoods
       loglike = loglike_prop;
       logprior = logprior_prop;
+      
+      // Robbins-Monro positive update  (on the log scale)
+      if (update_bw) {
+        propSD = exp(log(propSD) + rm_stepsize*(1 - 0.234)/sqrt(t));
+      }
+      
+      // add to acceptance rate count
+      accept_count++;
+      
+    } else {
+      
+      // Robbins-Monro negative update (on the log scale)
+      if (update_bw) {
+        propSD = exp(log(propSD) - rm_stepsize*0.234/sqrt(t));
+      }
       
     }
     
