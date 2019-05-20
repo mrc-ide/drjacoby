@@ -218,9 +218,7 @@ r_mcmc_out <- run_mcmc(data = x,
                        pb_markdown = TRUE)
 ```
 
-You should see that this MCMC runs considerably faster than the previous version that used R functions.
-
-We can quantify how much faster using the `microbenchmark` package. In the following we compare the MCMC evaluated using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.
+You should see that this MCMC runs considerably faster than the previous version that used R functions. We can quantify how much faster using the `microbenchmark` package. In the following we compare the MCMC evaluated using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.
 
 ```{r}
 # load packages
@@ -252,4 +250,4 @@ bm <- microbenchmark(r_version = run_mcmc(data = x,
 summary(bm)
 ```
 
-The pure C++ version was on average around `r round(summary(bm)$median[1] / summary(bm)$median[2], digits = 1)` times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is an important consideration then C++ versions of *both* the likelihood and prior should be used.
+The pure C++ version was on average around `r round(summary(bm)$median[1] / summary(bm)$median[2], digits = 1)` times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is a goal then C++ versions of *both* the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.

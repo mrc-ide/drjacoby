@@ -47,7 +47,7 @@
       <a href="../articles/installation.html">Installation</a>
     </li>
     <li>
-      <a href="../articles/example.html">Example MCMC implementation</a>
+      <a href="../articles/example.html">Basic MCMC</a>
     </li>
   </ul>
 </li>
@@ -178,7 +178,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                       </span>
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt;    completed in 0.154794 seconds</span></code></pre></div>
+<span class="co">#&gt;    completed in 0.158793 seconds</span></code></pre></div>
 <p>The raw output produced by this function is essentially a large nested list, containing all log-likelihoods and parameter values. We can dig down to individual elements of this list using the <code>$</code> symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first <code>mu</code> values from from first <a href="TODO">rung</a> of the first burn-in phase of the first <a href="TODO">chain</a>!</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get first few mu values</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/head">head</a></span>(r_mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_burnin<span class="op">$</span>phase1<span class="op">$</span>rung1<span class="op">$</span>mu)
@@ -278,9 +278,8 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                       </span>
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt;    completed in 0.00337689 seconds</span></code></pre></div>
-<p>You should see that this MCMC runs considerably faster than the previous version that used R functions.</p>
-<p>We can quantify how much faster using the <code>microbenchmark</code> package. In the following we compare the MCMC evaluated using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.</p>
+<span class="co">#&gt;    completed in 0.00352652 seconds</span></code></pre></div>
+<p>You should see that this MCMC runs considerably faster than the previous version that used R functions. We can quantify how much faster using the <code>microbenchmark</code> package. In the following we compare the MCMC evaluated using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># load packages</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(microbenchmark)
 
@@ -308,15 +307,15 @@ bm &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocument
                                               <span class="dt">silent =</span> <span class="ot">TRUE</span>),
                      <span class="dt">times =</span> <span class="dv">10</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(bm)
-<span class="co">#&gt;            expr        min         lq       mean    median         uq</span>
-<span class="co">#&gt; 1     r_version 118.871490 120.952451 126.196662 127.51385 129.891126</span>
-<span class="co">#&gt; 2   cpp_version   4.296442   4.531352   5.414303   4.64685   5.018356</span>
-<span class="co">#&gt; 3 mixed_version  62.603888  65.193368  67.173152  66.70036  68.365452</span>
+<span class="co">#&gt;            expr        min         lq       mean     median         uq</span>
+<span class="co">#&gt; 1     r_version 118.742516 124.476173 126.729622 124.724821 131.300492</span>
+<span class="co">#&gt; 2   cpp_version   4.391632   4.477698   5.227528   4.546912   4.740119</span>
+<span class="co">#&gt; 3 mixed_version  60.908578  66.594220  67.126014  67.479746  69.069778</span>
 <span class="co">#&gt;         max neval</span>
-<span class="co">#&gt; 1 134.27266    10</span>
-<span class="co">#&gt; 2  11.63694    10</span>
-<span class="co">#&gt; 3  73.13832    10</span></code></pre></div>
-<p>The pure C++ version was on average around 27.4 times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is an important consideration then C++ versions of <em>both</em> the likelihood and prior should be used.</p>
+<span class="co">#&gt; 1 132.56045    10</span>
+<span class="co">#&gt; 2  11.22520    10</span>
+<span class="co">#&gt; 3  70.87052    10</span></code></pre></div>
+<p>The pure C++ version was on average around 27.4 times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is a goal then C++ versions of <em>both</em> the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.</p>
 </div>
   </div>
 
