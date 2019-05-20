@@ -2,104 +2,137 @@
 #include "main.h"
 #include "misc_v4.h"
 #include "probability.h"
+#include "System.h"
 #include "Particle.h"
 
 #include <chrono>
 
 using namespace std;
 
-typedef SEXP (*pattern_cpp_loglike0)(std::vector<double>, std::vector<double>);
-
-template<class TYPE>
-double template_test(TYPE func, std::vector<double> &theta, std::vector<double> &x) {
-  return Rcpp::as<double>(func(theta, x));
-}
+// specify exact pattern that loglike and logprior function must take in C++
+typedef SEXP (*pattern_cpp_loglike)(std::vector<double>, std::vector<double>);
+typedef SEXP (*pattern_cpp_logprior)(std::vector<double>);
 
 //------------------------------------------------
 // Dummy function to test Rcpp working as expected
 // [[Rcpp::export]]
 Rcpp::List main_cpp(Rcpp::List args) {
   
+  // get flags for R vs. C++ likelihood and prior functions
+  Rcpp::List args_params = args["args_params"];
+  bool loglike_use_cpp = rcpp_to_bool(args_params["loglike_use_cpp"]);
+  bool logprior_use_cpp = rcpp_to_bool(args_params["logprior_use_cpp"]);
+  
+  // extract function args
+  Rcpp::List args_functions = args["args_functions"];
+  
+  // run MCMC with either C++ or R likelihood and prior
+  Rcpp::List ret;
+  if (loglike_use_cpp) {
+    
+    // extract likelihood function
+    SEXP cpp_loglike = args_functions["loglike"];
+    pattern_cpp_loglike get_loglike = *Rcpp::XPtr<pattern_cpp_loglike>(cpp_loglike);
+    
+    if (logprior_use_cpp) {
+      
+      // extract prior function
+      SEXP cpp_logprior = args_functions["logprior"];
+      pattern_cpp_logprior get_logprior = *Rcpp::XPtr<pattern_cpp_logprior>(cpp_logprior);
+      
+      // run MCMC with selected functions
+      ret = run_mcmc(args, get_loglike, get_logprior);
+      
+    } else {
+      
+      // extract prior function
+      Rcpp::Function get_logprior = args_functions["logprior"];
+      
+      // run MCMC with selected functions
+      ret = run_mcmc(args, get_loglike, get_logprior);
+    }
+    
+  } else {
+    
+    // extract likelihood function
+    Rcpp::Function get_loglike = args_functions["loglike"];
+    
+    if (logprior_use_cpp) {
+      
+      // extract prior function
+      SEXP cpp_logprior = args_functions["logprior"];
+      pattern_cpp_logprior get_logprior = *Rcpp::XPtr<pattern_cpp_logprior>(cpp_logprior);
+      
+      // run MCMC with selected functions
+      ret = run_mcmc(args, get_loglike, get_logprior);
+      
+    } else {
+      
+      // extract prior function
+      Rcpp::Function get_logprior = args_functions["logprior"];
+      
+      // run MCMC with selected functions
+      ret = run_mcmc(args, get_loglike, get_logprior);
+    }
+    
+  }
+  
+  // return list
+  return ret;
+}
+
+//------------------------------------------------
+// run MCMC
+template<class TYPE1, class TYPE2>
+Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
+  
   // start timer
   chrono::high_resolution_clock::time_point t1 = chrono::high_resolution_clock::now();
   
-  // split argument lists
-  Rcpp::List args_params = args["args_params"];
+  // create sytem object and load args
+  System s;
+  s.load(args);
+  
+  // extract R utility functions that will be called from within MCMC
   Rcpp::List args_functions = args["args_functions"];
-  Rcpp::List args_progress = args["args_progress"];
-  Rcpp::List args_progress_burnin = args_progress["pb_burnin"];
-  
-  // extract inputs from Rcpp format to base C++ format
-  vector<double> x = rcpp_to_vector_double(args_params["x"]);
-  vector<double> theta_init = rcpp_to_vector_double(args_params["theta_init"]);
-  vector<double> theta_min = rcpp_to_vector_double(args_params["theta_min"]);
-  vector<double> theta_max = rcpp_to_vector_double(args_params["theta_max"]);
-  vector<int> trans_type = rcpp_to_vector_int(args_params["trans_type"]);
-  int d = theta_init.size();
-  vector<int> burnin = rcpp_to_vector_int(args_params["burnin"]);
-  int samples = rcpp_to_int(args_params["samples"]);
-  int rungs = rcpp_to_int(args_params["rungs"]);
-  int burnin_phases = rcpp_to_int(args_params["burnin_phases"]);
-  vector<bool> bw_update = rcpp_to_vector_bool(args_params["bw_update"]);
-  vector<bool> cov_update = rcpp_to_vector_bool(args_params["cov_update"]);
-  vector<bool> coupling_on = rcpp_to_vector_bool(args_params["coupling_on"]);
-  double GTI_pow = rcpp_to_double(args_params["GTI_pow"]);
-  bool pb_markdown = rcpp_to_bool(args_params["pb_markdown"]);
-  bool silent = rcpp_to_bool(args_params["silent"]);
-  int chain = rcpp_to_int(args_params["chain"]);
-  int input_type = rcpp_to_int(args_params["input_type"]);
-  
-  // extract R functions
-  Rcpp::Function r_get_loglike = args_functions["r_loglike"];
-  Rcpp::Function r_get_logprior = args_functions["r_logprior"];
   Rcpp::Function test_convergence = args_functions["test_convergence"];
   Rcpp::Function update_progress = args_functions["update_progress"];
   
-  // extract C++ functions
-  SEXP cpp_loglike = args_functions["cpp_loglike"];
-  pattern_cpp_loglike cpp_get_loglike = *Rcpp::XPtr<pattern_cpp_loglike>(cpp_loglike);
+  // extract progress bar objects
+  Rcpp::List args_progress = args["args_progress"];
+  Rcpp::List args_progress_burnin = args_progress["pb_burnin"];
   
-  SEXP cpp_logprior = args_functions["cpp_logprior"];
-  pattern_cpp_logprior cpp_get_logprior = *Rcpp::XPtr<pattern_cpp_logprior>(cpp_logprior);
-  
-  
-  
-  
-  pattern_cpp_loglike0 cpp_get_loglike0 = *Rcpp::XPtr<pattern_cpp_loglike0>(cpp_loglike);
-  
-  vector<double> theta_test(5, 1);
-  vector<double> x_test(5, 1.0);
-  //double temp1 = template_test(r_get_loglike, theta_test, x_test);
-  double temp1 = template_test(cpp_get_loglike0, theta_test, x_test);
-  print(temp1);
-  
-  Rcpp::stop("done testing");
-  
-  
-  
+  // local copies of some parameters for convenience
+  int d = s.d;
+  int rungs = s.rungs;
   
   // initialise vector of particles
   vector<Particle> particle_vec(rungs);
-  for (int r=0; r<rungs; ++r) {
-    double beta_raised = (rungs == 1) ? 1 : pow((r + 1)/double(rungs), GTI_pow);
-    particle_vec[r].init(x, theta_init, theta_min, theta_max, trans_type, beta_raised,
-                         input_type, r_get_loglike, r_get_logprior,
-                         cpp_get_loglike, cpp_get_logprior);
+  for (int r = 0; r < rungs; ++r) {
+    
+    // calculate thermodynamic power of this rung
+    double beta_raised = (rungs == 1) ? 1 : pow((r + 1)/double(rungs), s.GTI_pow);
+    
+    // initialise particle with system objects
+    particle_vec[r].init(s, beta_raised);
+    
+    // initialise particle initial likelihood and prior values
+    particle_vec[r].init_like(get_loglike, get_logprior);
   }
   
-  // store loglikelihood and theta values
-  vector<vector<vector<double>>> loglike_burnin(burnin_phases);
-  vector<vector<vector<vector<double>>>> theta_burnin(burnin_phases);
-  for (int i=0; i<burnin_phases; ++i) {
-    loglike_burnin[i] = vector<vector<double>>(rungs, vector<double>(burnin[i]));
-    theta_burnin[i] = vector<vector<vector<double>>>(rungs, vector<vector<double>>(burnin[i], vector<double>(d)));
+  // objects for storing loglikelihood and theta values over iterations
+  vector<vector<vector<double>>> loglike_burnin(s.burnin_phases);
+  vector<vector<vector<vector<double>>>> theta_burnin(s.burnin_phases);
+  for (int i = 0; i < s.burnin_phases; ++i) {
+    loglike_burnin[i] = vector<vector<double>>(rungs, vector<double>(s.burnin[i]));
+    theta_burnin[i] = vector<vector<vector<double>>>(rungs, vector<vector<double>>(s.burnin[i], vector<double>(d)));
   }
-  vector<vector<double>> loglike_sampling(rungs, vector<double>(samples));
-  vector<vector<vector<double>>> theta_sampling(rungs, vector<vector<double>>(samples, vector<double>(d)));
+  vector<vector<double>> loglike_sampling(rungs, vector<double>(s.samples));
+  vector<vector<vector<double>>> theta_sampling(rungs, vector<vector<double>>(s.samples, vector<double>(d)));
   
   // specify stored values at first iteration. Ensures that user-defined initial
   // values are the first stored values
-  for (int r=0; r<rungs; ++r) {
+  for (int r = 0; r < rungs; ++r) {
     loglike_burnin[0][r][0] = particle_vec[r].loglike;
     theta_burnin[0][r][0] = particle_vec[r].theta;
   }
@@ -108,20 +141,20 @@ Rcpp::List main_cpp(Rcpp::List args) {
   // ---------- burn-in MCMC ----------
   
   // print message to console
-  if (!silent) {
-    print("MCMC chain", chain);
+  if (!s.silent) {
+    print("MCMC chain", s.chain);
   }
   
   // loop through burn-in phases
-  for (int phase=0; phase<burnin_phases; ++phase) {
+  for (int phase = 0; phase < s.burnin_phases; ++phase) {
     
     // print message to console
-    if (!silent) {
+    if (!s.silent) {
       print("burn-in phase", phase+1);
     }
     
     // loop through burn-in iterations
-    for (int rep=0; rep<burnin[phase]; ++rep) {
+    for (int rep = 0; rep < s.burnin[phase]; ++rep) {
       
       // skip over if first iteration of first phase. Ensures that user-defined
       // initial values are the first stored values
@@ -130,10 +163,10 @@ Rcpp::List main_cpp(Rcpp::List args) {
       }
       
       // loop through rungs
-      for (int r=0; r<rungs; ++r) {
+      for (int r = 0; r < rungs; ++r) {
         
         // update particles
-        particle_vec[r].update(r_get_loglike, r_get_logprior);
+        particle_vec[r].update(get_loglike, get_logprior);
         
         // store results
         loglike_burnin[phase][r][rep] = particle_vec[r].loglike;
@@ -141,11 +174,11 @@ Rcpp::List main_cpp(Rcpp::List args) {
       }
       
       // update progress bars
-      if (!silent) {
-        int remainder = rep % int(ceil(double(burnin[phase])/100));
-        if ((remainder == 0 && !pb_markdown) || ((rep+1) == burnin[phase])) {
-          update_progress(args_progress_burnin, phase+1, rep+1, burnin[phase], false);
-          if ((rep+1) == burnin[phase]) {
+      if (!s.silent) {
+        int remainder = rep % int(ceil(double(s.burnin[phase])/100));
+        if ((remainder == 0 && !s.pb_markdown) || ((rep+1) == s.burnin[phase])) {
+          update_progress(args_progress_burnin, phase+1, rep+1, s.burnin[phase], false);
+          if ((rep+1) == s.burnin[phase]) {
             print("");
           }
         }
@@ -159,18 +192,18 @@ Rcpp::List main_cpp(Rcpp::List args) {
   // ---------- sampling MCMC ----------
   
   // print message to console
-  if (!silent) {
+  if (!s.silent) {
     print("sampling phase");
   }
   
   // loop through sampling iterations
-  for (int rep=0; rep<samples; ++rep) {
+  for (int rep = 0; rep < s.samples; ++rep) {
     
     // loop through rungs
-    for (int r=0; r<rungs; ++r) {
+    for (int r = 0; r < rungs; ++r) {
       
       // update particles
-      particle_vec[r].update(r_get_loglike, r_get_logprior);
+      particle_vec[r].update(get_loglike, get_logprior);
       
       // store results
       loglike_sampling[r][rep] = particle_vec[r].loglike;
@@ -178,11 +211,11 @@ Rcpp::List main_cpp(Rcpp::List args) {
     }
     
     // update progress bars
-    if (!silent) {
-      int remainder = rep % int(ceil(double(samples)/100));
-      if ((remainder==0 && !pb_markdown) || ((rep+1) == samples)) {
-        update_progress(args_progress, "pb_samples", rep+1, samples, false);
-        if ((rep+1) == samples) {
+    if (!s.silent) {
+      int remainder = rep % int(ceil(double(s.samples)/100));
+      if ((remainder==0 && !s.pb_markdown) || ((rep+1) == s.samples)) {
+        update_progress(args_progress, "pb_samples", rep+1, s.samples, false);
+        if ((rep+1) == s.samples) {
           print("");
         }
       }
@@ -196,11 +229,9 @@ Rcpp::List main_cpp(Rcpp::List args) {
   // end timer
   chrono::high_resolution_clock::time_point t2 = chrono::high_resolution_clock::now();
   chrono::duration<double> time_span = chrono::duration_cast< chrono::duration<double> >(t2-t1);
-  if (!silent) {
+  if (!s.silent) {
     print("   completed in", time_span.count(), "seconds\n");
   }
-  
-  //Rcpp::List ret = Rcpp::List::create(Rcpp::Named("loglike") = -9);
   
   // return as Rcpp list
   Rcpp::List ret = Rcpp::List::create(Rcpp::Named("loglike_burnin") = loglike_burnin,

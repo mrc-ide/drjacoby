@@ -1,44 +1,27 @@
 
 #include "Particle.h"
-#include "misc_v4.h"
-#include "probability.h"
 
 using namespace std;
 
 //------------------------------------------------
 // initialise/reset particle
-void Particle::init(vector<double> &x,
-                    vector<double> &theta_init,
-                    vector<double> &theta_min,
-                    vector<double> &theta_max,
-                    vector<int> &trans_type,
-                    double beta_raised,
-                    int input_type,
-                    Rcpp::Function r_get_loglike,
-                    Rcpp::Function r_get_logprior,
-                    pattern_cpp_loglike cpp_get_loglike,
-                    pattern_cpp_logprior cpp_get_logprior) {
+void Particle::init(System &s, double beta_raised) {
   
-  // pointer to data
-  x_ptr = &x;
+  // pointer to system object
+  this->s_ptr = &s;
+  
+  // local copies of some parameters for convenience
+  d = s_ptr->d;
+  
+  // beta_raised stores values of beta (the thermodynamic power), raised to the
+  // power GTI_pow
+  this->beta_raised = beta_raised;
   
   // theta is the parameter vector in natural space
-  theta = theta_init;
-  this->theta_min = theta_min;
-  this->theta_max = theta_max;
-  d = theta.size();
+  theta = s_ptr->theta_init;
   theta_prop = vector<double>(d);
   
-  // TODO - delete once chosen best method
-  this->input_type = input_type;
-  this->cpp_get_loglike = cpp_get_loglike;
-  this->cpp_get_logprior = cpp_get_logprior;
-  
-  // the type of transformation applied to each element of theta. See main.R for
-  // a key
-  this->trans_type = trans_type;
-  
-  // adjustment factor to account for reparameterisation
+  // adjustment factor to account for transformation
   adj = 0;
   
   // phi is a vector of transformed parameters
@@ -46,65 +29,17 @@ void Particle::init(vector<double> &x,
   theta_to_phi();
   phi_prop = vector<double>(d);
   
-  // beta_raised stores values of beta (the thermodynamic power), raised to the
-  // power GTI_pow
-  this->beta_raised = beta_raised;
-  
   // proposal standard deviations
-  propSD = 1;
+  propSD = 0.1;
   
   // likelihoods and priors
-  loglike = rcpp_to_double(r_get_loglike(theta, *x_ptr));
+  loglike = 0;
   loglike_prop = 0;
-  logprior = rcpp_to_double(r_get_logprior(theta));;
+  logprior = 0;
   logprior_prop = 0;
   
   // acceptance rates
   accept = 0;
-  
-}
-
-//------------------------------------------------
-// update particle
-void Particle::update(Rcpp::Function get_loglike, Rcpp::Function get_logprior) {
-  
-  // propose new phi
-  propose_phi();
-  
-  // transform phi_prop to theta_prop
-  phi_prop_to_theta_prop();
-  
-  // calculate adjustment factor forwards and backwards
-  get_adjustment();
-  
-  // calculate loglikelihood of proposed theta
-  //loglike_prop = get_loglike0(fun);
-  if (input_type == 1) {
-    loglike_prop = rcpp_to_double(get_loglike(theta_prop, *x_ptr));
-    logprior_prop = rcpp_to_double(get_logprior(theta_prop));
-  } else {
-    loglike_prop = cpp_get_loglike(theta_prop, *x_ptr);
-    logprior_prop = cpp_get_logprior(theta_prop);
-  }
-  
-  // calculate logprior of proposed theta
-  //logprior_prop = rcpp_to_double(get_logprior(theta_prop));
-  
-  // calculate Metropolis-Hastings ratio
-  double MH = (loglike_prop + logprior_prop) - (loglike + logprior) + adj;
-  
-  // accept or reject move
-  if (log(runif_0_1()) < MH) {
-    
-    // update theta and phi
-    theta = theta_prop;
-    phi = phi_prop;
-    
-    // update likelihoods
-    loglike = loglike_prop;
-    logprior = logprior_prop;
-    
-  }
   
 }
 
@@ -115,7 +50,7 @@ void Particle::propose_phi() {
   
   // TODO - this function currently ignores correlations
   
-  for (int i=0; i<d; ++i) {
+  for (int i = 0; i < d; ++i) {
     phi_prop[i] = rnorm1(phi[i], propSD);
   }
   
@@ -126,19 +61,19 @@ void Particle::propose_phi() {
 // types
 void Particle::phi_prop_to_theta_prop() {
   
-  for (int i=0; i<d; ++i) {
-    switch(trans_type[i]) {
+  for (int i = 0; i < d; ++i) {
+    switch(s_ptr->trans_type[i]) {
     case 0:
       theta_prop[i] = phi_prop[i];
       break;
     case 1:
-      theta_prop[i] = theta_max[i] - exp(phi_prop[i]);
+      theta_prop[i] = s_ptr->theta_max[i] - exp(phi_prop[i]);
       break;
     case 2:
-      theta_prop[i] = exp(phi_prop[i]) + theta_min[i];
+      theta_prop[i] = exp(phi_prop[i]) + s_ptr->theta_min[i];
       break;
     case 3:
-      theta_prop[i] = (theta_max[i]*exp(phi_prop[i]) + theta_min[i]) / (1 + exp(phi_prop[i]));
+      theta_prop[i] = (s_ptr->theta_max[i]*exp(phi_prop[i]) + s_ptr->theta_min[i]) / (1 + exp(phi_prop[i]));
       break;
     default:
       Rcpp::stop("trans_type invalid");
@@ -151,19 +86,19 @@ void Particle::phi_prop_to_theta_prop() {
 // transform theta to phi. See main.R for a key to transformation types
 void Particle::theta_to_phi() {
   
-  for (int i=0; i<d; ++i) {
-    switch(trans_type[i]) {
+  for (int i = 0; i < d; ++i) {
+    switch(s_ptr->trans_type[i]) {
     case 0:
       phi[i] = theta[i];
       break;
     case 1:
-      phi[i] = log(theta_max[i] - theta[i]);
+      phi[i] = log(s_ptr->theta_max[i] - theta[i]);
       break;
     case 2:
-      phi[i] = log(theta[i] - theta_min[i]);
+      phi[i] = log(theta[i] - s_ptr->theta_min[i]);
       break;
     case 3:
-      phi[i] = log(theta[i] - theta_min[i]) - log(theta_max[i] - theta[i]);
+      phi[i] = log(theta[i] - s_ptr->theta_min[i]) - log(s_ptr->theta_max[i] - theta[i]);
       break;
     default:
       Rcpp::stop("trans_type invalid");
@@ -177,19 +112,19 @@ void Particle::theta_to_phi() {
 void Particle::get_adjustment() {
   
   double ret = 0;
-  for (int i=0; i<d; ++i) {
-    switch(trans_type[i]) {
+  for (int i = 0; i < d; ++i) {
+    switch(s_ptr->trans_type[i]) {
     case 0:
       // (no adjustment needed)
       break;
     case 1:
-      ret += log(theta_prop[i] - theta_max[i]) - log(theta[i] - theta_max[i]);
+      ret += log(theta_prop[i] - s_ptr->theta_max[i]) - log(theta[i] - s_ptr->theta_max[i]);
       break;
     case 2:
-      ret += log(theta_prop[i] - theta_min[i]) - log(theta[i] - theta_min[i]);
+      ret += log(theta_prop[i] - s_ptr->theta_min[i]) - log(theta[i] - s_ptr->theta_min[i]);
       break;
     case 3:
-      ret += log(theta_max[i] - theta_prop[i]) + log(theta_prop[i] - theta_min[i]) - log(theta_max[i] - theta[i]) - log(theta[i] - theta_min[i]);
+      ret += log(s_ptr->theta_max[i] - theta_prop[i]) + log(theta_prop[i] - s_ptr->theta_min[i]) - log(s_ptr->theta_max[i] - theta[i]) - log(theta[i] - s_ptr->theta_min[i]);
       break;
     default:
       Rcpp::stop("trans_type invalid");

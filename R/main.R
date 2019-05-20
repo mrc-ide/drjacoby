@@ -1,11 +1,5 @@
 
 #------------------------------------------------
-# link to Rcpp
-#' @useDynLib drjacoby, .registration = TRUE
-#' @importFrom Rcpp sourceCpp
-NULL
-
-#------------------------------------------------
 #' @title Check that drjacoby package has loaded successfully
 #'
 #' @description Simple function to check that drjacoby package has loaded 
@@ -25,12 +19,8 @@ check_drjacoby_loaded <- function() {
 #' @param data TODO.
 #' @param df_params a dataframe of parameters. Must contain the following
 #'   elements: TODO
-#' @param input_type switch between different methods of injecting likelihood
-#'   and prior.
-#' @param r_loglike TODO.
-#' @param r_logprior TODO.
-#' @param cpp_loglike TODO.
-#' @param cpp_logprior TODO.
+#' @param loglike TODO.
+#' @param logprior TODO.
 #' @param burnin the number of burn-in iterations (see also \code{burnin_phases}).
 #' @param samples the number of sampling iterations.
 #' @param rungs the number of temperature rungs used in Metropolis coupling (see
@@ -69,18 +59,15 @@ check_drjacoby_loaded <- function() {
 
 run_mcmc <- function(data,
                      df_params,
-                     input_type = 1,
-                     r_loglike,
-                     r_logprior,
-                     cpp_loglike,
-                     cpp_logprior,
+                     loglike,
+                     logprior,
                      burnin = 1e3,
                      samples = 1e4,
-                     rungs = 11,
+                     rungs = 1,
                      chains = 1,
-                     burnin_phases = 1,
+                     burnin_phases = 3,
                      bw_update = TRUE,
-                     cov_update = FALSE,
+                     cov_update = c(FALSE, TRUE, TRUE),
                      coupling_on = TRUE,
                      GTI_pow = 3,
                      cluster = NULL,
@@ -89,6 +76,10 @@ run_mcmc <- function(data,
   
   
   # ---------- check inputs ----------
+  
+  # check data
+  assert_vector(data)
+  assert_numeric(data)
   
   # check df_params
   assert_dataframe(df_params)
@@ -101,10 +92,9 @@ run_mcmc <- function(data,
   assert_gr(df_params$init, df_params$min)
   assert_le(df_params$init, df_params$max)
   
-  # check likelihoods and data
-  # TODO - loglike
-  # TODO - logprior
-  # TODO - data?
+  # check loglikelihood and logprior functions
+  assert_custom_class(loglike, c("function", "XPtr"))
+  # TODO - further checks that these functions are defined correctly?
   
   # check MCMC parameters
   assert_single_pos_int(burnin_phases, zero_allowed = FALSE)
@@ -134,6 +124,7 @@ run_mcmc <- function(data,
   assert_length(burnin, burnin_phases)
   assert_same_length_multiple(burnin, bw_update, cov_update, coupling_on)
   
+  
   # ---------- pre-processing ----------
   
   # calculate transformation type for each parameter
@@ -143,11 +134,17 @@ run_mcmc <- function(data,
   # 3 = [a,b]      -> phi = log((theta - a)/(b - theta))
   df_params$trans_type <- 2*is.finite(df_params$min) + is.finite(df_params$max)
   
+  # flag whether likelihood/prior are C++ functions
+  loglike_use_cpp <- inherits(loglike, "XPtr")
+  logprior_use_cpp <- inherits(logprior, "XPtr")
+  
   
   # ---------- define argument lists ----------
   
   # parameters to pass to C++
   args_params <- list(x = data,
+                      loglike_use_cpp = loglike_use_cpp,
+                      logprior_use_cpp = logprior_use_cpp,
                       theta_init = df_params$init,
                       theta_min = df_params$min,
                       theta_max = df_params$max,
@@ -161,14 +158,11 @@ run_mcmc <- function(data,
                       coupling_on = coupling_on,
                       GTI_pow = GTI_pow,
                       pb_markdown = pb_markdown,
-                      silent = silent,
-                      input_type = input_type)
+                      silent = silent)
   
   # functions to pass to C++
-  args_functions <- list(r_loglike = r_loglike,
-                         r_logprior = r_logprior,
-                         cpp_loglike = cpp_loglike,
-                         cpp_logprior = cpp_logprior,
+  args_functions <- list(loglike = loglike,
+                         logprior = logprior,
                          test_convergence = test_convergence,
                          update_progress = update_progress)
   
@@ -192,6 +186,7 @@ run_mcmc <- function(data,
     parallel_args[[i]]$args_params$chain <- i
   }
   
+  
   # ---------- run MCMC ----------
   
   # split into parallel and serial implementations
@@ -206,6 +201,7 @@ run_mcmc <- function(data,
     # run in serial
     output_raw <- lapply(parallel_args, main_cpp)
   }
+  
   
   # ---------- process output ----------
   

@@ -1,9 +1,11 @@
 Package: drjacoby
 Type: Package
-Title: Flexible Markov chain monte carlo via reparameterization
+Title: Flexible Markov Chain Monte Carlo via Reparameterization
 Version: 0.1.0
-Author: Bob Verity, Pete Winskill
-Maintainer: Bob Verity <r.verity@imperial.ac.uk>
+Authors@R: c(
+    person("Bob", "Verity", email = "r.verity@imperial.ac.uk", role = c("aut", "cre")),
+    person("Pete", "Winskill", email = "p.winskill@imperial.ac.uk", role = c("aut"))
+    )
 Description: Flexible Markov chain monte carlo via
      reparameterization using the Jacobean matrix.
 License: MIT + file LICENSE
