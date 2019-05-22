@@ -13,7 +13,30 @@ typedef SEXP (*pattern_cpp_loglike)(std::vector<double>, std::vector<double>);
 typedef SEXP (*pattern_cpp_logprior)(std::vector<double>);
 
 //------------------------------------------------
-// Dummy function to test Rcpp working as expected
+// [[Rcpp::export]]
+Rcpp::List test_cpp(Rcpp::List args) {
+  
+  // extract values
+  int chain = rcpp_to_int(args["chain"]);
+  
+  // extract function args
+  Rcpp::List args_functions = args["args_functions"];
+  
+  // extract likelihood function
+  SEXP cpp_loglike = args_functions["loglike"];
+  pattern_cpp_loglike get_loglike = *Rcpp::XPtr<pattern_cpp_loglike>(cpp_loglike);
+  
+  
+  vector<double> x(3, chain);
+  double z = Rcpp::as<double>(get_loglike(x, x));
+  
+  
+  Rcpp::List ret = Rcpp::List::create(Rcpp::Named("z") = z);
+  return ret;
+}
+
+//------------------------------------------------
+// main MCMC function
 // [[Rcpp::export]]
 Rcpp::List main_cpp(Rcpp::List args) {
   

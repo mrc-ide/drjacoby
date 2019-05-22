@@ -5,6 +5,17 @@
 
 using namespace Rcpp;
 
+// test_cpp
+Rcpp::List test_cpp(Rcpp::List args);
+RcppExport SEXP _drjacoby_test_cpp(SEXP argsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type args(argsSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_cpp(args));
+    return rcpp_result_gen;
+END_RCPP
+}
 // main_cpp
 Rcpp::List main_cpp(Rcpp::List args);
 RcppExport SEXP _drjacoby_main_cpp(SEXP argsSEXP) {
@@ -18,6 +29,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_drjacoby_test_cpp", (DL_FUNC) &_drjacoby_test_cpp, 1},
     {"_drjacoby_main_cpp", (DL_FUNC) &_drjacoby_main_cpp, 1},
     {NULL, NULL, 0}
 };

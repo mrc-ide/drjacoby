@@ -9,6 +9,7 @@
 #' @param phase which phase to plot. Must be either "burnin" or "sampling".
 #'
 #' @import ggplot2
+#' @importFrom grDevices grey
 #' @export
 
 plot_mc_acceptance <- function(x, chain = 1, phase = "sampling") {

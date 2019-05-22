@@ -35,7 +35,7 @@ For this example we will start by writing the likelihood and prior functions in 
 
 ```{r}
 # define cpp loglike function
-loglike_string <- "SEXP loglike(std::vector<double> params, std::vector<double> x) {
+loglike <- "SEXP loglike(std::vector<double> params, std::vector<double> x) {
   
   // extract parameters
   double alpha = params[0];
@@ -53,16 +53,13 @@ loglike_string <- "SEXP loglike(std::vector<double> params, std::vector<double> 
   // return as SEXP
   return Rcpp::wrap(ret);
 }"
-
-# convert to a function pointer
-loglike <- RcppXPtrUtils::cppXPtr(loglike_string)
 ```
 
 For our prior we assume that `alpha` is uniform [-10,10], `beta` is uniform [0,10], and `epsilon` is normally distributed with mean 0 and standard deviation 1.
 
 ```{r}
 # define cpp logprior function
-logprior_string <- "SEXP logprior(std::vector<double> params){
+logprior <- "SEXP logprior(std::vector<double> params){
   
   // extract parameters
   double epsilon = params[2];
@@ -73,9 +70,6 @@ logprior_string <- "SEXP logprior(std::vector<double> params){
   // return as SEXP
   return Rcpp::wrap(ret);
 }"
-
-# convert to a function pointer
-logprior <- RcppXPtrUtils::cppXPtr(logprior_string)
 ```
 
 As always, we need to define a dataframe of parameters so that *drjacoby* knows what parameter ranges to expect:
@@ -228,6 +222,6 @@ plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
                                 data = mcmc_out$chain1$theta_sampling$rung1)
 ```
 
-We now find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder, and can therefore be condifent that the prior is "talking to" the posterior. When this is the case it is *unlikely* (but not impossible) that your MCMC is still missing large parts of the posterior distribution. Incidentally, the values of `rungs = 20` and `GTI_pow = 3.0` used here are the default values.
+We now find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder, and can therefore be condifent that the prior is "talking to" the posterior. When this is the case it is *unlikely* (but not impossible) that your MCMC is still missing large parts of the posterior distribution.
 
 In summary, the correct number of rungs is enough that we have decent acceptance rates all the way through our temperature ladder.

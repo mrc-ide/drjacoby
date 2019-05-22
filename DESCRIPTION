@@ -18,14 +18,14 @@ Imports:
     Rcpp,
     coda,
     parallel,
-    ggplot2
+    ggplot2,
+    RcppXPtrUtils
 SystemRequirements: C++11
 Suggests: 
     testthat,
     covr,
     knitr,
     rmarkdown,
-    RcppXPtrUtils,
     microbenchmark,
     gridExtra
 BugReports: https://github.com/mrc-ide/drjacoby/issues

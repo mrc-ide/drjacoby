@@ -83,7 +83,8 @@ run_mcmc <- function(data,
   assert_le(df_params$init, df_params$max)
   
   # check loglikelihood and logprior functions
-  assert_custom_class(loglike, c("function", "XPtr"))
+  assert_custom_class(loglike, c("function", "character"))
+  assert_custom_class(logprior, c("function", "character"))
   # TODO - further checks that these functions are defined correctly?
   
   # check MCMC parameters
@@ -112,8 +113,8 @@ run_mcmc <- function(data,
   df_params$trans_type <- 2*is.finite(df_params$min) + is.finite(df_params$max)
   
   # flag whether likelihood/prior are C++ functions
-  loglike_use_cpp <- inherits(loglike, "XPtr")
-  logprior_use_cpp <- inherits(logprior, "XPtr")
+  loglike_use_cpp <- inherits(loglike, "character")
+  logprior_use_cpp <- inherits(logprior, "character")
   
   
   # ---------- define argument lists ----------
@@ -165,14 +166,13 @@ run_mcmc <- function(data,
     
     # run in parallel
     parallel::clusterEvalQ(cluster, library(drjacoby))
-    output_raw <- parallel::clusterApplyLB(cl = cluster, parallel_args, main_cpp)
+    output_raw <- parallel::clusterApplyLB(cl = cluster, parallel_args, deploy_chain)
     
   } else {
     
     # run in serial
-    output_raw <- lapply(parallel_args, main_cpp)
+    output_raw <- lapply(parallel_args, deploy_chain)
   }
-  
   
   # ---------- process output ----------
   
@@ -229,4 +229,23 @@ run_mcmc <- function(data,
   
   # return
   return(output_processed)
+}
+
+#------------------------------------------------
+# deploy main_mcmc for this chain
+#' @noRd
+deploy_chain <- function(args) {
+  
+  # convert C++ functions to pointers
+  if (args$args_params$loglike_use_cpp) {
+    args$args_functions$loglike <- RcppXPtrUtils::cppXPtr(args$args_functions$loglike)
+  }
+  if (args$args_params$logprior_use_cpp) {
+    args$args_functions$logprior <- RcppXPtrUtils::cppXPtr(args$args_functions$logprior)
+  }
+  
+  # run C++ function
+  ret <- main_cpp(args)
+  
+  return(ret)
 }

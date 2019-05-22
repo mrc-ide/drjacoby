@@ -52,6 +52,9 @@
     <li>
       <a href="../articles/metropolis_coupling.html">Metropolis Coupling</a>
     </li>
+    <li>
+      <a href="../articles/parallel.html">Running Parallel Chains</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -96,7 +99,7 @@
 <a href="#setup" class="anchor"></a>Setup</h2>
 <p>For this example we will start by writing the likelihood and prior functions in C++. If this sounds unfamiliar to you, check out the <a href="https://mrc-ide.github.io/drjacoby/articles/example.html">earlier vignette</a> for a simple example. Our basic model will assume that our data are normally distributed with mean <code>alpha^2*beta</code>. The <code>alpha^2</code> term here means that both positive and negative values of <code>alpha</code> map to the same value, thereby creating a multimodal distribution, and the <code>*beta</code> term ensures that <code>alpha</code> and <code>beta</code> are highly correlated. We will also use a third parameter <code>epsilon</code> to represent some random noise that we want to integrate over. While this example is a bit contrived, it does have the advantage of being horrendously awkward!</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define cpp loglike function</span>
-loglike_string &lt;-<span class="st"> "SEXP loglike(std::vector&lt;double&gt; params, std::vector&lt;double&gt; x) {</span>
+loglike &lt;-<span class="st"> "SEXP loglike(std::vector&lt;double&gt; params, std::vector&lt;double&gt; x) {</span>
 <span class="st">  </span>
 <span class="st">  // extract parameters</span>
 <span class="st">  double alpha = params[0];</span>
@@ -113,13 +116,10 @@ loglike_string &lt;-<span class="st"> "SEXP loglike(std::vector&lt;double&gt; pa
 <span class="st">  </span>
 <span class="st">  // return as SEXP</span>
 <span class="st">  return Rcpp::wrap(ret);</span>
-<span class="st">}"</span>
-
-<span class="co"># convert to a function pointer</span>
-loglike &lt;-<span class="st"> </span>RcppXPtrUtils<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/RcppXPtrUtils/topics/cppXPtr">cppXPtr</a></span>(loglike_string)</code></pre></div>
+<span class="st">}"</span></code></pre></div>
 <p>For our prior we assume that <code>alpha</code> is uniform [-10,10], <code>beta</code> is uniform [0,10], and <code>epsilon</code> is normally distributed with mean 0 and standard deviation 1.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define cpp logprior function</span>
-logprior_string &lt;-<span class="st"> "SEXP logprior(std::vector&lt;double&gt; params){</span>
+logprior &lt;-<span class="st"> "SEXP logprior(std::vector&lt;double&gt; params){</span>
 <span class="st">  </span>
 <span class="st">  // extract parameters</span>
 <span class="st">  double epsilon = params[2];</span>
@@ -129,10 +129,7 @@ logprior_string &lt;-<span class="st"> "SEXP logprior(std::vector&lt;double&gt; 
 <span class="st">  </span>
 <span class="st">  // return as SEXP</span>
 <span class="st">  return Rcpp::wrap(ret);</span>
-<span class="st">}"</span>
-
-<span class="co"># convert to a function pointer</span>
-logprior &lt;-<span class="st"> </span>RcppXPtrUtils<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/RcppXPtrUtils/topics/cppXPtr">cppXPtr</a></span>(logprior_string)</code></pre></div>
+<span class="st">}"</span></code></pre></div>
 <p>As always, we need to define a dataframe of parameters so that <em>drjacoby</em> knows what parameter ranges to expect:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define parameters dataframe</span>
 df_params &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.frame">data.frame</a></span>(<span class="dt">name =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"alpha"</span>, <span class="st">"beta"</span>, <span class="st">"epsilon"</span>),
@@ -197,7 +194,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.4%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.485046 seconds</span>
+<span class="co">#&gt; completed in 0.475005 seconds</span>
 
 <span class="co"># create plot of alpha against beta</span>
 plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
@@ -270,7 +267,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
                                 <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1)</code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-11-2.png" width="480"></p>
-<p>We now find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder, and can therefore be condifent that the prior is “talking to” the posterior. When this is the case it is <em>unlikely</em> (but not impossible) that your MCMC is still missing large parts of the posterior distribution. Incidentally, the values of <code>rungs = 20</code> and <code>GTI_pow = 3.0</code> used here are the default values.</p>
+<p>We now find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder, and can therefore be condifent that the prior is “talking to” the posterior. When this is the case it is <em>unlikely</em> (but not impossible) that your MCMC is still missing large parts of the posterior distribution.</p>
 <p>In summary, the correct number of rungs is enough that we have decent acceptance rates all the way through our temperature ladder.</p>
 </div>
   </div>

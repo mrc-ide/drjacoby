@@ -15,6 +15,8 @@ navbar:
           href: articles/example.html
         - text: "Metropolis Coupling"
           href: articles/metropolis_coupling.html
+        - text: "Running Parallel Chains"
+          href: articles/parallel.html
     - text: "Functions"
       href: reference/index.html
   right:
