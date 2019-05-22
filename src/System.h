@@ -22,16 +22,18 @@ public:
   std::vector<int> trans_type;
   int d;
   
-  // MCMC parameters
-  std::vector<int> burnin;
-  int samples;
-  int rungs;
+  // burnin parameters
   int burnin_phases;
-  double bw_init;
+  std::vector<int> burnin;
+  std::vector<int> prop_method;
   std::vector<bool> bw_update;
   std::vector<bool> bw_reset;
-  std::vector<bool> cov_update;
-  std::vector<bool> coupling_on;
+  std::vector<bool> cov_recalc;
+  
+  // other MCMC parameters
+  int samples;
+  int rungs;
+  bool coupling_on;
   double GTI_pow;
   int chain;
   

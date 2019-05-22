@@ -1,5 +1,6 @@
 
-#include "probability.h"
+#include "probability_v3.h"
+#include "misc_v7.h"
 
 using namespace std;
 
@@ -62,10 +63,10 @@ int rbinom1(int N, double p) {
 //------------------------------------------------
 // draw from multinomial(N,p_vec) distribution, where p_vec sums to 1
 vector<int> rmultinom1(int N, const vector<double> &p_vec) {
-  int k = p_vec.size();
+  int k = int(p_vec.size());
   double p_sum = 1.0;
   vector<int> ret(k);
-  for (int i=0; i<(k-1); ++i) {
+  for (int i = 0; i < (k-1); ++i) {
     ret[i] = rbinom1(N, p_vec[i]/p_sum);
     N -= ret[i];
     p_sum -= p_vec[i];
@@ -127,6 +128,24 @@ double rnorm1_interval(double mean, double sd, double a, double b) {
 }
 
 //------------------------------------------------
+// draw from multivariate normal distribution with mean mu and
+// variance/covariance matrix sigma*scale^2. The inputs consist of mu,
+// sigma_chol, and scale, where sigma_chol is the Cholesky decomposition of
+// sigma. Output values are stored in x.
+void rmnorm1(vector<double> &x, vector<double> &mu, vector<vector<double>> &sigma_chol, double scale) {
+  
+  int d = int(mu.size());
+  x = mu;
+  double z;
+  for (int j = 0; j < d; j++) {
+    z = rnorm1();
+    for (int i = j; i < d; i++) {
+      x[i] += sigma_chol[i][j]*scale*z;
+    }
+  }
+}
+
+//------------------------------------------------
 // resample a vector without replacement
 // reshuffle
 // DEFINED IN HEADER
@@ -177,10 +196,10 @@ double rgamma1(double shape, double rate) {
   
   // check for zero or infinite values (catches bug present in Visual Studio 2010)
   if (x == 0) {
-    x = UNDERFLO;
+    x = UNDERFLO_DOUBLE;
   }
   if ((1.0/x) == 0) {
-    x = 1.0/UNDERFLO;
+    x = 1.0/UNDERFLO_DOUBLE;
   }
   
   return x;
@@ -210,7 +229,7 @@ double dpois1(int n, double lambda, bool return_log) {
 }
 #else
 double dpois1(int n, double lambda, bool return_log) {
-  double ret = n*log(lambda) - lambda - lgamma(n+1)
+  double ret = n*log(lambda) - lambda - lgamma(n+1);
   if (!return_log) {
     ret = exp(ret);
   }

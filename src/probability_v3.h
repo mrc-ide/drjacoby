@@ -1,12 +1,6 @@
 
 #pragma once
 
-#include "misc_v4.h"
-
-#ifdef RCPP_ACTIVE
-#include <Rcpp.h>
-#endif
-
 #include <vector>
 #include <random>
 #include <math.h>
@@ -33,11 +27,18 @@ std::vector<int> rmultinom1(int N, const std::vector<double> &p_vec);
 
 //------------------------------------------------
 // draw from univariate normal distribution
-double rnorm1(double mean, double sd);
+double rnorm1(double mean = 0.0, double sd = 1.0);
 
 //------------------------------------------------
 // draw from univariate normal distribution and reflect to interval (a,b)
 double rnorm1_interval(double mean, double sd, double a, double b);
+
+//------------------------------------------------
+// draw from multivariate normal distribution with mean mu and
+// variance/covariance matrix sigma*scale^2. The inputs consist of mu,
+// sigma_chol, and scale, where sigma_chol is the Cholesky decomposition of
+// sigma. Output values are stored in x.
+void rmnorm1(std::vector<double> &x, std::vector<double> &mu, std::vector<std::vector<double>> &sigma_chol, double scale = 1.0);
 
 //------------------------------------------------
 // resample a vector without replacement
@@ -45,7 +46,7 @@ template<class TYPE>
 void reshuffle(std::vector<TYPE> &x) {
   int rnd1;
   TYPE tmp1;
-  int n = x.size();
+  int n = int(x.size());
   for (int i=0; i<n; i++) {
     
     // draw random index from i to end of vector. Note that although runif

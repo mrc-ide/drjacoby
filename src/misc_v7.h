@@ -1,21 +1,24 @@
 
 #pragma once
 
+// comment out this definition to switch from Rcpp to C++
 #define RCPP_ACTIVE
 
 #ifdef RCPP_ACTIVE
 #include <Rcpp.h>
 #endif
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <limits>
 #include <chrono>
+#include <cfloat>
 
 //------------------------------------------------
 // define very large/small numbers for catching overflow/underflow problems
 const int OVERFLO_INT = INT_MAX/100;
-const double  OVERFLO_DOUBLE = DBL_MAX/100;
+const double OVERFLO_DOUBLE = DBL_MAX/100;
 const double UNDERFLO_DOUBLE = DBL_MIN/100;
 
 //------------------------------------------------
@@ -123,7 +126,9 @@ std::vector<TYPE> unique(const std::vector<TYPE> &v) {
 
 //------------------------------------------------
 // update timer and optionally print time difference
-void chrono_timer(std::chrono::high_resolution_clock::time_point &t0, bool print_diff = true);
+void chrono_timer(std::chrono::high_resolution_clock::time_point &t0,
+                  std::string message_before = "completed in ",
+                  bool print_diff = true);
 
 //------------------------------------------------
 // helper function for printing a single value or series of values
@@ -295,3 +300,21 @@ std::vector<std::vector<std::vector<int>>> rcpp_to_array_int(Rcpp::List x);
 // converts input from Rcpp::List format to vector<vector<vector<double>>> format.
 std::vector<std::vector<std::vector<double>>> rcpp_to_array_double(Rcpp::List x);
 #endif
+
+//------------------------------------------------
+// read values from comma-separated text file to vector<int>
+std::vector<int> file_to_vector_int(std::string file_path);
+
+//------------------------------------------------
+// read values from comma-separated text file to vector<double>
+std::vector<double> file_to_vector_double(std::string file_path);
+
+//------------------------------------------------
+// read values from text file to vector<vector<double>>. Text file should be
+// delimited by first line break, then comma. Lines do not all need to be same
+// length, i.e. jagged matrices are allowed.
+std::vector<std::vector<double>> file_to_matrix_double(std::string file_path);
+
+//------------------------------------------------
+// calculate Cholesky decomposition of positive definite matrix sigma
+void cholesky(std::vector<std::vector<double>> &chol, std::vector<std::vector<double>> &sigma);

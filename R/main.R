@@ -16,40 +16,52 @@ check_drjacoby_loaded <- function() {
 #'
 #' @description Run MCMC.
 #'
+#' @details TODO - explain df_burnin defaults.
+#'
 #' @param data TODO.
 #' @param df_params a dataframe of parameters. Must contain the following
-#'   elements: TODO
+#'   elements:
+#'   \itemize{
+#'     \item \code{name} - the parameter name.
+#'     \item \code{min} - the minimum value of the parameter. \code{-Inf} is
+#'     allowed.
+#'     \item \code{max} - the maximum value of the parameter. \code{Inf} is
+#'     allowed.
+#'     \item \code{init} - the initial value of the parameter.
+#'   }
 #' @param loglike TODO.
 #' @param logprior TODO.
-#' @param burnin the number of burn-in iterations (see also \code{burnin_phases}).
+#' @param df_burnin a dataframe specifying the parameters of each phase of
+#'   burn-in. Must contain the following elements:
+#'   \itemize{
+#'     \item \code{iterations} - the number of MCMC iterations this phase.
+#'     \item \code{prop_method} - integer flag specifying which method to use
+#'     when proposing new values this phase. 1 = independent proposal per
+#'     parameter, 2 = multivariate proposal over all parameters.
+#'     \item \code{bw_update} - boolean, whether to update the proposal
+#'     bandwidth dynamically via Robbins-Monro this phase. If \code{TRUE} then
+#'     for the independent proposal method this means updating a different
+#'     bandwidth per parameter, for the multivariate proposal method this means
+#'     updating a single bandwidth for all parameters, scaled by a covariance
+#'     matrix.
+#'     \item \code{bw_reset} - boolean, whether the Robbins-Monro index should
+#'     be reset at the beginning of this phase. Resetting the index makes the
+#'     proposal bandwidths more free to move to new values.
+#'     \item \code{cov_recalc} boolean, whether the multivariate proposal
+#'     covariance matrix should be re-calculated from the posterior draws at the
+#'     end of this burn-in phase.
+#'   }
+#'   If \code{NULL} then a default dataframe is used (see details).
 #' @param samples the number of sampling iterations.
 #' @param rungs the number of temperature rungs used in Metropolis coupling (see
 #'   \code{coupling_on}).
 #' @param chains the number of independent replicates of the MCMC chain to run.
 #'   If a \code{cluster} object is defined then these chains are run in
 #'   parallel, otherwise they are run in serial.
-#' @param burnin_phases the number of times a burn-in should be carried out
-#'   prior to entering the sampling phase. Several parameters can be defined
-#'   separately for each phase of the burn-in, giving greater control over which
-#'   tuning methods are applied, and in which order. For example, by default the
-#'   proposal bandwidth is updated in the first burn-in phase, followed by two
-#'   burn-in phases in which both the proposal bandwidth and covariance are
-#'   updated. The complete list of arguments that can be specified separately
-#'   for each burn-in phase is: \code{burnin}, \code{bw_update},
-#'   \code{bw_reset}, \code{cov_update}, \code{coupling_on}. Each of these
-#'   arguments can be specified as a vector of length \code{burnin_phases}, or
-#'   as a single value in which case the same value applies over every phase.
-#' @param bw_init the initial value used for the proposal bandwidth.
-#' @param bw_update whether the proposal bandwidth should be updated dynamically
-#'   via Robbins-Monro (see also \code{burnin_phases}).
-#' @param bw_reset whether the proposal bandwidth should be reset to the value
-#'   of \code{bw_init} in each burn-in phase  (see also \code{burnin_phases}).
-#' @param cov_update whether the proposal covariance matrix should be updated
-#'   dynamically from the posterior draws (see also \code{burnin_phases}).
 #' @param coupling_on whether to implement Metropolis-coupling over temperature 
-#'   rungs (see also \code{burnin_phases}).
+#'   rungs.
 #' @param GTI_pow the power used in the generalised thermodynamic integration 
-#'   method. Must be greater than 1.1.
+#'   method. Must be greater than 1.0.
 #' @param cluster option to pass in a cluster environment, allowing chains to be
 #'   run in parallel (see package "parallel").
 #' @param pb_markdown whether to run progress bars in markdown mode, meaning
@@ -64,15 +76,10 @@ run_mcmc <- function(data,
                      df_params,
                      loglike,
                      logprior,
-                     burnin = 1e3,
+                     df_burnin = NULL,
                      samples = 1e4,
                      rungs = 1,
                      chains = 1,
-                     burnin_phases = 3,
-                     bw_init = 1.0,
-                     bw_update = TRUE,
-                     bw_reset = TRUE,
-                     cov_update = c(FALSE, TRUE, TRUE),
                      coupling_on = TRUE,
                      GTI_pow = 3,
                      cluster = NULL,
@@ -89,7 +96,7 @@ run_mcmc <- function(data,
   # check df_params
   assert_dataframe(df_params)
   assert_in(c("name", "min", "max", "init"), names(df_params),
-            message = "df_frame must contain the columns 'name', 'min', 'max', 'init'")
+            message = "df_params must contain the columns 'name', 'min', 'max', 'init'")
   assert_numeric(df_params$min)
   assert_numeric(df_params$max)
   assert_le(df_params$min, df_params$max)
@@ -101,20 +108,32 @@ run_mcmc <- function(data,
   assert_custom_class(loglike, c("function", "XPtr"))
   # TODO - further checks that these functions are defined correctly?
   
-  # check MCMC parameters
-  assert_single_pos_int(burnin_phases, zero_allowed = FALSE)
-  assert_pos_int(burnin, zero_allowed = TRUE)
+  # define default df_burnin
+  if (is.null(df_burnin)) {
+    df_burnin <- data.frame(iterations = 1e3,
+                            prop_method = c(1, 1, 2),
+                            bw_update = TRUE,
+                            bw_reset = TRUE,
+                            cov_recalc = c(FALSE, TRUE, TRUE))
+  }
+  
+  # check df_burnin
+  assert_dataframe(df_burnin)
+  assert_in(c("iterations", "prop_method", "bw_update", "bw_reset", "cov_recalc"), names(df_burnin),
+            message = "df_burnin must contain the columns 'iterations', 'prop_method', 'bw_update', 'bw_reset', 'cov_recalc'")
+  assert_pos_int(df_burnin$iterations, zero_allowed = FALSE)
+  assert_in(df_burnin$prop_method, c(1,2))
+  assert_logical(df_burnin$bw_update)
+  assert_logical(df_burnin$bw_reset)
+  assert_logical(df_burnin$cov_recalc)
+  
+  # check other MCMC parameters
   assert_single_pos_int(samples, zero_allowed = FALSE)
-  assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_pos_int(rungs, zero_allowed = FALSE)
-  assert_single_pos(bw_init, zero_allowed = FALSE)
-  assert_logical(bw_update)
-  assert_logical(bw_reset)
-  assert_eq(bw_reset[1], TRUE)
-  assert_logical(cov_update)
-  assert_logical(coupling_on)
+  assert_single_pos_int(chains, zero_allowed = FALSE)
+  assert_single_logical(coupling_on)
   assert_single_pos(GTI_pow)
-  assert_gr(GTI_pow, 1.1)
+  assert_gr(GTI_pow, 1.0)
   
   # check misc parameters
   if (!is.null(cluster)) {
@@ -122,16 +141,6 @@ run_mcmc <- function(data,
   }
   assert_single_logical(pb_markdown)
   assert_single_logical(silent)
-  
-  # any arguments that can be defined either as single values or as vectors are
-  # forced to vectors by repeating the same single value
-  burnin <- force_vector(burnin, burnin_phases)
-  bw_update <- force_vector(bw_update, burnin_phases)
-  bw_reset <- force_vector(bw_reset, burnin_phases)
-  cov_update <- force_vector(cov_update, burnin_phases)
-  coupling_on <- force_vector(coupling_on, burnin_phases)
-  assert_length(burnin, burnin_phases)
-  assert_same_length_multiple(burnin, bw_update, bw_reset, cov_update, coupling_on)
   
   
   # ---------- pre-processing ----------
@@ -158,14 +167,13 @@ run_mcmc <- function(data,
                       theta_min = df_params$min,
                       theta_max = df_params$max,
                       trans_type = df_params$trans_type,
-                      burnin = burnin,
+                      burnin = df_burnin$iterations,
+                      prop_method = df_burnin$prop_method,
+                      bw_update = df_burnin$bw_update,
+                      bw_reset = df_burnin$bw_reset,
+                      cov_recalc = df_burnin$cov_recalc,
                       samples = samples,
                       rungs = rungs,
-                      burnin_phases = burnin_phases,
-                      bw_init = bw_init,
-                      bw_update = bw_update,
-                      bw_reset = bw_reset,
-                      cov_update = cov_update,
                       coupling_on = coupling_on,
                       GTI_pow = GTI_pow,
                       pb_markdown = pb_markdown,
@@ -179,8 +187,8 @@ run_mcmc <- function(data,
   
   # progress bars
   pb_burnin <- list()
-  for (i in 1:burnin_phases) {
-    pb_burnin[[i]] <- txtProgressBar(min = 0, max = burnin[i], initial = NA, style = 3)
+  for (i in 1:nrow(df_burnin)) {
+    pb_burnin[[i]] <- txtProgressBar(min = 0, max = df_burnin$iterations[i], initial = NA, style = 3)
   }
   pb_samples <- txtProgressBar(min = 0, max = samples, initial = NA, style = 3)
   args_progress <- list(pb_burnin = pb_burnin,
@@ -218,7 +226,7 @@ run_mcmc <- function(data,
   
   # define names
   chain_names <- sprintf("chain%s", 1:chains)
-  phase_names <- sprintf("phase%s", 1:burnin_phases)
+  phase_names <- sprintf("phase%s", 1:nrow(df_burnin))
   rung_names <- sprintf("rung%s", 1:rungs)
   param_names <- df_params$name
   
@@ -256,6 +264,10 @@ run_mcmc <- function(data,
     theta_burnin <- mapply(get_theta_rungs, output_raw[[c]]$theta_burnin, SIMPLIFY = FALSE)
     names(theta_burnin) <- phase_names
     
+    # get burnin phi
+    phi_burnin <- mapply(get_theta_rungs, output_raw[[c]]$phi_burnin, SIMPLIFY = FALSE)
+    names(phi_burnin) <- phase_names
+    
     # get sampling theta
     theta_sampling <- get_theta_rungs(output_raw[[c]]$theta_sampling)
     
@@ -263,6 +275,7 @@ run_mcmc <- function(data,
     output_processed[[c]]$loglike_burnin <- loglike_burnin
     output_processed[[c]]$loglike_sampling <- loglike_sampling
     output_processed[[c]]$theta_burnin <- theta_burnin
+    output_processed[[c]]$phi_burnin <- phi_burnin
     output_processed[[c]]$theta_sampling <- theta_sampling
   }
   

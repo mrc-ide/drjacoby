@@ -1,10 +1,10 @@
 ---
-title: "Basic MCMC"
+title: "Example MCMC Implementation"
 author: "Bob Verity and Pete Winskill"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{"Basic MCMC"}
+  %\VignetteIndexEntry{"Example MCMC Implementation"}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -107,12 +107,19 @@ r_logprior <- function(params) {
 Once we have all the elements above it is straightforward to run a basic MCMC. As with any MCMC, we must define the number of burn-in and sampling iterations that we want to draw. Unlike most MCMC's, the burn-in is repeated over multiple phases - three by default. These multiple burn-in phases give greater control in terms of tuning parameters (see [this vignette](TODO) on tuning parameters). Finally, by default *drjacoby* prints progress bars to the console to report on the progress of the MCMC. When running in R markdown we can use the option `pb_markdown = TRUE` to print progress bars in a markdown-friendly way, and if you want to get rid of these completely you can use the option `silent = TRUE`.
 
 ```{r}
+# define burn-in parameters
+df_burnin <- data.frame(iterations = 1e3,
+                        prop_method = c(1, 1, 1),
+                        bw_update = TRUE,
+                        bw_reset = TRUE,
+                        cov_recalc = c(FALSE, TRUE, TRUE))
+
 # run MCMC
 r_mcmc_out <- run_mcmc(data = x,
                        df_params = df_params,
                        loglike = r_loglike,
                        logprior = r_logprior,
-                       burnin = 1e3,
+                       df_burnin = df_burnin,
                        samples = 1e3,
                        pb_markdown = TRUE)
 ```
@@ -209,7 +216,7 @@ r_mcmc_out <- run_mcmc(data = x,
                        df_params = df_params,
                        loglike = cpp_loglike,
                        logprior = cpp_logprior,
-                       burnin = 1e3,
+                       df_burnin = df_burnin,
                        samples = 1e3,
                        pb_markdown = TRUE)
 ```
@@ -222,21 +229,21 @@ bm <- microbenchmark::microbenchmark(r_version = run_mcmc(data = x,
                                                           df_params = df_params,
                                                           loglike = r_loglike,
                                                           logprior = r_logprior,
-                                                          burnin = 1e3,
+                                                          df_burnin = df_burnin,
                                                           samples = 1e3,
                                                           silent = TRUE),
                                      cpp_version = run_mcmc(data = x,
                                                             df_params = df_params,
                                                             loglike = cpp_loglike,
                                                             logprior = cpp_logprior,
-                                                            burnin = 1e3,
+                                                            df_burnin = df_burnin,
                                                             samples = 1e3,
                                                             silent = TRUE),
                                      mixed_version = run_mcmc(data = x,
                                                               df_params = df_params,
                                                               loglike = cpp_loglike,
                                                               logprior = r_logprior,
-                                                              burnin = 1e3,
+                                                              df_burnin = df_burnin,
                                                               samples = 1e3,
                                                               silent = TRUE),
                                      times = 10)

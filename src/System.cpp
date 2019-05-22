@@ -1,6 +1,6 @@
 
 #include "System.h"
-#include "misc_v4.h"
+#include "misc_v7.h"
 
 using namespace std;
 
@@ -22,16 +22,18 @@ void System::load(Rcpp::List args) {
   trans_type = rcpp_to_vector_int(args_params["trans_type"]);
   d = theta_init.size();
   
-  // MCMC parameters
+  // burnin parameters
   burnin = rcpp_to_vector_int(args_params["burnin"]);
-  samples = rcpp_to_int(args_params["samples"]);
-  rungs = rcpp_to_int(args_params["rungs"]);
-  burnin_phases = rcpp_to_int(args_params["burnin_phases"]);
-  bw_init = rcpp_to_double(args_params["bw_init"]);
+  prop_method = rcpp_to_vector_int(args_params["prop_method"]);
   bw_update = rcpp_to_vector_bool(args_params["bw_update"]);
   bw_reset = rcpp_to_vector_bool(args_params["bw_reset"]);
-  cov_update = rcpp_to_vector_bool(args_params["cov_update"]);
-  coupling_on = rcpp_to_vector_bool(args_params["coupling_on"]);
+  cov_recalc = rcpp_to_vector_bool(args_params["cov_recalc"]);
+  burnin_phases = int(burnin.size());
+  
+  // other MCMC parameters
+  samples = rcpp_to_int(args_params["samples"]);
+  rungs = rcpp_to_int(args_params["rungs"]);
+  coupling_on = rcpp_to_bool(args_params["coupling_on"]);
   GTI_pow = rcpp_to_double(args_params["GTI_pow"]);
   chain = rcpp_to_int(args_params["chain"]);
   

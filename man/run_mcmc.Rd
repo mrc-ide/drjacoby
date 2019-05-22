@@ -4,23 +4,49 @@
 \alias{run_mcmc}
 \title{Run MCMC}
 \usage{
-run_mcmc(data, df_params, loglike, logprior, burnin = 1000,
-  samples = 10000, rungs = 1, chains = 1, burnin_phases = 3,
-  bw_init = 1, bw_update = TRUE, bw_reset = TRUE,
-  cov_update = c(FALSE, TRUE, TRUE), coupling_on = TRUE, GTI_pow = 3,
-  cluster = NULL, pb_markdown = FALSE, silent = FALSE)
+run_mcmc(data, df_params, loglike, logprior, df_burnin = NULL,
+  samples = 10000, rungs = 1, chains = 1, coupling_on = TRUE,
+  GTI_pow = 3, cluster = NULL, pb_markdown = FALSE, silent = FALSE)
 }
 \arguments{
 \item{data}{TODO.}
 
 \item{df_params}{a dataframe of parameters. Must contain the following
-elements: TODO}
+elements:
+\itemize{
+  \item \code{name} - the parameter name.
+  \item \code{min} - the minimum value of the parameter. \code{-Inf} is
+  allowed.
+  \item \code{max} - the maximum value of the parameter. \code{Inf} is
+  allowed.
+  \item \code{init} - the initial value of the parameter.
+}}
 
 \item{loglike}{TODO.}
 
 \item{logprior}{TODO.}
 
-\item{burnin}{the number of burn-in iterations (see also \code{burnin_phases}).}
+\item{df_burnin}{a dataframe specifying the parameters of each phase of
+burn-in. Must contain the following elements:
+\itemize{
+  \item \code{iterations} - the number of MCMC iterations this phase.
+  \item \code{prop_method} - integer flag specifying which method to use
+  when proposing new values this phase. 1 = independent proposal per
+  parameter, 2 = multivariate proposal over all parameters.
+  \item \code{bw_update} - boolean, whether to update the proposal
+  bandwidth dynamically via Robbins-Monro this phase. If \code{TRUE} then
+  for the independent proposal method this means updating a different
+  bandwidth per parameter, for the multivariate proposal method this means
+  updating a single bandwidth for all parameters, scaled by a covariance
+  matrix.
+  \item \code{bw_reset} - boolean, whether the Robbins-Monro index should
+  be reset at the beginning of this phase. Resetting the index makes the
+  proposal bandwidths more free to move to new values.
+  \item \code{cov_recalc} boolean, whether the multivariate proposal
+  covariance matrix should be re-calculated from the posterior draws at the
+  end of this burn-in phase.
+}
+If \code{NULL} then a default dataframe is used (see details).}
 
 \item{samples}{the number of sampling iterations.}
 
@@ -31,34 +57,11 @@ elements: TODO}
 If a \code{cluster} object is defined then these chains are run in
 parallel, otherwise they are run in serial.}
 
-\item{burnin_phases}{the number of times a burn-in should be carried out
-prior to entering the sampling phase. Several parameters can be defined
-separately for each phase of the burn-in, giving greater control over which
-tuning methods are applied, and in which order. For example, by default the
-proposal bandwidth is updated in the first burn-in phase, followed by two
-burn-in phases in which both the proposal bandwidth and covariance are
-updated. The complete list of arguments that can be specified separately
-for each burn-in phase is: \code{burnin}, \code{bw_update},
-\code{bw_reset}, \code{cov_update}, \code{coupling_on}. Each of these
-arguments can be specified as a vector of length \code{burnin_phases}, or
-as a single value in which case the same value applies over every phase.}
-
-\item{bw_init}{the initial value used for the proposal bandwidth.}
-
-\item{bw_update}{whether the proposal bandwidth should be updated dynamically
-via Robbins-Monro (see also \code{burnin_phases}).}
-
-\item{bw_reset}{whether the proposal bandwidth should be reset to the value
-of \code{bw_init} in each burn-in phase  (see also \code{burnin_phases}).}
-
-\item{cov_update}{whether the proposal covariance matrix should be updated
-dynamically from the posterior draws (see also \code{burnin_phases}).}
-
 \item{coupling_on}{whether to implement Metropolis-coupling over temperature 
-rungs (see also \code{burnin_phases}).}
+rungs.}
 
 \item{GTI_pow}{the power used in the generalised thermodynamic integration 
-method. Must be greater than 1.1.}
+method. Must be greater than 1.0.}
 
 \item{cluster}{option to pass in a cluster environment, allowing chains to be
 run in parallel (see package "parallel").}
@@ -71,4 +74,7 @@ being printed to markdown files.}
 }
 \description{
 Run MCMC.
+}
+\details{
+TODO - explain df_burnin defaults.
 }

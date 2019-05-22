@@ -1,5 +1,9 @@
 
-#include "misc_v4.h"
+#include "misc_v7.h"
+
+#include <math.h>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 
@@ -31,8 +35,8 @@ double log_sum(double logA, double logB) {
 // sum boolean values and return integer
 int sum_bool(const vector<bool> &x_vec) {
   int ret = 0;
-  for (const auto & x : x_vec) {
-    ret += x;
+  for (int i=0; i<int(x_vec.size()); ++i) {
+    ret += x_vec[i];
   }
   return ret;
 }
@@ -103,15 +107,17 @@ vector<int> seq_int(int from, int to, int by) {
 
 //------------------------------------------------
 // update timer and optionally print time difference
-void chrono_timer(chrono::high_resolution_clock::time_point &t0, bool print_diff) {
+void chrono_timer(chrono::high_resolution_clock::time_point &t0, string message_before, bool print_diff) {
   
   // calculate elapsed time
   chrono::high_resolution_clock::time_point t1 = chrono::high_resolution_clock::now();
   chrono::duration<double> time_span = chrono::duration_cast< chrono::duration<double> >(t1-t0);
+  double time_double = time_span.count();
   
   // print time difference
   if (print_diff) {
-    print(time_span.count(), "seconds");
+    message_before += to_string(time_double) + " seconds";
+    print(message_before);
   }
   
   // update timer to current time
@@ -364,3 +370,107 @@ vector<vector<vector<double>>> rcpp_to_array_double(Rcpp::List x) {
   return ret;
 }
 #endif
+
+//------------------------------------------------
+// read values from comma-separated text file to vector<int>
+vector<int> file_to_vector_int(string file_path) {
+  
+  // initialise return object
+  vector<int> ret;
+  
+  // read in values from comma-separated file
+  ifstream infile(file_path);
+  std::string line1, line2;
+  int x;
+  while (getline(infile, line1)) {
+    istringstream ss(line1);
+    while (getline(ss, line2, ',')) {
+      if (line2.size() > 0) {
+        istringstream(line2) >> x;
+        ret.push_back(x);
+      }
+    }
+  }
+  
+  return ret;
+}
+
+//------------------------------------------------
+// read values from comma-separated text file to vector<double>
+vector<double> file_to_vector_double(string file_path) {
+  
+  // initialise return object
+  vector<double> ret;
+  
+  // read in values from comma-separated file
+  ifstream infile(file_path);
+  std::string line1, line2;
+  double x;
+  while (getline(infile, line1)) {
+    istringstream ss(line1);
+    while (getline(ss, line2, ',')) {
+      if (line2.size() > 0) {
+        istringstream(line2) >> x;
+        ret.push_back(x);
+      }
+    }
+  }
+  
+  return ret;
+}
+
+//------------------------------------------------
+// read values from text file to vector<vector<double>>. Text file should be
+// delimited by first line break, then comma. Lines do not all need to be same
+// length, i.e. jagged matrices are allowed.
+vector<vector<double>> file_to_matrix_double(string file_path) {
+  
+  // initialise return object
+  vector<vector<double>> ret;
+  
+  // read in values from comma-separated file
+  ifstream infile(file_path);
+  std::string line1, line2, line3;
+  double x;
+  vector<double> v;
+  while (getline(infile, line1)) {
+    v.clear();
+    istringstream ss(line1);
+    while (getline(ss, line2, ',')) {
+      if (line2.size() > 0) {
+        istringstream(line2) >> x;
+        v.push_back(x);
+      }
+    }
+    ret.push_back(v);
+  }
+  
+  return ret;
+}
+
+//------------------------------------------------
+// calculate Cholesky decomposition of positive definite matrix sigma
+void cholesky(vector<vector<double>> &chol, vector<vector<double>> &sigma) {
+  
+  for (int i = 0; i < int(sigma.size()); ++i) {
+    for (int j = 0; j < (i+1); ++j) {
+      chol[i][j] = sigma[i][j];
+      if (i == j) {
+        if (i > 0) {
+          for (int k = 0; k < i; ++k) {
+            chol[i][i] -= chol[i][k]*chol[i][k];
+          }
+        }
+        chol[i][i] = sqrt(chol[i][i]);
+      } else {
+        if (j > 0) {
+          for (int k = 0; k < j; ++k) {
+            chol[i][j] -= chol[i][k]*chol[j][k];
+          }
+        }
+        chol[i][j] /= chol[j][j];
+      }
+    }
+  }
+  
+}
