@@ -13,6 +13,8 @@ navbar:
           href: articles/installation.html
         - text: "Basic MCMC"
           href: articles/example.html
+        - text: "Metropolis Coupling"
+          href: articles/metropolis_coupling.html
     - text: "Functions"
       href: reference/index.html
   right:

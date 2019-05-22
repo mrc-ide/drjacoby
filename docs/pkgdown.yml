@@ -4,4 +4,5 @@ pkgdown_sha: ~
 articles:
   example: example.html
   installation: installation.html
+  metropolis_coupling: metropolis_coupling.html
 

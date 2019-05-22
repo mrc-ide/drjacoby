@@ -22,15 +22,8 @@ void System::load(Rcpp::List args) {
   trans_type = rcpp_to_vector_int(args_params["trans_type"]);
   d = theta_init.size();
   
-  // burnin parameters
-  burnin = rcpp_to_vector_int(args_params["burnin"]);
-  prop_method = rcpp_to_vector_int(args_params["prop_method"]);
-  bw_update = rcpp_to_vector_bool(args_params["bw_update"]);
-  bw_reset = rcpp_to_vector_bool(args_params["bw_reset"]);
-  cov_recalc = rcpp_to_vector_bool(args_params["cov_recalc"]);
-  burnin_phases = int(burnin.size());
-  
-  // other MCMC parameters
+  // MCMC parameters
+  burnin = rcpp_to_int(args_params["burnin"]);
   samples = rcpp_to_int(args_params["samples"]);
   rungs = rcpp_to_int(args_params["rungs"]);
   coupling_on = rcpp_to_bool(args_params["coupling_on"]);

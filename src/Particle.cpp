@@ -28,16 +28,8 @@ void Particle::init(System &s, double beta_raised) {
   
   // proposal parameters
   bw = vector<double>(d, 1.0);
-  bw_multi = 1.0;
   bw_index = vector<int>(d, 1);
   bw_stepsize = 1.0;
-  phi_sum = vector<double>(d);
-  phi_sumsq = vector<vector<double>>(d, vector<double>(d));
-  phi_cov = vector<vector<double>>(d, vector<double>(d));
-  phi_cholesky = vector<vector<double>>(d, vector<double>(d));
-  for (int i = 0; i < d; ++i) {
-    phi_cholesky[i][i] = 1.0;
-  }
   
   // likelihoods and priors
   loglike = 0;
@@ -52,15 +44,8 @@ void Particle::init(System &s, double beta_raised) {
 
 //------------------------------------------------
 // propose new value of phi[i] from univariate normal distribution
-void Particle::propose_phi_univar(int i) {
+void Particle::propose_phi(int i) {
   phi_prop[i] = rnorm1(phi[i], bw[i]);
-}
-
-//------------------------------------------------
-// propose new value of phi from multivariate normal distribution centred on
-// current phi
-void Particle::propose_phi_multivar() {
-  rmnorm1(phi_prop, phi, phi_cholesky, bw_multi);
 }
 
 //------------------------------------------------
@@ -137,34 +122,3 @@ double Particle::get_adjustment(int i) {
   
 }
 
-//------------------------------------------------
-// add current phi values to running sum and sum of squares
-void Particle::update_phi_sumsq() {
-  
-  // update phi_sum and phi_sumsq
-  for (int i = 0; i < d; ++i) {
-    phi_sum[i] += phi[i];
-    for (int j = i; j < d; ++j) {
-      phi_sumsq[i][j] += phi[i]*phi[j];
-    }
-  }
-  
-}
-
-//------------------------------------------------
-// calculate phi covariance matrix and Cholesky decomposition of covariance
-// matrix from sum and sum-of-squares. n is the number of values that went into
-// the sum
-void Particle::get_phi_cov(int n) {
-  
-  // calculate covariance matrix
-  for (int i = 0; i < d; ++i) {
-    for (int j = i; j < d; ++j) {
-      phi_cov[i][j] = phi_sumsq[i][j]/double(n) - (phi_sum[i]/double(n))*(phi_sum[j]/double(n));
-    }
-  }
-  
-  // calculate Cholesky decomposition
-  cholesky(phi_cholesky, phi_cov);
-  
-}

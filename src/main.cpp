@@ -99,7 +99,6 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   
   // extract progress bar objects
   Rcpp::List args_progress = args["args_progress"];
-  Rcpp::List args_progress_burnin = args_progress["pb_burnin"];
   
   // local copies of some parameters for convenience
   int d = s.d;
@@ -119,29 +118,17 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     particle_vec[r].init_like(get_loglike, get_logprior);
   }
   
-  // initialise vector for storing the order of temperature rungs. When swapping
-  // particles through Metropolis coupling it is faster to update this vector to
-  // represent swapping temperatures, rather than swapping parameters around
-  // within particles.
-  vector<int> rung_order = seq_int(0,rungs-1);
-  
   // objects for storing loglikelihood and theta values over iterations
-  vector<vector<vector<double>>> loglike_burnin(s.burnin_phases);
-  vector<vector<vector<vector<double>>>> theta_burnin(s.burnin_phases);
-  vector<vector<vector<vector<double>>>> phi_burnin(s.burnin_phases);
-  for (int i = 0; i < s.burnin_phases; ++i) {
-    loglike_burnin[i] = vector<vector<double>>(rungs, vector<double>(s.burnin[i]));
-    theta_burnin[i] = vector<vector<vector<double>>>(rungs, vector<vector<double>>(s.burnin[i], vector<double>(d)));
-    phi_burnin[i] = theta_burnin[i];
-  }
+  vector<vector<double>> loglike_burnin(rungs, vector<double>(s.burnin));
+  vector<vector<vector<double>>> theta_burnin(rungs, vector<vector<double>>(s.burnin, vector<double>(d)));
   vector<vector<double>> loglike_sampling(rungs, vector<double>(s.samples));
   vector<vector<vector<double>>> theta_sampling(rungs, vector<vector<double>>(s.samples, vector<double>(d)));
   
   // specify stored values at first iteration. Ensures that user-defined initial
   // values are the first stored values
   for (int r = 0; r < rungs; ++r) {
-    loglike_burnin[0][r][0] = particle_vec[r].loglike;
-    theta_burnin[0][r][0] = particle_vec[r].theta;
+    loglike_burnin[r][0] = particle_vec[r].loglike;
+    theta_burnin[r][0] = particle_vec[r].theta;
   }
   
   
@@ -150,101 +137,46 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   // print message to console
   if (!s.silent) {
     print("MCMC chain", s.chain);
+    print("burn-in");
   }
   
-  // loop through burn-in phases
-  for (int phase = 0; phase < s.burnin_phases; ++phase) {
+  // loop through burn-in iterations
+  for (int rep = 1; rep < s.burnin; ++rep) {
     
-    // print message to console
-    if (!s.silent) {
-      print("burn-in phase", phase+1);
-    }
-    
-    // reset bandwidth Robbins-Monro index of all rungs
-    if (s.bw_reset[phase]) {
-      for (int r = 0; r < rungs; ++r) {
-        particle_vec[r].bw_index = vector<int>(d, 1);
-      }
-    }
-    
-    // reset phi covariance elements of all rungs
-    if (s.cov_recalc[phase]) {
-      for (int r = 0; r < rungs; ++r) {
-        particle_vec[r].phi_sum = vector<double>(d);
-        particle_vec[r].phi_sumsq = vector<vector<double>>(d, vector<double>(d));
-      }
-    }
-    
-    // reset acceptance count of all rungs
+    // loop through rungs
     for (int r = 0; r < rungs; ++r) {
-      particle_vec[r].accept_count = 0;
+      
+      // update particles
+      particle_vec[r].update(get_loglike, get_logprior);
+      
+      // store results
+      loglike_burnin[r][rep] = particle_vec[r].loglike;
+      theta_burnin[r][rep] = particle_vec[r].theta;
     }
     
-    // loop through burn-in iterations
-    for (int rep = 0; rep < s.burnin[phase]; ++rep) {
-      
-      // skip over if first iteration of first phase. Ensures that user-defined
-      // initial values are the first stored values
-      if (phase == 0 && rep == 0) {
-        continue;
-      }
-      
-      // loop through rungs
-      for (int r = 0; r < rungs; ++r) {
-        
-        // update particles
-        if (s.prop_method[phase] == 1) {
-          particle_vec[r].update_univar(get_loglike, get_logprior, s.bw_update[phase]);
-        } else {
-          particle_vec[r].update_multivar(get_loglike, get_logprior, s.bw_update[phase]);
-        }
-        
-        // update phi sum and sum-of-squares
-        if (s.cov_recalc[phase]) {
-          particle_vec[r].update_phi_sumsq();
-        }
-        
-        // store results
-        loglike_burnin[phase][r][rep] = particle_vec[r].loglike;
-        theta_burnin[phase][r][rep] = particle_vec[r].theta;
-        phi_burnin[phase][r][rep] = particle_vec[r].phi;
-      }
-      
-      // perform Metropolis coupling
-      if (s.coupling_on) {
-        coupling(particle_vec);
-      }
-      
-      // update progress bars
-      if (!s.silent) {
-        int remainder = rep % int(ceil(double(s.burnin[phase])/100));
-        if ((remainder == 0 && !s.pb_markdown) || ((rep+1) == s.burnin[phase])) {
-          update_progress(args_progress_burnin, phase+1, rep+1, s.burnin[phase], false);
-          if ((rep+1) == s.burnin[phase]) {
-            print("");
-          }
-        }
-      }
-      
-    }  // end burn-in MCMC loop
-    
-    // update phi covariance
-    if (s.cov_recalc[phase]) {
-      for (int r = 0; r < rungs; ++r) {
-        particle_vec[r].get_phi_cov(s.burnin[phase]);
-      }
+    // perform Metropolis coupling
+    if (s.coupling_on) {
+      coupling(particle_vec);
     }
     
-    // print phase diagnostics
+    // update progress bars
     if (!s.silent) {
-      double accept_rate = particle_vec[rungs-1].accept_count/double(s.burnin[phase]);
-      if (s.prop_method[phase] == 1) {
-        accept_rate /= d;
+      int remainder = rep % int(ceil(double(s.burnin)/100));
+      if ((remainder == 0 && !s.pb_markdown) || ((rep+1) == s.burnin)) {
+        update_progress(args_progress, "pb_burnin", rep+1, s.burnin, false);
+        if ((rep+1) == s.burnin) {
+          print("");
+        }
       }
-      Rcpp::Rcout << "acceptance rate: " << round(accept_rate*1000)/10.0 << "%\n";
     }
     
-  }  // end loop over burn-in phases
+  }  // end burn-in MCMC loop
+  
+  // print phase diagnostics
+  if (!s.silent) {
+    double accept_rate = particle_vec[rungs-1].accept_count/double(s.burnin*d);
+    Rcpp::Rcout << "acceptance rate: " << round(accept_rate*1000)/10.0 << "%\n";
+  }
   
   
   // ---------- sampling MCMC ----------
@@ -253,9 +185,6 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   if (!s.silent) {
     print("sampling phase");
   }
-  
-  // get final sampling method
-  int prop_method_sampling = s.prop_method[s.burnin_phases-1];
   
   // reset acceptance count of all rungs
   for (int r = 0; r < rungs; ++r) {
@@ -269,11 +198,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     for (int r = 0; r < rungs; ++r) {
       
       // update particles
-      if (prop_method_sampling == 1) {
-        particle_vec[r].update_univar(get_loglike, get_logprior, false);
-      } else {
-        particle_vec[r].update_multivar(get_loglike, get_logprior, false);
-      }
+      particle_vec[r].update(get_loglike, get_logprior);
       
       // store results
       loglike_sampling[r][rep] = particle_vec[r].loglike;
@@ -288,7 +213,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     // update progress bars
     if (!s.silent) {
       int remainder = rep % int(ceil(double(s.samples)/100));
-      if ((remainder==0 && !s.pb_markdown) || ((rep+1) == s.samples)) {
+      if ((remainder == 0 && !s.pb_markdown) || ((rep+1) == s.samples)) {
         update_progress(args_progress, "pb_samples", rep+1, s.samples, false);
         if ((rep+1) == s.samples) {
           print("");
@@ -300,10 +225,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   
   // print final diagnostics
   if (!s.silent) {
-    double accept_rate = particle_vec[rungs-1].accept_count/double(s.samples);
-    if (prop_method_sampling == 1) {
-      accept_rate /= d;
-    }
+    double accept_rate = particle_vec[rungs-1].accept_count/double(s.samples*d);
     Rcpp::Rcout << "acceptance rate: " << round(accept_rate*1000)/10.0 << "%\n";
   }
   
@@ -319,7 +241,6 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   // return as Rcpp list
   Rcpp::List ret = Rcpp::List::create(Rcpp::Named("loglike_burnin") = loglike_burnin,
                                       Rcpp::Named("theta_burnin") = theta_burnin,
-                                      Rcpp::Named("phi_burnin") = phi_burnin,
                                       Rcpp::Named("loglike_sampling") = loglike_sampling,
                                       Rcpp::Named("theta_sampling") = theta_sampling);
   return ret;

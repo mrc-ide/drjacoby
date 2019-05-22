@@ -16,8 +16,6 @@ check_drjacoby_loaded <- function() {
 #'
 #' @description Run MCMC.
 #'
-#' @details TODO - explain df_burnin defaults.
-#'
 #' @param data TODO.
 #' @param df_params a dataframe of parameters. Must contain the following
 #'   elements:
@@ -31,27 +29,7 @@ check_drjacoby_loaded <- function() {
 #'   }
 #' @param loglike TODO.
 #' @param logprior TODO.
-#' @param df_burnin a dataframe specifying the parameters of each phase of
-#'   burn-in. Must contain the following elements:
-#'   \itemize{
-#'     \item \code{iterations} - the number of MCMC iterations this phase.
-#'     \item \code{prop_method} - integer flag specifying which method to use
-#'     when proposing new values this phase. 1 = independent proposal per
-#'     parameter, 2 = multivariate proposal over all parameters.
-#'     \item \code{bw_update} - boolean, whether to update the proposal
-#'     bandwidth dynamically via Robbins-Monro this phase. If \code{TRUE} then
-#'     for the independent proposal method this means updating a different
-#'     bandwidth per parameter, for the multivariate proposal method this means
-#'     updating a single bandwidth for all parameters, scaled by a covariance
-#'     matrix.
-#'     \item \code{bw_reset} - boolean, whether the Robbins-Monro index should
-#'     be reset at the beginning of this phase. Resetting the index makes the
-#'     proposal bandwidths more free to move to new values.
-#'     \item \code{cov_recalc} boolean, whether the multivariate proposal
-#'     covariance matrix should be re-calculated from the posterior draws at the
-#'     end of this burn-in phase.
-#'   }
-#'   If \code{NULL} then a default dataframe is used (see details).
+#' @param burnin the number of burn-in iterations.
 #' @param samples the number of sampling iterations.
 #' @param rungs the number of temperature rungs used in Metropolis coupling (see
 #'   \code{coupling_on}).
@@ -76,7 +54,7 @@ run_mcmc <- function(data,
                      df_params,
                      loglike,
                      logprior,
-                     df_burnin = NULL,
+                     burnin = 1e3,
                      samples = 1e4,
                      rungs = 1,
                      chains = 1,
@@ -108,26 +86,8 @@ run_mcmc <- function(data,
   assert_custom_class(loglike, c("function", "XPtr"))
   # TODO - further checks that these functions are defined correctly?
   
-  # define default df_burnin
-  if (is.null(df_burnin)) {
-    df_burnin <- data.frame(iterations = 1e3,
-                            prop_method = c(1, 1, 2),
-                            bw_update = TRUE,
-                            bw_reset = TRUE,
-                            cov_recalc = c(FALSE, TRUE, TRUE))
-  }
-  
-  # check df_burnin
-  assert_dataframe(df_burnin)
-  assert_in(c("iterations", "prop_method", "bw_update", "bw_reset", "cov_recalc"), names(df_burnin),
-            message = "df_burnin must contain the columns 'iterations', 'prop_method', 'bw_update', 'bw_reset', 'cov_recalc'")
-  assert_pos_int(df_burnin$iterations, zero_allowed = FALSE)
-  assert_in(df_burnin$prop_method, c(1,2))
-  assert_logical(df_burnin$bw_update)
-  assert_logical(df_burnin$bw_reset)
-  assert_logical(df_burnin$cov_recalc)
-  
-  # check other MCMC parameters
+  # check MCMC parameters
+  assert_single_pos_int(burnin, zero_allowed = FALSE)
   assert_single_pos_int(samples, zero_allowed = FALSE)
   assert_single_pos_int(rungs, zero_allowed = FALSE)
   assert_single_pos_int(chains, zero_allowed = FALSE)
@@ -167,11 +127,7 @@ run_mcmc <- function(data,
                       theta_min = df_params$min,
                       theta_max = df_params$max,
                       trans_type = df_params$trans_type,
-                      burnin = df_burnin$iterations,
-                      prop_method = df_burnin$prop_method,
-                      bw_update = df_burnin$bw_update,
-                      bw_reset = df_burnin$bw_reset,
-                      cov_recalc = df_burnin$cov_recalc,
+                      burnin = burnin,
                       samples = samples,
                       rungs = rungs,
                       coupling_on = coupling_on,
@@ -186,10 +142,7 @@ run_mcmc <- function(data,
                          update_progress = update_progress)
   
   # progress bars
-  pb_burnin <- list()
-  for (i in 1:nrow(df_burnin)) {
-    pb_burnin[[i]] <- txtProgressBar(min = 0, max = df_burnin$iterations[i], initial = NA, style = 3)
-  }
+  pb_burnin <- txtProgressBar(min = 0, max = burnin, initial = NA, style = 3)
   pb_samples <- txtProgressBar(min = 0, max = samples, initial = NA, style = 3)
   args_progress <- list(pb_burnin = pb_burnin,
                         pb_samples = pb_samples)
@@ -226,7 +179,6 @@ run_mcmc <- function(data,
   
   # define names
   chain_names <- sprintf("chain%s", 1:chains)
-  phase_names <- sprintf("phase%s", 1:nrow(df_burnin))
   rung_names <- sprintf("rung%s", 1:rungs)
   param_names <- df_params$name
   
@@ -237,17 +189,10 @@ run_mcmc <- function(data,
   # loop through chains
   for (c in 1:chains) {
     
-    # get burnin loglikelihoods
-    loglike_burnin <- mapply(function(x) {
-      ret <- as.data.frame(t(rcpp_to_matrix(x)))
-      names(ret) <- rung_names
-      ret
-    }, output_raw[[c]]$loglike_burnin, SIMPLIFY = FALSE)
-    names(loglike_burnin) <- phase_names
-    
-    # get sampling loglikelihoods
+    # get loglikelihoods
+    loglike_burnin <- as.data.frame(t(rcpp_to_matrix(output_raw[[c]]$loglike_burnin)))
     loglike_sampling <- as.data.frame(t(rcpp_to_matrix(output_raw[[c]]$loglike_sampling)))
-    names(loglike_sampling) <- rung_names
+    names(loglike_burnin) <- names(loglike_sampling) <- rung_names
     
     # function for extracting theta into list of matrices over rungs
     get_theta_rungs <- function(theta_list) {
@@ -260,22 +205,15 @@ run_mcmc <- function(data,
       ret
     }
     
-    # get burnin theta
-    theta_burnin <- mapply(get_theta_rungs, output_raw[[c]]$theta_burnin, SIMPLIFY = FALSE)
-    names(theta_burnin) <- phase_names
-    
-    # get burnin phi
-    phi_burnin <- mapply(get_theta_rungs, output_raw[[c]]$phi_burnin, SIMPLIFY = FALSE)
-    names(phi_burnin) <- phase_names
-    
-    # get sampling theta
+    # get theta values
+    theta_burnin <- get_theta_rungs(output_raw[[c]]$theta_burnin)
     theta_sampling <- get_theta_rungs(output_raw[[c]]$theta_sampling)
+    names(theta_burnin) <- names(theta_sampling) <- rung_names
     
     # store in processed output list
     output_processed[[c]]$loglike_burnin <- loglike_burnin
     output_processed[[c]]$loglike_sampling <- loglike_sampling
     output_processed[[c]]$theta_burnin <- theta_burnin
-    output_processed[[c]]$phi_burnin <- phi_burnin
     output_processed[[c]]$theta_sampling <- theta_sampling
   }
   

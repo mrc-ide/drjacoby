@@ -5,11 +5,11 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Basic MCMC • drjacoby</title>
+<title>Example MCMC Implementation • drjacoby</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Basic MCMC">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Example MCMC Implementation">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -49,6 +49,9 @@
     <li>
       <a href="../articles/example.html">Basic MCMC</a>
     </li>
+    <li>
+      <a href="../articles/metropolis_coupling.html">Metropolis Coupling</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -74,10 +77,10 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>Basic MCMC</h1>
+      <h1>Example MCMC Implementation</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2019-05-20</h4>
+            <h4 class="date">2019-05-22</h4>
       
       
       <div class="hidden name"><code>example.Rmd</code></div>
@@ -86,7 +89,7 @@
 
     
     
-<p>The <em>drjacoby</em> package runs flexible Markov chain Monte Carlo (MCMC) using likelihoods and priors specified by the user. These likelihood and prior functions can be specified either as R functions, or as C++ functions using the fantastic <a href="https://cran.r-project.org/web/packages/Rcpp/index.html">Rcpp package</a>. This vignette demonstrates a basic MCMC implementation in <em>drjacoby</em> using both the R and C++ methods, and compares the two methods in terms of speed.</p>
+<p>The likelihood and prior distributions that go into <em>drjacoby</em> can be specified by the user either as R functions or as C++ functions. This vignette demonstrates a basic MCMC implementation using both the R and C++ methods, and compares the two in terms of speed.</p>
 <div id="setup" class="section level2">
 <h2 class="hasAnchor">
 <a href="#setup" class="anchor"></a>Setup</h2>
@@ -97,7 +100,7 @@
 <li>a likelihood function</li>
 <li>a prior function</li>
 </ol>
-<p>Starting with the data, let’s assume that our data consists of a series of draws from a normal distribution with a given mean (<code>mu_true</code>) and standard deviation (<code>sigma_true</code>). We can generate some random data to play with:</p>
+<p>Starting with the data, let’s assume that our observations consist of a series of draws from a normal distribution with a given mean (<code>mu_true</code>) and standard deviation (<code>sigma_true</code>). We can generate some random data to play with:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># set random seed</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Random">set.seed</a></span>(<span class="dv">1</span>)
 
@@ -107,7 +110,7 @@ sigma_true &lt;-<span class="st"> </span><span class="dv">2</span>
 
 <span class="co"># draw example data</span>
 x &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>(<span class="dv">10</span>, <span class="dt">mean =</span> mu_true, <span class="dt">sd =</span> sigma_true)</code></pre></div>
-<p>For our example MCMC we will assume that we know the correct distribution of the data (i.e. the normal distribution), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the mean and standard deviation of the distribution are unknown. Parameters within <em>drjacoby</em> must be defined in dataframe, where we specify minimum, maximum, and initial values:</p>
+<p>For our example MCMC we will assume that we know the correct distribution of the data (i.e. the normal distribution), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the parameters of the distribution are unknown. Parameters within <em>drjacoby</em> must be defined in dataframe format, where we must specify minimum, maximum, and initial values of all parameters:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define parameters dataframe</span>
 df_params &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.frame">data.frame</a></span>(<span class="dt">name =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"mu"</span>, <span class="st">"sigma"</span>),
                         <span class="dt">min =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">10</span>, <span class="dv">0</span>),
@@ -118,9 +121,12 @@ df_params &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rd
 <span class="co">#&gt;    name min max init</span>
 <span class="co">#&gt; 1    mu -10  10    5</span>
 <span class="co">#&gt; 2 sigma   0 Inf    1</span></code></pre></div>
-<p>Note that in this example we have one parameter (<code>mu</code>) that occupies a finite range [-10, 10], and one parameter (<code>sigma</code>) that can take any positive value. <em>drjacoby</em> deals with different parameter ranges using reparameterisation, which all occurs internally meaning we don’t need to worry these constraints affecting our MCMC.</p>
-<p>Next we need a likelihood function. This <strong>must</strong> have two input arguments: 1) a vector of parameters, 2) a vector of data, and these <strong>must</strong> be input <strong>in that order</strong>. It also <strong>must</strong> return a single value for the likelihood <strong>in log space</strong>. These constraints on the format of the likelihood function might seem a bit restrictive, but they are needed in order for <em>drjacoby</em> to know how to use the function internally.</p>
-<p>Typically our likelihood function will involve splitting the input vector of parameters into individual elements before calculating the probability of the data. In our example, the likelihood function is quite simple thanks to the <code><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">dnorm()</a></code> function which can return values already in log space:</p>
+<p>In this example we have one parameter (<code>mu</code>) that occupies a finite range [-10, 10], and one parameter (<code>sigma</code>) that can take any positive value. <em>drjacoby</em> deals with different parameter ranges using reparameterisation, which all occurs internally meaning we don’t need to worry about these constraints affecting our inference.</p>
+<p>Next, we need a likelihood function. This <strong>must</strong> have two input arguments: 1) a vector of parameters, 2) a vector of data, and these <strong>must</strong> be input <strong>in that order</strong>. It also <strong>must</strong> return a single value for the likelihood <strong>in log space</strong>. These constraints on the format of the likelihood function might seem a bit restrictive, but they are needed in order for <em>drjacoby</em> to know how to use the function internally. The issue of taking logs is particularly important, as the MCMC will still run even if we forget to take logs, but the results produced will be nonsense!</p>
+<div class="figure">
+<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/loglady.jpg" alt="Do not underestimate the importance of taking logs."><p class="caption">Do not underestimate the importance of taking logs.</p>
+</div>
+<p>A good way of structuring our likelihood function is to split the input vector of parameters into individual elements before calculating the probability of the data. In our example, the likelihood function is quite simple thanks to the <code><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">dnorm()</a></code> function which can return the density of the normal distribution in log space:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define log-likelihood function</span>
 r_loglike &lt;-<span class="st"> </span><span class="cf">function</span>(params, x) {
   
@@ -134,7 +140,7 @@ r_loglike &lt;-<span class="st"> </span><span class="cf">function</span>(params,
   <span class="co"># return</span>
   <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(ret)
 }</code></pre></div>
-<p>Finally, we need a prior function. This <strong>must</strong> take a single vector of parameters as input, and it <strong>must</strong> return a single value for the prior probability of those parameters <strong>in log space</strong>. Again, this strict format is required for <em>drjacoby</em> to know how to use the prior internally. In our case we will assume a uniform prior on <code>mu</code> over the range [-10, 10], and a log-normal prior on <code>sigma</code>, which is defined from 0 to infinity:</p>
+<p>Finally, we need a prior function. This <strong>must</strong> take a single vector of parameters as input, and it <strong>must</strong> return a single value for the prior probability of those parameters <strong>in log space</strong>. Again, this strict format is required for <em>drjacoby</em> to know how to use the prior internally. In our case we will assume a uniform prior on <code>mu</code>, and a log-normal prior on <code>sigma</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define log-prior function</span>
 r_logprior &lt;-<span class="st"> </span><span class="cf">function</span>(params) {
   
@@ -148,11 +154,12 @@ r_logprior &lt;-<span class="st"> </span><span class="cf">function</span>(params
   <span class="co"># return</span>
   <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(ret)
 }</code></pre></div>
+<p>Be careful to ensure that your prior is defined over the same range as specified in the <code>df_params</code> dataframe. For example, here our uniform prior for <code>mu</code> ranges from -10 to 10, and our log-normal prior for <code>sigma</code> ranges from 0 to infinity.</p>
 </div>
 <div id="running-the-mcmc" class="section level2">
 <h2 class="hasAnchor">
 <a href="#running-the-mcmc" class="anchor"></a>Running the MCMC</h2>
-<p>Once we have all the elements above it is straightforward to run a basic MCMC. As with any MCMC, we must define the number of burn-in and sampling iterations that we want to draw. Unlike most MCMC’s, the burn-in is repeated over multiple phases - three by default. These multiple burn-in phases give greater control in terms of tuning parameters (see <a href="TODO">this vignette</a> on tuning parameters). Finally, by default <em>drjacoby</em> prints progress bars to the console to report on the progress of the MCMC. When running in R markdown we can use the option <code>pb_markdown = TRUE</code> to print progress bars in a markdown-friendly way, and if you want to get rid of these completely you can use the option <code>silent = TRUE</code>.</p>
+<p>Once we have all the elements above it is straightforward to run a basic MCMC. As with any MCMC, we must define the number of burn-in and sampling iterations that we want. By default <em>drjacoby</em> prints progress bars to the console to report on the progress of the MCMC. When running in R markdown we can use the option <code>pb_markdown = TRUE</code> to print progress bars in a markdown-friendly way, although you will probably want to leave this option turned off when running interactively.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC</span>
 r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
                        <span class="dt">df_params =</span> df_params,
@@ -162,40 +169,30 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
                        <span class="dt">samples =</span> <span class="fl">1e3</span>,
                        <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
 <span class="co">#&gt; MCMC chain 1</span>
-<span class="co">#&gt; burn-in phase 1</span>
+<span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                       </span>
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; bandwidth: 0.327318, acceptance rate: 22.5%</span>
-<span class="co">#&gt; burn-in phase 2</span>
-<span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                       </span>
-<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; bandwidth: 0.341449, acceptance rate: 23.1%</span>
-<span class="co">#&gt; burn-in phase 3</span>
-<span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                       </span>
-<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; bandwidth: 0.385723, acceptance rate: 23%</span>
+<span class="co">#&gt; acceptance rate: 22.8%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                       </span>
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 20.9%</span>
+<span class="co">#&gt; acceptance rate: 23.6%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.157665 seconds</span></code></pre></div>
-<p>The raw output produced by this function is essentially a large nested list, containing all log-likelihoods and parameter values. We can dig down to individual elements of this list using the <code>$</code> symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first <code>mu</code> values from from first <a href="TODO">rung</a> of the first burn-in phase of the first <a href="TODO">chain</a>!</p>
+<span class="co">#&gt; completed in 0.154931 seconds</span></code></pre></div>
+<p>The raw output produced by this function is essentially a large nested list, containing all log-likelihoods and parameter values. We can dig down to individual elements of this list using the <code>$</code> symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first few <code>mu</code> values from from first rung of the the first chain:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get first few mu values</span>
-<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/head">head</a></span>(r_mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_burnin<span class="op">$</span>phase1<span class="op">$</span>rung1<span class="op">$</span>mu)
-<span class="co">#&gt; [1] 5.000000 5.000000 4.025150 3.773924 3.773924 3.773924</span></code></pre></div>
-<p>Note that the first value is 5.0, which is the initial value for <code>mu</code> that we specified in the <code>df_params</code> dataframe.</p>
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/head">head</a></span>(r_mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_burnin<span class="op">$</span>rung1<span class="op">$</span>mu)
+<span class="co">#&gt; [1] 5.000000 5.000000 5.000000 4.959170 4.959170 5.215691</span></code></pre></div>
+<p>Note that the first value is 5.0, which is the initial value for <code>mu</code> that we specified in the <code>df_params</code> dataframe. The advantages of using <a href="TODO">multiple rungs</a> and <a href="TODO">multiple chains</a> are dealt with in later vignettes.</p>
 </div>
 <div id="exploring-outputs-and-checking-mcmc-performance" class="section level2">
 <h2 class="hasAnchor">
 <a href="#exploring-outputs-and-checking-mcmc-performance" class="anchor"></a>Exploring outputs and checking MCMC performance</h2>
 <p>We can produce simple trace plots of output, e.g. the log-likelihood:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># extract and plot log-likelihood in first burn-in phase, and in the sampling phase</span>
-loglike_burnin &lt;-<span class="st"> </span>r_mcmc_out<span class="op">$</span>chain1<span class="op">$</span>loglike_burnin<span class="op">$</span>phase1<span class="op">$</span>rung1
+loglike_burnin &lt;-<span class="st"> </span>r_mcmc_out<span class="op">$</span>chain1<span class="op">$</span>loglike_burnin<span class="op">$</span>rung1
 loglike_sampling &lt;-<span class="st"> </span>r_mcmc_out<span class="op">$</span>chain1<span class="op">$</span>loglike_sampling<span class="op">$</span>rung1
 
 <span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(loglike_burnin, <span class="dt">type =</span> <span class="st">'l'</span>)</code></pre></div>
@@ -219,21 +216,23 @@ sigma &lt;-<span class="st"> </span>theta<span class="op">$</span>sigma
 <div id="using-c-functions" class="section level2">
 <h2 class="hasAnchor">
 <a href="#using-c-functions" class="anchor"></a>Using C++ functions</h2>
-<p>Although <em>drjacoby</em> is an R package, under the hood it is running C++ through the fantastic <a href="https://cran.r-project.org/web/packages/Rcpp/index.html">Rcpp package</a>. When we pass in an R likelihood function, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This comes with an obvious computational overhead, which can be avoided by specifying functions directly within C++.</p>
-<p>To use C++ functions within <em>drjacoby</em> we need the <code>Rcpp</code> and <code>RcppXPtrUtils</code> packages installed and attached. These packages allow us to write a C++ function directly within R as simple character string, and then to use the <code>cppXPtr()</code> function to convert this string to a function pointer that will be recognised by <em>drjacoby</em>. As before, there are some constraints on what this function must look like. First, it <strong>must</strong> take as input a <code>std::vector&lt;double&gt;</code> of parameters <strong>followed by</strong> a <code>std::vector&lt;double&gt;</code> of data. Note that data must be input as doubles, and so data consisting of integer or boolean values should be dealt with as though they are continuous values (for example <code>TRUE = 1.0</code>, <code>FALSE = 0.0</code>). Second, the function <strong>must</strong> return an object of class <code>SEXP</code>. The easiest way to achieve this is to calculate the raw return value as a double, and to use the <code>Rcpp::wrap()</code> function when returning to transform to <code>SEXP</code>. As before, the value returned should be the likelihood evaluated in <strong>log space</strong>.</p>
-<p>One disadvantage of using C++ functions over R functions is that we do not have access to all R’s nice distributions, for example <code><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">dnorm()</a></code>, and so functions will tend to be mathematically more involved. For example, the <code>r_loglike()</code> function defined above can be re-written in C++ as follows:</p>
+<p>Although <em>drjacoby</em> is an R package, under the hood it is running C++ through <a href="https://cran.r-project.org/web/packages/Rcpp/index.html">Rcpp</a>. When we pass an R likelihood function to the MCMC, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This comes with a computational overhead, which can be avoided by specifying functions directly within C++.</p>
+<p>To use C++ functions within <em>drjacoby</em> we need the <code>Rcpp</code> and <code>RcppXPtrUtils</code> packages installed and attached. These packages allow us to write a C++ function directly within R as a simple character string, and then to use the <code>cppXPtr()</code> function to convert this string to a function pointer that will be recognised by <em>drjacoby</em>. As before, there are some constraints on what this function must look like. First, it <strong>must</strong> take as input a <code>std::vector&lt;double&gt;</code> of parameters <strong>followed by</strong> a <code>std::vector&lt;double&gt;</code> of data. Note that data <strong>must</strong> be input as doubles, and so data consisting of integer or boolean values should be dealt with as though they are continuous values (for example <code>TRUE = 1.0</code>, <code>FALSE = 0.0</code>). Second, the function <strong>must</strong> return an object of class <code>SEXP</code>. The easiest way to achieve this is to calculate the raw return value as a double, and to use the <code>Rcpp::wrap()</code> function when returning to transform to <code>SEXP</code>. As before, the value returned should be the likelihood evaluated in <strong>log space</strong>.</p>
+<p>One disadvantage of using C++ functions over R functions is that we do not have access to all R’s nice distribution functions, for example <code><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">dnorm()</a></code>, and so functions written in C++ will tend to be mathematically more involved. For example, the <code>r_loglike()</code> function defined above can be re-written in C++ as follows:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define cpp log-likelihood function as character string</span>
-cpp_loglike_string &lt;-<span class="st"> "SEXP loglike(std::vector&lt;double&gt; theta, std::vector&lt;double&gt; x) {</span>
+cpp_loglike_string &lt;-<span class="st"> "SEXP loglike(std::vector&lt;double&gt; params, std::vector&lt;double&gt; x) {</span>
 <span class="st">  </span>
 <span class="st">  // extract parameters from theta</span>
-<span class="st">  double mu = theta[0];</span>
-<span class="st">  double sigma = theta[1];</span>
+<span class="st">  double mu = params[0];</span>
+<span class="st">  double sigma = params[1];</span>
 <span class="st">  </span>
 <span class="st">  // sum log-likelihood over all data</span>
 <span class="st">  double ret = 0.0;</span>
 <span class="st">  for (size_t i = 0; i &lt; sizeof(x); ++i) {</span>
 <span class="st">    ret += -0.5*log(2*M_PI*sigma*sigma) - (x[i] - mu)*(x[i] - mu)/(2*sigma*sigma);</span>
 <span class="st">  }</span>
+<span class="st">  </span>
+<span class="st">  // return as SEXP</span>
 <span class="st">  return Rcpp::wrap(ret);</span>
 <span class="st">}"</span>
 
@@ -249,6 +248,7 @@ cpp_logprior_string &lt;-<span class="st"> "SEXP logprior(std::vector&lt;double&
 <span class="st">  // calculate logprior</span>
 <span class="st">  double ret = -log(20.0) - log(sigma) - 0.5*log(2*M_PI*1.0*1.0) - (log(sigma) - 0)*(log(sigma) - 0)/(2*1.0*1.0);</span>
 <span class="st">  </span>
+<span class="st">  // return as SEXP</span>
 <span class="st">  return Rcpp::wrap(ret);</span>
 <span class="st">}"</span>
 cpp_logprior &lt;-<span class="st"> </span>RcppXPtrUtils<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/RcppXPtrUtils/topics/cppXPtr">cppXPtr</a></span>(cpp_logprior_string)</code></pre></div>
@@ -262,28 +262,18 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
                        <span class="dt">samples =</span> <span class="fl">1e3</span>,
                        <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
 <span class="co">#&gt; MCMC chain 1</span>
-<span class="co">#&gt; burn-in phase 1</span>
+<span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                       </span>
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; bandwidth: 6.62374e-07, acceptance rate: 0%</span>
-<span class="co">#&gt; burn-in phase 2</span>
-<span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                       </span>
-<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; bandwidth: 5.24177e-07, acceptance rate: 0%</span>
-<span class="co">#&gt; burn-in phase 3</span>
-<span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                       </span>
-<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; bandwidth: 5.24177e-07, acceptance rate: 0%</span>
+<span class="co">#&gt; acceptance rate: 22.8%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                       </span>
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 0%</span>
+<span class="co">#&gt; acceptance rate: 23.7%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.00351852 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.002843 seconds</span></code></pre></div>
 <p>You should see that this MCMC runs considerably faster than the previous version that used R functions. We can quantify how much faster using the <code>microbenchmark</code> package. In the following we compare the MCMC evaluated using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run both R and C++ versions multiple times to compare speed</span>
 bm &lt;-<span class="st"> </span>microbenchmark<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/microbenchmark/topics/microbenchmark">microbenchmark</a></span>(<span class="dt">r_version =</span> <span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
@@ -309,15 +299,16 @@ bm &lt;-<span class="st"> </span>microbenchmark<span class="op">::</span><span c
                                                               <span class="dt">silent =</span> <span class="ot">TRUE</span>),
                                      <span class="dt">times =</span> <span class="dv">10</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(bm)
-<span class="co">#&gt;            expr        min         lq       mean     median        uq</span>
-<span class="co">#&gt; 1     r_version 120.314394 122.060632 124.225239 123.593674 125.01231</span>
-<span class="co">#&gt; 2   cpp_version   4.514447   4.625224   5.712066   4.746994   5.71814</span>
-<span class="co">#&gt; 3 mixed_version  60.437277  63.441485  66.738545  68.310206  68.54274</span>
-<span class="co">#&gt;         max neval</span>
-<span class="co">#&gt; 1 131.05872    10</span>
-<span class="co">#&gt; 2  11.75316    10</span>
-<span class="co">#&gt; 3  72.75746    10</span></code></pre></div>
-<p>The pure C++ version was on average around 26 times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is a goal then C++ versions of <em>both</em> the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.</p>
+<span class="co">#&gt;            expr        min        lq       mean     median         uq</span>
+<span class="co">#&gt; 1     r_version 117.846752 121.10493 123.614097 123.838383 126.055068</span>
+<span class="co">#&gt; 2   cpp_version   3.557993   3.58492   3.745241   3.697045   3.932682</span>
+<span class="co">#&gt; 3 mixed_version  59.191080  64.84719  66.359515  65.434914  66.936734</span>
+<span class="co">#&gt;          max neval</span>
+<span class="co">#&gt; 1 129.165546    10</span>
+<span class="co">#&gt; 2   4.015692    10</span>
+<span class="co">#&gt; 3  76.982558    10</span></code></pre></div>
+<p>The pure C++ version was on average around 33.5 times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior.</p>
+<p>In conclusion, if efficiency is your goal then C++ versions of <em>both</em> the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.</p>
 </div>
   </div>
 

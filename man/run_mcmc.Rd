@@ -4,7 +4,7 @@
 \alias{run_mcmc}
 \title{Run MCMC}
 \usage{
-run_mcmc(data, df_params, loglike, logprior, df_burnin = NULL,
+run_mcmc(data, df_params, loglike, logprior, burnin = 1000,
   samples = 10000, rungs = 1, chains = 1, coupling_on = TRUE,
   GTI_pow = 3, cluster = NULL, pb_markdown = FALSE, silent = FALSE)
 }
@@ -26,27 +26,7 @@ elements:
 
 \item{logprior}{TODO.}
 
-\item{df_burnin}{a dataframe specifying the parameters of each phase of
-burn-in. Must contain the following elements:
-\itemize{
-  \item \code{iterations} - the number of MCMC iterations this phase.
-  \item \code{prop_method} - integer flag specifying which method to use
-  when proposing new values this phase. 1 = independent proposal per
-  parameter, 2 = multivariate proposal over all parameters.
-  \item \code{bw_update} - boolean, whether to update the proposal
-  bandwidth dynamically via Robbins-Monro this phase. If \code{TRUE} then
-  for the independent proposal method this means updating a different
-  bandwidth per parameter, for the multivariate proposal method this means
-  updating a single bandwidth for all parameters, scaled by a covariance
-  matrix.
-  \item \code{bw_reset} - boolean, whether the Robbins-Monro index should
-  be reset at the beginning of this phase. Resetting the index makes the
-  proposal bandwidths more free to move to new values.
-  \item \code{cov_recalc} boolean, whether the multivariate proposal
-  covariance matrix should be re-calculated from the posterior draws at the
-  end of this burn-in phase.
-}
-If \code{NULL} then a default dataframe is used (see details).}
+\item{burnin}{the number of burn-in iterations.}
 
 \item{samples}{the number of sampling iterations.}
 
@@ -74,7 +54,4 @@ being printed to markdown files.}
 }
 \description{
 Run MCMC.
-}
-\details{
-TODO - explain df_burnin defaults.
 }
