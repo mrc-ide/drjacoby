@@ -47,7 +47,7 @@
       <a href="../articles/installation.html">Installation</a>
     </li>
     <li>
-      <a href="../articles/example.html">Basic MCMC</a>
+      <a href="../articles/example.html">Example MCMC Implementation</a>
     </li>
     <li>
       <a href="../articles/metropolis_coupling.html">Metropolis Coupling</a>
@@ -89,14 +89,139 @@
 
     
     
-<p><a href="https://darrenjw.wordpress.com/2013/09/29/parallel-tempering-and-metropolis-coupled-mcmc/">link to blog</a></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">x &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/seq">seq</a></span>(<span class="op">-</span><span class="dv">2</span>,<span class="dv">2</span>,<span class="dt">l=</span><span class="dv">1001</span>)
-fx &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Log">exp</a></span>(<span class="op">-</span><span class="dv">10</span><span class="op">*</span>(x<span class="op">^</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>)<span class="op">^</span><span class="dv">2</span>) <span class="op">^</span><span class="st"> </span><span class="fl">0.1</span>
-<span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(x,fx,<span class="dt">type=</span><span class="st">'l'</span>)</code></pre></div>
-<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-1-1.png" width="700"></p>
+<p>Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, or 2) highly multimodal, for example if it has twin peaks. Hamiltonion Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to “roll around” the target distribution allowing it to go round corners, but it still struggles with the multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains.</p>
+<p>This vignette demonstrates how Metropolis coupling can be implemented within <em>drjacoby</em> to solve a deliberately awkward MCMC problem.</p>
+<div id="setup" class="section level2">
+<h2 class="hasAnchor">
+<a href="#setup" class="anchor"></a>Setup</h2>
+<p>For this example we will start by writing the likelihood and prior functions in C++ - if this sounds unfamiliar to you, check out the <a href="https://mrc-ide.github.io/drjacoby/articles/example.html">earlier vignette</a>. Our basic model will assume that our data are normally distributed with mean <code>alpha^2*beta</code>. The <code>alpha^2</code> term here means that both positive and negative values of <code>alpha</code> map to the same mean, thereby creating a multimodal distribution, and the <code>*beta</code> term ensures that <code>alpha</code> and <code>beta</code> are highly correlated. We will also use a third parameter <code>epsilon</code> to represent some random noise that we want to integrate over. While this example is a bit contrived, it does have the advantage of being horrendously awkward!</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define cpp loglike function</span>
+loglike_string &lt;-<span class="st"> "SEXP loglike(std::vector&lt;double&gt; params, std::vector&lt;double&gt; x) {</span>
+<span class="st">  </span>
+<span class="st">  // extract parameters</span>
+<span class="st">  double alpha = params[0];</span>
+<span class="st">  double beta = params[1];</span>
+<span class="st">  double epsilon = params[2];</span>
+<span class="st">  int n = int(x.size());</span>
+<span class="st">  </span>
+<span class="st">  // sum log-likelihood over all data</span>
+<span class="st">  double mean = alpha*alpha*beta + epsilon;</span>
+<span class="st">  double ret = 0.0;</span>
+<span class="st">  for (int i = 0; i &lt; n; ++i) {</span>
+<span class="st">    ret += -0.5*log(2*M_PI) - (x[i] - mean)*(x[i] - mean)/2.0;</span>
+<span class="st">  }</span>
+<span class="st">  </span>
+<span class="st">  // return as SEXP</span>
+<span class="st">  return Rcpp::wrap(ret);</span>
+<span class="st">}"</span>
+
+<span class="co"># convert to a function pointer</span>
+loglike &lt;-<span class="st"> </span>RcppXPtrUtils<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/RcppXPtrUtils/topics/cppXPtr">cppXPtr</a></span>(loglike_string)</code></pre></div>
+<p>For our prior we assume that <code>alpha</code> is uniform [-10,10], <code>beta</code> is uniform [0,10], and <code>epsilon</code> is normally distributed with mean 0 and standard deviation 1.0:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define cpp logprior function</span>
+logprior_string &lt;-<span class="st"> "SEXP logprior(std::vector&lt;double&gt; params){</span>
+<span class="st">  </span>
+<span class="st">  // extract parameters</span>
+<span class="st">  double epsilon = params[2];</span>
+<span class="st">  </span>
+<span class="st">  // calculate logprior</span>
+<span class="st">  double ret = -log(20.0) - log(10) - 0.5*log(2*M_PI) - epsilon*epsilon/2.0;</span>
+<span class="st">  </span>
+<span class="st">  // return as SEXP</span>
+<span class="st">  return Rcpp::wrap(ret);</span>
+<span class="st">}"</span>
+
+<span class="co"># convert to a function pointer</span>
+logprior &lt;-<span class="st"> </span>RcppXPtrUtils<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/RcppXPtrUtils/topics/cppXPtr">cppXPtr</a></span>(logprior_string)</code></pre></div>
+<p>We also need to define the corresponding parameters dataframe:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define parameters dataframe</span>
+df_params &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.frame">data.frame</a></span>(<span class="dt">name =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"alpha"</span>, <span class="st">"beta"</span>, <span class="st">"epsilon"</span>),
+                        <span class="dt">min =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">10</span>, <span class="dv">0</span>, <span class="op">-</span><span class="ot">Inf</span>),
+                        <span class="dt">max =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">10</span>, <span class="dv">10</span>, <span class="ot">Inf</span>),
+                        <span class="dt">init =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">0</span>))</code></pre></div>
+<p>Finally, we need some data. Rather than drawing from the model, for simplicity we will use a series of normal draws with mean 10:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># set random seed</span>
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Random">set.seed</a></span>(<span class="dv">1</span>)
+
+<span class="co"># draw example data</span>
+x &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>(<span class="dv">10</span>, <span class="dt">mean =</span> <span class="dv">10</span>)</code></pre></div>
+</div>
+<div id="running-the-mcmc" class="section level2">
+<h2 class="hasAnchor">
+<a href="#running-the-mcmc" class="anchor"></a>Running the MCMC</h2>
+<p>First, we will try running the basic MCMC without Metropolis coupling to show that it is incapable of producing good results in this model. The following code repeats the same MCMC analysis nine times, each time producing a plot of posterior <code>alpha</code> against <code>beta</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># create base plot object</span>
+plot_base &lt;-<span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/ggplot">ggplot</a></span>() <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/ggtheme">theme_bw</a></span>() <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/coord_cartesian">coord_cartesian</a></span>(<span class="dt">xlim =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">10</span>,<span class="dv">10</span>), <span class="dt">ylim =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>,<span class="dv">10</span>))
+
+<span class="co"># repeat analysis multiple times</span>
+plot_list &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>()
+<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">9</span>) {
+  
+  <span class="co"># run MCMC</span>
+  mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
+                       <span class="dt">df_params =</span> df_params,
+                       <span class="dt">loglike =</span> loglike,
+                       <span class="dt">logprior =</span> logprior,
+                       <span class="dt">burnin =</span> <span class="fl">1e3</span>,
+                       <span class="dt">samples =</span> <span class="fl">1e4</span>,
+                       <span class="dt">silent =</span> <span class="ot">TRUE</span>)
+  
+  <span class="co"># create plot of alpha against beta</span>
+  plot_list[[i]] &lt;-<span class="st"> </span>plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
+                                                    <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1)
+}
+
+<span class="co"># plot grid</span>
+gridExtra<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/gridExtra/topics/arrangeGrob">grid.arrange</a></span>(<span class="dt">grobs =</span> plot_list)</code></pre></div>
+<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-6-1.png" width="768"></p>
+<p>By looking over all nine plots we can get a rough idea of what the distribution <em>should</em> look like, but no single MCMC run has captured it adequately. You can experiment with increasing the number of samples - you should find that we get better results for more samples, but a <em>very</em> large number of samples are needed before we get good representation of both the left and right sides of the distribution.</p>
+<p>To use Metropolis coupling we need to specify an additional argument - the number of <code>rungs</code> (you also need the arugment <code>coupling_on = TRUE</code>, but this is the default). In this example we use 20 rungs, meaning we run 20 chains, each at a different temperature. Note that when plotting results we use the values in <code>$rung20</code> - it is always the final rung that is the “cold chain”, which are the results we are usually interested in.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">  
+<span class="co"># run MCMC</span>
+mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
+                     <span class="dt">df_params =</span> df_params,
+                     <span class="dt">loglike =</span> loglike,
+                     <span class="dt">logprior =</span> logprior,
+                     <span class="dt">burnin =</span> <span class="fl">1e3</span>,
+                     <span class="dt">samples =</span> <span class="fl">1e4</span>,
+                     <span class="dt">rungs =</span> <span class="dv">20</span>,
+                     <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
+<span class="co">#&gt; MCMC chain 1</span>
+<span class="co">#&gt; burn-in</span>
+<span class="co">#&gt; </span>
+  <span class="op">|</span><span class="st">                                                                       </span>
+<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
+<span class="co">#&gt; acceptance rate: 22.6%</span>
+<span class="co">#&gt; sampling phase</span>
+<span class="co">#&gt; </span>
+  <span class="op">|</span><span class="st">                                                                       </span>
+<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
+<span class="co">#&gt; acceptance rate: 23.4%</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; completed in 0.422040 seconds</span>
+
+<span class="co"># create plot of alpha against beta</span>
+plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
+                                <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung20)</code></pre></div>
+<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-7-1.png" width="480"></p>
+<p>You should see a much better characterisation of the posterior, thanks to the hot chains passing information up to the cold chain. The run time scales approximately linearly with the number of rungs, so there is a computational cost to using this method, but on the other hand our results are far better than we would obtain by simply increasing the number of samples by 20 times.</p>
+</div>
+<div id="how-many-rungs-to-use" class="section level2">
+<h2 class="hasAnchor">
+<a href="#how-many-rungs-to-use" class="anchor"></a>How many rungs to use?</h2>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+        <div id="tocnav">
+      <h2 class="hasAnchor">
+<a href="#tocnav" class="anchor"></a>Contents</h2>
+      <ul class="nav nav-pills nav-stacked">
+<li><a href="#setup">Setup</a></li>
+      <li><a href="#running-the-mcmc">Running the MCMC</a></li>
+      <li><a href="#how-many-rungs-to-use">How many rungs to use?</a></li>
+      </ul>
+</div>
       </div>
 
 </div>

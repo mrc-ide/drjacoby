@@ -173,7 +173,7 @@ One disadvantage of using C++ functions over R functions is that we do not have 
 # define cpp log-likelihood function as character string
 cpp_loglike_string <- "SEXP loglike(std::vector<double> params, std::vector<double> x) {
   
-  // extract parameters from theta
+  // extract parameters
   double mu = params[0];
   double sigma = params[1];
   
@@ -197,7 +197,7 @@ Similarly, we can define the prior as a C++ function. This function **must** tak
 # define cpp logprior function
 cpp_logprior_string <- "SEXP logprior(std::vector<double> params){
   
-  // extract parameters from theta
+  // extract parameters
   double sigma = params[1];
   
   // calculate logprior
@@ -206,6 +206,8 @@ cpp_logprior_string <- "SEXP logprior(std::vector<double> params){
   // return as SEXP
   return Rcpp::wrap(ret);
 }"
+
+# convert to a function pointer
 cpp_logprior <- RcppXPtrUtils::cppXPtr(cpp_logprior_string)
 ```
 
@@ -257,6 +259,6 @@ median_time <- summary(bm)$median
 speedup <- round(median_time[1]/median_time[2], digits = 1)
 ```
 
-The pure C++ version was on average around `r speedup` times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior.
+The pure C++ version was on average around `r speedup` times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is your goal then C++ versions of *both* the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.
 
-In conclusion, if efficiency is your goal then C++ versions of *both* the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.
+This was a very easy problem, and so required no fancy MCMC tricks. The [next vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) demonstrates how *drjacoby* can be applied to more challenging problems.

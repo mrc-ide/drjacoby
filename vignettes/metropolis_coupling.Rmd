@@ -16,10 +16,143 @@ knitr::opts_chunk$set(
 )
 ```
 
-[link to blog](https://darrenjw.wordpress.com/2013/09/29/parallel-tempering-and-metropolis-coupled-mcmc/)
+```{r, echo=FALSE}
+# set random seed
+set.seed(1)
+
+# load the drjacoby package
+library(drjacoby)
+```
+
+Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, or 2) highly multimodal, for example if it has twin peaks. Hamiltonion Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to "roll around" the target distribution allowing it to go round corners, but it still struggles with the multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains.
+
+This vignette demonstrates how Metropolis coupling can be implemented within *drjacoby* to solve a deliberately awkward MCMC problem.
+
+
+## Setup
+
+For this example we will start by writing the likelihood and prior functions in C++ - if this sounds unfamiliar to you, check out the [earlier vignette](https://mrc-ide.github.io/drjacoby/articles/example.html). Our basic model will assume that our data are normally distributed with mean `alpha^2*beta`. The `alpha^2` term here means that both positive and negative values of `alpha` map to the same mean, thereby creating a multimodal distribution, and the `*beta` term ensures that `alpha` and `beta` are highly correlated. We will also use a third parameter `epsilon` to represent some random noise that we want to integrate over. While this example is a bit contrived, it does have the advantage of being horrendously awkward!
 
 ```{r}
-x <- seq(-2,2,l=1001)
-fx <- exp(-10*(x^2-1)^2) ^ 0.1
-plot(x,fx,type='l')
+# define cpp loglike function
+loglike_string <- "SEXP loglike(std::vector<double> params, std::vector<double> x) {
+  
+  // extract parameters
+  double alpha = params[0];
+  double beta = params[1];
+  double epsilon = params[2];
+  int n = int(x.size());
+  
+  // sum log-likelihood over all data
+  double mean = alpha*alpha*beta + epsilon;
+  double ret = 0.0;
+  for (int i = 0; i < n; ++i) {
+    ret += -0.5*log(2*M_PI) - (x[i] - mean)*(x[i] - mean)/2.0;
+  }
+  
+  // return as SEXP
+  return Rcpp::wrap(ret);
+}"
+
+# convert to a function pointer
+loglike <- RcppXPtrUtils::cppXPtr(loglike_string)
 ```
+
+For our prior we assume that `alpha` is uniform [-10,10], `beta` is uniform [0,10], and `epsilon` is normally distributed with mean 0 and standard deviation 1.0:
+
+```{r}
+# define cpp logprior function
+logprior_string <- "SEXP logprior(std::vector<double> params){
+  
+  // extract parameters
+  double epsilon = params[2];
+  
+  // calculate logprior
+  double ret = -log(20.0) - log(10) - 0.5*log(2*M_PI) - epsilon*epsilon/2.0;
+  
+  // return as SEXP
+  return Rcpp::wrap(ret);
+}"
+
+# convert to a function pointer
+logprior <- RcppXPtrUtils::cppXPtr(logprior_string)
+```
+
+We also need to define the corresponding parameters dataframe:
+
+```{r}
+# define parameters dataframe
+df_params <- data.frame(name = c("alpha", "beta", "epsilon"),
+                        min = c(-10, 0, -Inf),
+                        max = c(10, 10, Inf),
+                        init = c(5, 5, 0))
+```
+
+Finally, we need some data. Rather than drawing from the model, for simplicity we will use a series of normal draws with mean 10:
+
+```{r}
+# set random seed
+set.seed(1)
+
+# draw example data
+x <- rnorm(10, mean = 10)
+```
+
+
+## Running the MCMC
+
+First, we will try running the basic MCMC without Metropolis coupling to show that it is incapable of producing good results in this model. The following code repeats the same MCMC analysis nine times, each time producing a plot of posterior `alpha` against `beta`:
+
+```{r, fig.width=8, fig.height=7}
+# create base plot object
+plot_base <- ggplot2::ggplot() + ggplot2::theme_bw() + ggplot2::coord_cartesian(xlim = c(-10,10), ylim = c(0,10))
+
+# repeat analysis multiple times
+plot_list <- list()
+for (i in 1:9) {
+  
+  # run MCMC
+  mcmc_out <- run_mcmc(data = x,
+                       df_params = df_params,
+                       loglike = loglike,
+                       logprior = logprior,
+                       burnin = 1e3,
+                       samples = 1e4,
+                       silent = TRUE)
+  
+  # create plot of alpha against beta
+  plot_list[[i]] <- plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
+                                                    data = mcmc_out$chain1$theta_sampling$rung1)
+}
+
+# plot grid
+gridExtra::grid.arrange(grobs = plot_list)
+```
+
+By looking over all nine plots we can get a rough idea of what the distribution *should* look like, but no single MCMC run has captured it adequately. You can experiment with increasing the number of samples - you should find that we get better results for more samples, but a *very* large number of samples are needed before we get good representation of both the left and right sides of the distribution.
+
+To use Metropolis coupling we need to specify an additional argument - the number of `rungs` (you also need the arugment `coupling_on = TRUE`, but this is the default). In this example we use 20 rungs, meaning we run 20 chains, each at a different temperature. Note that when plotting results we use the values in `$rung20` - it is always the final rung that is the "cold chain", which are the results we are usually interested in.
+
+```{r, fig.width=5, fig.height=4}
+  
+# run MCMC
+mcmc_out <- run_mcmc(data = x,
+                     df_params = df_params,
+                     loglike = loglike,
+                     logprior = logprior,
+                     burnin = 1e3,
+                     samples = 1e4,
+                     rungs = 20,
+                     pb_markdown = TRUE)
+
+# create plot of alpha against beta
+plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
+                                data = mcmc_out$chain1$theta_sampling$rung20)
+```
+
+You should see a much better characterisation of the posterior, thanks to the hot chains passing information up to the cold chain. The run time scales approximately linearly with the number of rungs, so there is a computational cost to using this method, but on the other hand our results are far better than we would obtain by simply increasing the number of samples by 20 times.
+
+
+## How many rungs to use?
+
+
