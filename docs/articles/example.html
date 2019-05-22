@@ -180,7 +180,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.6%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.154458 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.151187 seconds</span></code></pre></div>
 <p>The raw output produced by this function is essentially a large nested list, containing all log-likelihoods and parameter values. We can dig down to individual elements of this list using the <code>$</code> symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first few <code>mu</code> values from from first rung of the the first chain:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get first few mu values</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/head">head</a></span>(r_mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_burnin<span class="op">$</span>rung1<span class="op">$</span>mu)
@@ -268,14 +268,14 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                       </span>
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 0%</span>
+<span class="co">#&gt; acceptance rate: 22.8%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                       </span>
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 0%</span>
+<span class="co">#&gt; acceptance rate: 23.7%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.002717 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.002914 seconds</span></code></pre></div>
 <p>You should see that this MCMC runs considerably faster than the previous version that used R functions. We can quantify how much faster using the <code>microbenchmark</code> package. In the following we compare the MCMC evaluated using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run both R and C++ versions multiple times to compare speed</span>
 bm &lt;-<span class="st"> </span>microbenchmark<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/microbenchmark/topics/microbenchmark">microbenchmark</a></span>(<span class="dt">r_version =</span> <span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
@@ -301,15 +301,15 @@ bm &lt;-<span class="st"> </span>microbenchmark<span class="op">::</span><span c
                                                               <span class="dt">silent =</span> <span class="ot">TRUE</span>),
                                      <span class="dt">times =</span> <span class="dv">10</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(bm)
-<span class="co">#&gt;            expr       min         lq       mean     median         uq</span>
-<span class="co">#&gt; 1     r_version 116.95214 119.385265 121.317807 121.801388 123.487147</span>
-<span class="co">#&gt; 2   cpp_version   3.54858   3.598508   3.695249   3.679693   3.781225</span>
-<span class="co">#&gt; 3 mixed_version  60.26394  62.590602  64.768653  64.061838  65.383853</span>
+<span class="co">#&gt;            expr        min        lq       mean     median         uq</span>
+<span class="co">#&gt; 1     r_version 122.382256 125.07318 127.898446 127.341614 129.697335</span>
+<span class="co">#&gt; 2   cpp_version   3.384499   3.49338   4.105561   3.617683   3.737133</span>
+<span class="co">#&gt; 3 mixed_version  60.079792  65.38168  66.149208  66.087969  68.982567</span>
 <span class="co">#&gt;          max neval</span>
-<span class="co">#&gt; 1 123.869970    10</span>
-<span class="co">#&gt; 2   3.919015    10</span>
-<span class="co">#&gt; 3  74.889806    10</span></code></pre></div>
-<p>The pure C++ version was on average around 33.1 times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is your goal then C++ versions of <em>both</em> the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.</p>
+<span class="co">#&gt; 1 137.176612    10</span>
+<span class="co">#&gt; 2   6.542937    10</span>
+<span class="co">#&gt; 3  69.532111    10</span></code></pre></div>
+<p>The pure C++ version was on average around 35.2 times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is your goal then C++ versions of <em>both</em> the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.</p>
 <p>This was a very easy problem, and so required no fancy MCMC tricks. The <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">next vignette</a> demonstrates how <em>drjacoby</em> can be applied to more challenging problems.</p>
 </div>
   </div>

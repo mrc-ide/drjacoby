@@ -15,4 +15,4 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior);
 
 //------------------------------------------------
 // Metropolis-coupling over temperature rungs
-void coupling(std::vector<Particle> &particle_vec);
+void coupling(std::vector<Particle> &particle_vec, std::vector<int> &mc_accept);

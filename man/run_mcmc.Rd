@@ -41,7 +41,7 @@ parallel, otherwise they are run in serial.}
 rungs.}
 
 \item{GTI_pow}{the power used in the generalised thermodynamic integration 
-method. Must be greater than 1.0.}
+method.}
 
 \item{cluster}{option to pass in a cluster environment, allowing chains to be
 run in parallel (see package "parallel").}

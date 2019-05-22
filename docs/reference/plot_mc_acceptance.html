@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Run MCMC — run_mcmc • drjacoby</title>
+<title>Plot Metropolis Coupling Acceptance — plot_mc_acceptance • drjacoby</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Run MCMC — run_mcmc" />
+<meta property="og:title" content="Plot Metropolis Coupling Acceptance — plot_mc_acceptance" />
 
-<meta property="og:description" content="Run MCMC." />
+<meta property="og:description" content="Plot Metropolis Coupling Acceptance." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -111,91 +111,33 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Run MCMC</h1>
+    <h1>Plot Metropolis Coupling Acceptance</h1>
     
-    <div class="hidden name"><code>run_mcmc.Rd</code></div>
+    <div class="hidden name"><code>plot_mc_acceptance.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Run MCMC.</p>
+    <p>Plot Metropolis Coupling Acceptance.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>run_mcmc</span>(<span class='no'>data</span>, <span class='no'>df_params</span>, <span class='no'>loglike</span>, <span class='no'>logprior</span>, <span class='kw'>burnin</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
-  <span class='kw'>samples</span> <span class='kw'>=</span> <span class='fl'>10000</span>, <span class='kw'>rungs</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>coupling_on</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>GTI_pow</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>cluster</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pb_markdown</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>plot_mc_acceptance</span>(<span class='no'>x</span>, <span class='kw'>chain</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>data</th>
-      <td><p>TODO.</p></td>
+      <th>x</th>
+      <td><p>an object of class <code>drjacoby_output</code></p></td>
     </tr>
     <tr>
-      <th>df_params</th>
-      <td><p>a dataframe of parameters. Must contain the following
-elements:</p><ul>
-<li><p><code>name</code> - the parameter name.</p></li>
-<li><p><code>min</code> - the minimum value of the parameter. <code>-Inf</code> is
-  allowed.</p></li>
-<li><p><code>max</code> - the maximum value of the parameter. <code>Inf</code> is
-  allowed.</p></li>
-<li><p><code>init</code> - the initial value of the parameter.</p></li>
-</ul></td>
+      <th>chain</th>
+      <td><p>which chain to plot.</p></td>
     </tr>
     <tr>
-      <th>loglike</th>
-      <td><p>TODO.</p></td>
-    </tr>
-    <tr>
-      <th>logprior</th>
-      <td><p>TODO.</p></td>
-    </tr>
-    <tr>
-      <th>burnin</th>
-      <td><p>the number of burn-in iterations.</p></td>
-    </tr>
-    <tr>
-      <th>samples</th>
-      <td><p>the number of sampling iterations.</p></td>
-    </tr>
-    <tr>
-      <th>rungs</th>
-      <td><p>the number of temperature rungs used in Metropolis coupling (see
-<code>coupling_on</code>).</p></td>
-    </tr>
-    <tr>
-      <th>chains</th>
-      <td><p>the number of independent replicates of the MCMC chain to run.
-If a <code>cluster</code> object is defined then these chains are run in
-parallel, otherwise they are run in serial.</p></td>
-    </tr>
-    <tr>
-      <th>coupling_on</th>
-      <td><p>whether to implement Metropolis-coupling over temperature 
-rungs.</p></td>
-    </tr>
-    <tr>
-      <th>GTI_pow</th>
-      <td><p>the power used in the generalised thermodynamic integration 
-method.</p></td>
-    </tr>
-    <tr>
-      <th>cluster</th>
-      <td><p>option to pass in a cluster environment, allowing chains to be
-run in parallel (see package "parallel").</p></td>
-    </tr>
-    <tr>
-      <th>pb_markdown</th>
-      <td><p>whether to run progress bars in markdown mode, meaning
-they are only updated when they reach 100<!-- % to avoid large amounts of output -->
-being printed to markdown files.</p></td>
-    </tr>
-    <tr>
-      <th>silent</th>
-      <td><p>whether to suppress all console output.</p></td>
+      <th>phase</th>
+      <td><p>which phase to plot. Must be either "burnin" or "sampling".</p></td>
     </tr>
     </table>
     

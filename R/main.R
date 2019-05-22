@@ -39,7 +39,7 @@ check_drjacoby_loaded <- function() {
 #' @param coupling_on whether to implement Metropolis-coupling over temperature 
 #'   rungs.
 #' @param GTI_pow the power used in the generalised thermodynamic integration 
-#'   method. Must be greater than 1.0.
+#'   method.
 #' @param cluster option to pass in a cluster environment, allowing chains to be
 #'   run in parallel (see package "parallel").
 #' @param pb_markdown whether to run progress bars in markdown mode, meaning
@@ -92,8 +92,7 @@ run_mcmc <- function(data,
   assert_single_pos_int(rungs, zero_allowed = FALSE)
   assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_logical(coupling_on)
-  assert_single_pos(GTI_pow)
-  assert_gr(GTI_pow, 1.0)
+  assert_single_pos(GTI_pow, zero_allowed = FALSE)
   
   # check misc parameters
   if (!is.null(cluster)) {
@@ -210,14 +209,23 @@ run_mcmc <- function(data,
     theta_sampling <- get_theta_rungs(output_raw[[c]]$theta_sampling)
     names(theta_burnin) <- names(theta_sampling) <- rung_names
     
+    # get Metropolis coupling acceptance rates
+    beta_raised_vec <- output_raw[[c]]$beta_raised_vec
+    mc_accept_burnin <- output_raw[[c]]$mc_accept_burnin/burnin
+    mc_accept_sampling <- output_raw[[c]]$mc_accept_sampling/samples
+    
     # store in processed output list
+    output_processed[[c]]$diagnostics <- list(beta_raised = beta_raised_vec,
+                                              mc_accept_burnin = mc_accept_burnin,
+                                              mc_accept_sampling = mc_accept_sampling)
     output_processed[[c]]$loglike_burnin <- loglike_burnin
     output_processed[[c]]$loglike_sampling <- loglike_sampling
     output_processed[[c]]$theta_burnin <- theta_burnin
     output_processed[[c]]$theta_sampling <- theta_sampling
   }
   
-  # TODO - save output as custom class
+  # save output as custom class
+  class(output_processed) <- "drjacoby_output"
   
   # return
   return(output_processed)

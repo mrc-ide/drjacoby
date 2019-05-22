@@ -105,14 +105,15 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   int rungs = s.rungs;
   
   // initialise vector of particles
+  vector<double> beta_raised_vec(rungs);
   vector<Particle> particle_vec(rungs);
   for (int r = 0; r < rungs; ++r) {
     
     // calculate thermodynamic power of this rung
-    double beta_raised = (rungs == 1) ? 1 : pow((r + 1)/double(rungs), s.GTI_pow);
+    beta_raised_vec[r] = (rungs == 1) ? 1 : pow(1.0 - r/double(rungs-1), s.GTI_pow);
     
     // initialise particle
-    particle_vec[r].init(s, beta_raised);
+    particle_vec[r].init(s, beta_raised_vec[r]);
     
     // initialise particle initial likelihood and prior values
     particle_vec[r].init_like(get_loglike, get_logprior);
@@ -130,6 +131,10 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     loglike_burnin[r][0] = particle_vec[r].loglike;
     theta_burnin[r][0] = particle_vec[r].theta;
   }
+  
+  // store Metropolis coupling acceptance rates
+  vector<int> mc_accept_burnin(rungs - 1);
+  vector<int> mc_accept_sampling(rungs - 1);
   
   
   // ---------- burn-in MCMC ----------
@@ -156,7 +161,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     
     // perform Metropolis coupling
     if (s.coupling_on) {
-      coupling(particle_vec);
+      coupling(particle_vec, mc_accept_burnin);
     }
     
     // update progress bars
@@ -207,7 +212,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     
     // perform Metropolis coupling
     if (s.coupling_on) {
-      coupling(particle_vec);
+      coupling(particle_vec, mc_accept_sampling);
     }
     
     // update progress bars
@@ -242,13 +247,16 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   Rcpp::List ret = Rcpp::List::create(Rcpp::Named("loglike_burnin") = loglike_burnin,
                                       Rcpp::Named("theta_burnin") = theta_burnin,
                                       Rcpp::Named("loglike_sampling") = loglike_sampling,
-                                      Rcpp::Named("theta_sampling") = theta_sampling);
+                                      Rcpp::Named("theta_sampling") = theta_sampling,
+                                      Rcpp::Named("beta_raised_vec") = beta_raised_vec,
+                                      Rcpp::Named("mc_accept_burnin") = mc_accept_burnin,
+                                      Rcpp::Named("mc_accept_sampling") = mc_accept_sampling);
   return ret;
 }
 
 //------------------------------------------------
 // Metropolis-coupling over temperature rungs
-void coupling(vector<Particle> &particle_vec) {
+void coupling(vector<Particle> &particle_vec, vector<int> &mc_accept) {
   
   // get number of rungs
   int rungs = int(particle_vec.size());
@@ -296,7 +304,7 @@ void coupling(vector<Particle> &particle_vec) {
       particle_vec[rung2].logprior = logprior_tmp;
       
       // update acceptance rates
-      //coupling_accept[i]++;
+      mc_accept[i]++;
     }
     
   }  // end loop over rungs
