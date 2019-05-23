@@ -83,7 +83,7 @@
       <h1>Metropolis Coupling</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2019-05-22</h4>
+            <h4 class="date">2019-05-23</h4>
       
       
       <div class="hidden name"><code>metropolis_coupling.Rmd</code></div>
@@ -92,7 +92,7 @@
 
     
     
-<p>Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonion Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to “roll around” the target distribution allowing it to go round corners, but it still struggles with multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains. Note that this is separate from the concept of running multiple chains to diagnose performance, which is dealt with in a <a href="TODO">separate vignette</a>.</p>
+<p>Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonion Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to “roll around” the target distribution allowing it to go round corners, but it still struggles with multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains. Note that this is separate from the concept of running multiple chains to diagnose performance, which is dealt with in a <a href="https://mrc-ide.github.io/drjacoby/articles/parallel.html">separate vignette</a>.</p>
 <p>This vignette demonstrates how Metropolis coupling can be implemented within <em>drjacoby</em> to solve a deliberately awkward MCMC problem.</p>
 <div id="setup" class="section level2">
 <h2 class="hasAnchor">
@@ -152,7 +152,7 @@ plot_base &lt;-<span class="st"> </span>ggplot2<span class="op">::</span><span c
 
 <span class="co"># repeat analysis multiple times</span>
 plot_list &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>()
-<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">9</span>) {
+<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">1</span>) {
   
   <span class="co"># run MCMC</span>
   mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
@@ -194,7 +194,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.4%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.475005 seconds</span>
+<span class="co">#&gt; completed in 0.496979 seconds</span>
 
 <span class="co"># create plot of alpha against beta</span>
 plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),

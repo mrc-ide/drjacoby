@@ -2,14 +2,17 @@
 % Please edit documentation in R/main.R
 \name{run_mcmc}
 \alias{run_mcmc}
-\title{Run MCMC}
+\title{Run drjacoby MCMC}
 \usage{
 run_mcmc(data, df_params, loglike, logprior, burnin = 1000,
   samples = 10000, rungs = 1, chains = 1, coupling_on = TRUE,
   GTI_pow = 3, cluster = NULL, pb_markdown = FALSE, silent = FALSE)
 }
 \arguments{
-\item{data}{TODO.}
+\item{data}{a vector of data values. When using C++ versions of the
+likelihood and/or prior these values are treated internally as doubles, so
+while integer and boolean values can be used, keep in mind that these will
+be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).}
 
 \item{df_params}{a dataframe of parameters. Must contain the following
 elements:
@@ -53,5 +56,5 @@ being printed to markdown files.}
 \item{silent}{whether to suppress all console output.}
 }
 \description{
-Run MCMC.
+Run flexible MCMC through drjacoby.
 }

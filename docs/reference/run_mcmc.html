@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Run MCMC — run_mcmc • drjacoby</title>
+<title>Run drjacoby MCMC — run_mcmc • drjacoby</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Run MCMC — run_mcmc" />
+<meta property="og:title" content="Run drjacoby MCMC — run_mcmc" />
 
-<meta property="og:description" content="Run MCMC." />
+<meta property="og:description" content="Run flexible MCMC through drjacoby." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -114,14 +114,14 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Run MCMC</h1>
+    <h1>Run drjacoby MCMC</h1>
     
     <div class="hidden name"><code>run_mcmc.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Run MCMC.</p>
+    <p>Run flexible MCMC through drjacoby.</p>
     
     </div>
 
@@ -134,7 +134,10 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>data</th>
-      <td><p>TODO.</p></td>
+      <td><p>a vector of data values. When using C++ versions of the
+likelihood and/or prior these values are treated internally as doubles, so
+while integer and boolean values can be used, keep in mind that these will
+be recast as doubles in the likelihood (i.e. <code>TRUE = 1.0</code>).</p></td>
     </tr>
     <tr>
       <th>df_params</th>

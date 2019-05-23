@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r, echo=FALSE}
+```{r, echo = FALSE}
 # set random seed
 set.seed(1)
 
@@ -24,7 +24,7 @@ set.seed(1)
 library(drjacoby)
 ```
 
-Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonion Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to "roll around" the target distribution allowing it to go round corners, but it still struggles with multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains. Note that this is separate from the concept of running multiple chains to diagnose performance, which is dealt with in a [separate vignette](TODO).
+Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonion Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to "roll around" the target distribution allowing it to go round corners, but it still struggles with multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains. Note that this is separate from the concept of running multiple chains to diagnose performance, which is dealt with in a [separate vignette](https://mrc-ide.github.io/drjacoby/articles/parallel.html).
 
 This vignette demonstrates how Metropolis coupling can be implemented within *drjacoby* to solve a deliberately awkward MCMC problem.
 
@@ -103,7 +103,7 @@ plot_base <- ggplot2::ggplot() + ggplot2::theme_bw() + ggplot2::coord_cartesian(
 
 # repeat analysis multiple times
 plot_list <- list()
-for (i in 1:9) {
+for (i in 1:1) {
   
   # run MCMC
   mcmc_out <- run_mcmc(data = x,

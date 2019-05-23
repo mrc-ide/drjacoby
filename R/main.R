@@ -12,11 +12,14 @@ check_drjacoby_loaded <- function() {
 }
 
 #------------------------------------------------
-#' @title Run MCMC
+#' @title Run drjacoby MCMC
 #'
-#' @description Run MCMC.
+#' @description Run flexible MCMC through drjacoby. 
 #'
-#' @param data TODO.
+#' @param data a vector of data values. When using C++ versions of the
+#'   likelihood and/or prior these values are treated internally as doubles, so
+#'   while integer and boolean values can be used, keep in mind that these will
+#'   be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).
 #' @param df_params a dataframe of parameters. Must contain the following
 #'   elements:
 #'   \itemize{
@@ -141,16 +144,9 @@ run_mcmc <- function(data,
                          test_convergence = test_convergence,
                          update_progress = update_progress)
   
-  # progress bars
-  pb_burnin <- txtProgressBar(min = 0, max = burnin, initial = NA, style = 3)
-  pb_samples <- txtProgressBar(min = 0, max = samples, initial = NA, style = 3)
-  args_progress <- list(pb_burnin = pb_burnin,
-                        pb_samples = pb_samples)
-  
   # complete list of arguments
   args <- list(args_params = args_params,
-               args_functions = args_functions,
-               args_progress = args_progress)
+               args_functions = args_functions)
   
   # replicate arguments over chains
   parallel_args <- replicate(chains, args, simplify = FALSE)
@@ -244,8 +240,23 @@ deploy_chain <- function(args) {
     args$args_functions$logprior <- RcppXPtrUtils::cppXPtr(args$args_functions$logprior)
   }
   
+  # get parameters
+  burnin <- args$args_params$burnin
+  samples <- args$args_params$samples
+  
+  # make progress bars
+  pb_burnin <- txtProgressBar(min = 0, max = burnin, initial = NA, style = 3)
+  pb_samples <- txtProgressBar(min = 0, max = samples, initial = NA, style = 3)
+  args$args_progress <- list(pb_burnin = pb_burnin,
+                             pb_samples = pb_samples)
+  
+  
   # run C++ function
   ret <- main_cpp(args)
+  
+  # remove and cleanup pointers
+  rm(args)
+  gc()
   
   return(ret)
 }
