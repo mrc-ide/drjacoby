@@ -2,7 +2,7 @@
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/mrc-ide/drjacoby?branch=master&svg=true)](https://ci.appveyor.com/project/mrc-ide/drjacoby)
 [![Coverage status](https://codecov.io/gh/mrc-ide/drjacoby/branch/master/graph/badge.svg)](https://codecov.io/github/mrc-ide/drjacoby?branch=master)
 
-![](https://github.com/mrc-ide/drjacoby/blob/master/R_ignore/images/logo.png)
+![](https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo.png)
 
 Flexible Markov chain monte carlo via reparameterization
 
