@@ -103,7 +103,7 @@ plot_base <- ggplot2::ggplot() + ggplot2::theme_bw() + ggplot2::coord_cartesian(
 
 # repeat analysis multiple times
 plot_list <- list()
-for (i in 1:1) {
+for (i in 1:9) {
   
   # run MCMC
   mcmc_out <- run_mcmc(data = x,
