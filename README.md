@@ -6,7 +6,6 @@
 <br/>
 <img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo.png" height="60px" width="300px" />
 <br/>
-<br/>
 
 Flexible Markov chain monte carlo via reparameterization
 
