@@ -1,10 +1,10 @@
 ---
-title: "Running Parallel Chains"
+title: "Running Multiple Chains"
 author: "Bob Verity and Pete Winskill"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Running Parallel Chains}
+  %\VignetteIndexEntry{Running Multiple Chains}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,13 +24,13 @@ set.seed(1)
 library(drjacoby)
 ```
 
-Running multiple chains is a good way of checking that our MCMC is working, in the sense that it is converging on the same stationary distribution. Each chain is completely independent of all others, and so this is an "embarrassingly parallel" problem.
+Running multiple chains is a good way of checking that our MCMC is working, in the sense that it is converging on the same stationary distribution. Each chain is completely independent of all others, and so this qualifies as an [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) problem.
 
 This vignette will demonstrate how to run *drjacoby* with multiple chains, first in serial and then in parallel over cores.
 
 ## Setup
 
-As always, we require some data, some parameters, and some functions to work with (see [earlier examples](https://mrc-ide.github.io/drjacoby/articles/example.html)). The underlying model is not our focus here, so we will use a very basic model.
+As always, we require some data, some parameters, and some functions to work with (see [earlier examples](https://mrc-ide.github.io/drjacoby/articles/example.html)). The underlying model is not our focus here, so we will use a very basic setup
 
 
 ```{r}
@@ -58,7 +58,7 @@ logprior <- "SEXP logprior(std::vector<double> params){
 
 ## Running multiple chains
 
-Whenever the input argument `cluster` is `NULL`, chains will run in serial. This is true by default, so running multiple chains in serial is a simple case of specifying the `chains` argument:
+Whenever the input argument `cluster` is `NULL`, chains will run in serial. This is true by default, so running multiple chains in serial is simply a case of specifying the `chains` argument:
 
 ```{r}
 # run MCMC in serial
@@ -83,7 +83,7 @@ plot(mcmc_out$chain1$theta_sampling$rung1$mu, type = "l")
 lines(mcmc_out$chain2$theta_sampling$rung1$mu, col = 2)
 ```
 
-Running in parallel is only slightly more complex. Before running anything we need to know how many cores our machine has. You may know this number already, but if you don't then the parallel package has a handy function for detecting the number of cores for you:
+Running in parallel is only slightly more complex. Before running anything we need to know how many cores our machine has. You may know this number already, but if you don't then the `parallel` package has a handy function for detecting the number of cores for you:
 
 ```{r, eval = FALSE}
 cores <- parallel::detectCores()
@@ -115,8 +115,15 @@ mcmc_out <- run_mcmc(data = x,
 Finally, it is good practice to shut down the workers once we are finished:
 
 ```{r, eval = FALSE}
-stopCluster(cl)
+parallel::stopCluster(cl)
 ```
 
 Running chains in parallel tends to be faster than running in serial, although remember that you will see a delay the first time you run a new set of functions as the likelihood and prior must compile on every chain.
+
+## Comparing chains
+
+TODO!
+
+- convergence statistics?
+- plots?
 

@@ -5,11 +5,11 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Running Parallel Chains • drjacoby</title>
+<title>Running Multiple Chains • drjacoby</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Running Parallel Chains">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Running Multiple Chains">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -80,7 +80,7 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>Running Parallel Chains</h1>
+      <h1>Running Multiple Chains</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
             <h4 class="date">2019-05-23</h4>
@@ -92,12 +92,12 @@
 
     
     
-<p>Running multiple chains is a good way of checking that our MCMC is working, in the sense that it is converging on the same stationary distribution. Each chain is completely independent of all others, and so this is an “embarrassingly parallel” problem.</p>
+<p>Running multiple chains is a good way of checking that our MCMC is working, in the sense that it is converging on the same stationary distribution. Each chain is completely independent of all others, and so this qualifies as an <a href="https://en.wikipedia.org/wiki/Embarrassingly_parallel">embarrassingly parallel</a> problem.</p>
 <p>This vignette will demonstrate how to run <em>drjacoby</em> with multiple chains, first in serial and then in parallel over cores.</p>
 <div id="setup" class="section level2">
 <h2 class="hasAnchor">
 <a href="#setup" class="anchor"></a>Setup</h2>
-<p>As always, we require some data, some parameters, and some functions to work with (see <a href="https://mrc-ide.github.io/drjacoby/articles/example.html">earlier examples</a>). The underlying model is not our focus here, so we will use a very basic model.</p>
+<p>As always, we require some data, some parameters, and some functions to work with (see <a href="https://mrc-ide.github.io/drjacoby/articles/example.html">earlier examples</a>). The underlying model is not our focus here, so we will use a very basic setup</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define data</span>
 x &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>(<span class="dv">10</span>)
 
@@ -122,7 +122,7 @@ logprior &lt;-<span class="st"> "SEXP logprior(std::vector&lt;double&gt; params)
 <div id="running-multiple-chains" class="section level2">
 <h2 class="hasAnchor">
 <a href="#running-multiple-chains" class="anchor"></a>Running multiple chains</h2>
-<p>Whenever the input argument <code>cluster</code> is <code>NULL</code>, chains will run in serial. This is true by default, so running multiple chains in serial is a simple case of specifying the <code>chains</code> argument:</p>
+<p>Whenever the input argument <code>cluster</code> is <code>NULL</code>, chains will run in serial. This is true by default, so running multiple chains in serial is simply a case of specifying the <code>chains</code> argument:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC in serial</span>
 mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
                      <span class="dt">df_params =</span> df_params,
@@ -144,7 +144,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.4%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.002045 seconds</span>
+<span class="co">#&gt; completed in 0.001927 seconds</span>
 <span class="co">#&gt; MCMC chain 2</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -157,7 +157,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.5%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.001545 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.001547 seconds</span></code></pre></div>
 <p>When we look at our MCMC output we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">temperature rungs</a> then these would also be duplicated over chains.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># summarise output</span>
 mcmc_out
@@ -172,7 +172,7 @@ mcmc_out
 <span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1<span class="op">$</span>mu, <span class="dt">type =</span> <span class="st">"l"</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/lines">lines</a></span>(mcmc_out<span class="op">$</span>chain2<span class="op">$</span>theta_sampling<span class="op">$</span>rung1<span class="op">$</span>mu, <span class="dt">col =</span> <span class="dv">2</span>)</code></pre></div>
 <p><img src="parallel_files/figure-html/unnamed-chunk-4-1.png" width="768"></p>
-<p>Running in parallel is only slightly more complex. Before running anything we need to know how many cores our machine has. You may know this number already, but if you don’t then the parallel package has a handy function for detecting the number of cores for you:</p>
+<p>Running in parallel is only slightly more complex. Before running anything we need to know how many cores our machine has. You may know this number already, but if you don’t then the <code>parallel</code> package has a handy function for detecting the number of cores for you:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cores &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/detectCores">detectCores</a></span>()</code></pre></div>
 <p>Next we make a cluster object, which creates multiple copies of R running in parallel over different cores. Here we are using all available cores, but if you want to hold some back for other intensive tasks then simply use a smaller number of cores when specifying this cluster.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cl &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/makeCluster">makeCluster</a></span>(cores)</code></pre></div>
@@ -189,8 +189,17 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
                      <span class="dt">cluster =</span> cl,
                      <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)</code></pre></div>
 <p>Finally, it is good practice to shut down the workers once we are finished:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">stopCluster</span>(cl)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/makeCluster">stopCluster</a></span>(cl)</code></pre></div>
 <p>Running chains in parallel tends to be faster than running in serial, although remember that you will see a delay the first time you run a new set of functions as the likelihood and prior must compile on every chain.</p>
+</div>
+<div id="comparing-chains" class="section level2">
+<h2 class="hasAnchor">
+<a href="#comparing-chains" class="anchor"></a>Comparing chains</h2>
+<p>TODO!</p>
+<ul>
+<li>convergence statistics?</li>
+<li>plots?</li>
+</ul>
 </div>
   </div>
 
@@ -201,6 +210,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#setup">Setup</a></li>
       <li><a href="#running-multiple-chains">Running multiple chains</a></li>
+      <li><a href="#comparing-chains">Comparing chains</a></li>
       </ul>
 </div>
       </div>

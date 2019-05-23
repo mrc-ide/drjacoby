@@ -92,7 +92,7 @@
 
     
     
-<p>Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonion Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to “roll around” the target distribution allowing it to go round corners, but it still struggles with multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains. Note that this is separate from the concept of running multiple chains to diagnose performance, which is dealt with in a <a href="https://mrc-ide.github.io/drjacoby/articles/parallel.html">separate vignette</a>.</p>
+<p>Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonian Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to “roll around” the target distribution allowing it to go round corners, but it still struggles with multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains. Note that this is separate from the concept of running multiple chains to diagnose performance, which is dealt with in a <a href="https://mrc-ide.github.io/drjacoby/articles/parallel.html">separate vignette</a>.</p>
 <p>This vignette demonstrates how Metropolis coupling can be implemented within <em>drjacoby</em> to solve a deliberately awkward MCMC problem.</p>
 <div id="setup" class="section level2">
 <h2 class="hasAnchor">
@@ -171,8 +171,8 @@ plot_list &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rd
 <span class="co"># plot grid</span>
 gridExtra<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/gridExtra/topics/arrangeGrob">grid.arrange</a></span>(<span class="dt">grobs =</span> plot_list)</code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-6-1.png" width="768"></p>
-<p>Clearly this MCMC is not mixing well. By looking over all nine plots we can get a rough idea of what the distribution <em>should</em> look like, but no single MCMC run has captured it adequately. You can experiment with increasing the number of samples - you should find that we get better results for more samples, but a <em>very</em> large number of samples are needed before we get a good representation of both the left and right sides of the distribution.</p>
-<p>This is the kind of problem Metropolis coupling was designed to solve. To use Metropolis coupling we need to specify an additional argument to the <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> function - the number of <code>rungs</code>. In this example we use 20 rungs, meaning we run 20 chains, each at a different temperature. Note that <code>$rung1</code> in the output always corresponds to the cold chain, and increasing rungs have increasing temperatures.</p>
+<p>Clearly this MCMC is not mixing well! By looking over all nine plots we can get a rough idea of what the distribution <em>should</em> look like, but no single MCMC run has captured it adequately. You can experiment with increasing the number of samples - you should get better results for more samples, but a <em>very</em> large number of samples are needed before we get good mixing between the left and right sides of the distribution.</p>
+<p>Metropolis coupling is perfectly designed to solve this kind of problem. To activate Metropolis coupling we need to specify an additional argument to the <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> function - the number of <code>rungs</code>. In this example we use 20 rungs, meaning we run 20 chains, each at a different temperature. Note that <code>$rung1</code> in the output always corresponds to the cold chain, and increasing rungs have increasing temperatures.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC</span>
 mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
                      <span class="dt">df_params =</span> df_params,
@@ -194,7 +194,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.4%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.493614 seconds</span>
+<span class="co">#&gt; completed in 0.512681 seconds</span>
 
 <span class="co"># create plot of alpha against beta</span>
 plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
@@ -227,7 +227,7 @@ plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="
                                 <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1)</code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-9-1.png" width="480"></p>
 <p>Although we have some mixing between the left and right sides of the distribution, overall sampling is still a bit patchy.</p>
-<p>One way of improving mixing between rungs is simply to increase the number of rungs, so the distance between distributions is smaller. The following results are for 50 rungs:</p>
+<p>One way of improving mixing between rungs is simply to increase the number of rungs, so the distance between distributions is smaller:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC</span>
 mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
                      <span class="dt">df_params =</span> df_params,
@@ -247,7 +247,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
                                 <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1)</code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-10-2.png" width="480"></p>
-<p>This mitigates the problem to some extent, as we now have acceptance rates going “deeper” towards the prior, however it comes at a high computational cost. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter <code>GTI_pow</code>, with higher values leading to more highly concentrated rungs. The previous runs had <code>GTI_pow</code> set to 1.0 to ensure that rungs were evenly distributed between [0,1] - now we repeat the MCMC with 20 rungs and <code>GTI_pow = 3.0</code>:</p>
+<p>This mitigates the problem to some extent, as we now have acceptance rates going “deeper” towards the prior, however the hottest rung is still not passing information up the ladder. It comes at a high computational cost, as we are effectively running the MCMC 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter <code>GTI_pow</code>, in which higher values lead to more highly concentrated rungs. The previous two MCMCs had <code>GTI_pow</code> set to 1.0 leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with 20 rungs and <code>GTI_pow = 3.0</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC</span>
 mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
                      <span class="dt">df_params =</span> df_params,
@@ -267,8 +267,8 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
                                 <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1)</code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-11-2.png" width="480"></p>
-<p>We now find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder, and can therefore be condifent that the prior is “talking to” the posterior. When this is the case it is <em>unlikely</em> (but not impossible) that your MCMC is still missing large parts of the posterior distribution.</p>
-<p>In summary, the correct number of rungs is enough that we have decent acceptance rates all the way through our temperature ladder.</p>
+<p>We find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder. We can therefore be condifent that the prior is “talking to” the posterior. When this is the case it is <em>unlikely</em> (but not impossible) that your MCMC is still missing large parts of the posterior distribution.</p>
+<p>In summary, the correct number of rungs is enough that we have decent acceptance rates all the way through our temperature ladder. We can explore the impact this is having on our posterior distribution by running <a href="https://mrc-ide.github.io/drjacoby/articles/parallel.html">multiple chains</a>.</p>
 </div>
   </div>
 

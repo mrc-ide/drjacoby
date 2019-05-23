@@ -50,7 +50,7 @@ sigma_true <- 2
 x <- rnorm(10, mean = mu_true, sd = sigma_true)
 ```
 
-For our example MCMC we will assume that we know the correct distribution of the data (i.e. the normal distribution), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the parameters of the distribution are unknown. Parameters within *drjacoby* must be defined in dataframe format, where we must specify minimum, maximum, and initial values of all parameters:
+For our example MCMC we will assume that we know the correct distribution of the data (i.e. the normal distribution), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the parameters of the distribution are unknown. Parameters within *drjacoby* are defined in dataframe format, where we specify minimum, maximum, and initial values of all parameters:
 
 ```{r}
 # define parameters dataframe
@@ -68,7 +68,7 @@ Next, we need a likelihood function. This **must** have two input arguments: 1) 
 
 ![Do not underestimate the importance of taking logs.](https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/loglady.jpg)
 
-A good way of structuring our likelihood function is to split the input vector of parameters into individual elements before calculating the probability of the data. In our example, the likelihood function is quite simple thanks to the `dnorm()` function which can return the density of the normal distribution in log space:
+A good way of structuring our likelihood function is to split the input vector of parameters into individual elements before calculating the probability of the data. In our example, the likelihood function is quite simple thanks to the `dnorm()` function which can return the density of the normal distribution already in log space:
 
 ```{r}
 # define log-likelihood function
@@ -109,7 +109,7 @@ Be careful to ensure that your prior is defined over the same range as specified
 
 ## Running the MCMC
 
-Once we have all the elements above it is straightforward to run a basic MCMC. As with any MCMC, we must define the number of burn-in and sampling iterations that we want. By default *drjacoby* prints progress bars to the console to report on the progress of the MCMC. When running in R markdown we can use the option `pb_markdown = TRUE` to print progress bars in a markdown-friendly way, although you will probably want to leave this option turned off when running interactively.
+Once we have all the elements above it is straightforward to run a basic MCMC. We input the four elements listed above, along with the number of burn-in and sampling iterations that. By default *drjacoby* prints progress bars to the console to keep you updated on the progress of the MCMC. When running in R markdown we can use the option `pb_markdown = TRUE` to print progress bars in a markdown-friendly way, although you will probably want to leave this option turned off when running interactively (simply delete this argument).
 
 ```{r}
 # run MCMC
@@ -122,7 +122,7 @@ r_mcmc_out <- run_mcmc(data = x,
                        pb_markdown = TRUE)
 ```
 
-The raw output produced by this function is essentially a large nested list, containing all log-likelihoods and parameter values. We can dig down to individual elements of this list using the `$` symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first few `mu` values from from first rung of the the first chain:
+The raw output produced is essentially a large nested list, containing all log-likelihoods and parameter values. We can dig down to individual elements of this list using the `$` symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first few `mu` values from from first rung of the the first chain:
 
 ```{r}
 # get first few mu values
@@ -163,7 +163,7 @@ abline(h = sigma_true, col = 2)
 
 ## Using C++ functions
 
-Although *drjacoby* is an R package, under the hood it is running C++ through [Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html). When we pass an R likelihood function to the MCMC, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This comes with a computational overhead, which can be avoided by specifying functions directly within C++.
+Although *drjacoby* is an R package, under the hood it is running C++ through [Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html). When we pass an R likelihood function to `run_mcmc()`, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This comes with a computational overhead, which can be avoided by specifying functions directly within C++.
 
 To use C++ functions within *drjacoby* we simply write them directly within R as character strings. As before, there are some constraints on what this function must look like. First, it **must** take as input a `std::vector<double>` of parameters **followed by** a `std::vector<double>` of data. Data **must** be input as doubles, and so data consisting of integer or boolean values should be dealt with as though they are continuous values (for example `TRUE = 1.0`, `FALSE = 0.0`). Second, the function **must** return an object of class `SEXP`. The easiest way to achieve this is to calculate the raw return value as a double, and to use the `Rcpp::wrap()` function when returning to transform to `SEXP`. As before, the value returned should be the likelihood evaluated in **log space**.
 
@@ -218,7 +218,7 @@ r_mcmc_out <- run_mcmc(data = x,
                        pb_markdown = TRUE)
 ```
 
-You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this is only the first time a function is compiled. We can quantify how much faster the C++ method is using the `microbenchmark` package. In the following we compare the MCMC evaluated using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.
+You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. We can quantify how much faster the C++ method is using the `microbenchmark` package. In the following we compare the MCMC evaluated using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.
 
 ```{r}
 # run both R and C++ versions multiple times to compare speed

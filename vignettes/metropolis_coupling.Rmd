@@ -24,7 +24,7 @@ set.seed(1)
 library(drjacoby)
 ```
 
-Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonion Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to "roll around" the target distribution allowing it to go round corners, but it still struggles with multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains. Note that this is separate from the concept of running multiple chains to diagnose performance, which is dealt with in a [separate vignette](https://mrc-ide.github.io/drjacoby/articles/parallel.html).
+Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonian Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to "roll around" the target distribution allowing it to go round corners, but it still struggles with multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains. Note that this is separate from the concept of running multiple chains to diagnose performance, which is dealt with in a [separate vignette](https://mrc-ide.github.io/drjacoby/articles/parallel.html).
 
 This vignette demonstrates how Metropolis coupling can be implemented within *drjacoby* to solve a deliberately awkward MCMC problem.
 
@@ -123,9 +123,9 @@ for (i in 1:9) {
 gridExtra::grid.arrange(grobs = plot_list)
 ```
 
-Clearly this MCMC is not mixing well. By looking over all nine plots we can get a rough idea of what the distribution *should* look like, but no single MCMC run has captured it adequately. You can experiment with increasing the number of samples - you should find that we get better results for more samples, but a *very* large number of samples are needed before we get a good representation of both the left and right sides of the distribution.
+Clearly this MCMC is not mixing well! By looking over all nine plots we can get a rough idea of what the distribution *should* look like, but no single MCMC run has captured it adequately. You can experiment with increasing the number of samples - you should get better results for more samples, but a *very* large number of samples are needed before we get good mixing between the left and right sides of the distribution.
 
-This is the kind of problem Metropolis coupling was designed to solve. To use Metropolis coupling we need to specify an additional argument to the `run_mcmc()` function - the number of `rungs`. In this example we use 20 rungs, meaning we run 20 chains, each at a different temperature. Note that `$rung1` in the output always corresponds to the cold chain, and increasing rungs have increasing temperatures.
+Metropolis coupling is perfectly designed to solve this kind of problem. To activate Metropolis coupling we need to specify an additional argument to the `run_mcmc()` function - the number of `rungs`. In this example we use 20 rungs, meaning we run 20 chains, each at a different temperature. Note that `$rung1` in the output always corresponds to the cold chain, and increasing rungs have increasing temperatures.
 
 ```{r, fig.width=5, fig.height=4}
 # run MCMC
@@ -178,7 +178,7 @@ plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
 
 Although we have some mixing between the left and right sides of the distribution, overall sampling is still a bit patchy.
 
-One way of improving mixing between rungs is simply to increase the number of rungs, so the distance between distributions is smaller. The following results are for 50 rungs:
+One way of improving mixing between rungs is simply to increase the number of rungs, so the distance between distributions is smaller:
 
 ```{r, fig.width=5, fig.height=4}
 # run MCMC
@@ -200,7 +200,7 @@ plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
                                 data = mcmc_out$chain1$theta_sampling$rung1)
 ```
 
-This mitigates the problem to some extent, as we now have acceptance rates going "deeper" towards the prior, however it comes at a high computational cost. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter `GTI_pow`, with higher values leading to more highly concentrated rungs. The previous runs had `GTI_pow` set to 1.0 to ensure that rungs were evenly distributed between [0,1] - now we repeat the MCMC with 20 rungs and `GTI_pow = 3.0`:
+This mitigates the problem to some extent, as we now have acceptance rates going "deeper" towards the prior, however the hottest rung is still not passing information up the ladder. It comes at a high computational cost, as we are effectively running the MCMC 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter `GTI_pow`, in which higher values lead to more highly concentrated rungs. The previous two MCMCs had `GTI_pow` set to 1.0 leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with 20 rungs and `GTI_pow = 3.0`:
 
 ```{r, fig.width=5, fig.height=4}
 # run MCMC
@@ -222,6 +222,6 @@ plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
                                 data = mcmc_out$chain1$theta_sampling$rung1)
 ```
 
-We now find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder, and can therefore be condifent that the prior is "talking to" the posterior. When this is the case it is *unlikely* (but not impossible) that your MCMC is still missing large parts of the posterior distribution.
+We find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder. We can therefore be condifent that the prior is "talking to" the posterior. When this is the case it is *unlikely* (but not impossible) that your MCMC is still missing large parts of the posterior distribution.
 
-In summary, the correct number of rungs is enough that we have decent acceptance rates all the way through our temperature ladder.
+In summary, the correct number of rungs is enough that we have decent acceptance rates all the way through our temperature ladder. We can explore the impact this is having on our posterior distribution by running [multiple chains](https://mrc-ide.github.io/drjacoby/articles/parallel.html).
