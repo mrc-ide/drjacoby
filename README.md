@@ -6,6 +6,8 @@
 knitr::include_graphics("https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo.png")
 ```
 
+<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo.png" height="400px" width="300px" />
+
 Flexible Markov chain monte carlo via reparameterization
 
 Full details can be found on the drjacoby [website](https://mrc-ide.github.io/drjacoby/).
