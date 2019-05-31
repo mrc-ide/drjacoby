@@ -3,6 +3,8 @@
 S3method(print,drjacoby_output)
 S3method(summary,drjacoby_output)
 export(check_drjacoby_loaded)
+export(check_likelihood_compilation)
+export(check_prior_compilation)
 export(plot_mc_acceptance)
 export(run_mcmc)
 import(ggplot2)
