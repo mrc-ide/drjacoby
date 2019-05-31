@@ -7,6 +7,7 @@ r_packages:
   - Rcpp
   - RcppXPtrUtils
   - microbenchmark
+  - ggplot2
 
 after_success:
   - Rscript -e 'covr::codecov()'
