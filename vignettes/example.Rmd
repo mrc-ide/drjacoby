@@ -218,39 +218,23 @@ r_mcmc_out <- run_mcmc(data = x,
                        pb_markdown = TRUE)
 ```
 
-You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. We can quantify how much faster the C++ method is using the `microbenchmark` package. In the following we compare the MCMC evaluated using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.
+You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. We can quantify how much faster the C++ method is using the `microbenchmark` package. In the following we compare the MCMC evaluated over 100,000 iterations using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.
 
-```{r}
-# run both R and C++ versions multiple times to compare speed
-bm <- microbenchmark::microbenchmark(r_version = run_mcmc(data = x,
-                                                          df_params = df_params,
-                                                          loglike = r_loglike,
-                                                          logprior = r_logprior,
-                                                          burnin = 1e3,
-                                                          samples = 1e3,
-                                                          silent = TRUE),
-                                     cpp_version = run_mcmc(data = x,
-                                                            df_params = df_params,
-                                                            loglike = cpp_loglike,
-                                                            logprior = cpp_logprior,
-                                                            burnin = 1e3,
-                                                            samples = 1e3,
-                                                            silent = TRUE),
-                                     mixed_version = run_mcmc(data = x,
-                                                              df_params = df_params,
-                                                              loglike = cpp_loglike,
-                                                              logprior = r_logprior,
-                                                              burnin = 1e3,
-                                                              samples = 1e3,
-                                                              silent = TRUE),
-                                     times = 10)
-summary(bm)
+```{r, echo=FALSE, fig.height = 3, fig.width = 7}
+#microbenchmark:::summary.microbenchmark(drjacoby:::bm)
+ggplot2::ggplot(drjacoby:::bm, ggplot2::aes(x = expr, y = time / 1e6, fill = expr)) + 
+  ggplot2::geom_violin() +
+  ggplot2::scale_fill_brewer(palette = 2, type = "qual", guide = FALSE) +
+  ggplot2::xlab("") +
+  ggplot2::ylab("Time (milliseconds)") +
+  ggplot2::coord_flip() +
+  ggplot2::theme_bw()
 ```
 
 ```{r, echo = FALSE}
 # hidden block, calculate speed-up of C++
-median_time <- summary(bm)$median
-speedup <- round(median_time[1]/median_time[2], digits = 1)
+median_time <- microbenchmark:::summary.microbenchmark(drjacoby:::bm)$median
+speedup <- round(median_time[1]/median_time[3], digits = 1)
 ```
 
 The pure C++ version was on average around `r speedup` times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is your goal then C++ versions of *both* the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.
