@@ -17,4 +17,4 @@ Together, these methods lead to a flexible MCMC that should provide good results
 
 The likelihood and prior that go into *drjacoby* are defined by the user, and can be written in R or C++, with the latter leading to significant performance advantages. Currently the main drawback of *drjacoby* is that all parameters must be continuous (i.e. no integer or boolean values), although this is likely to be relaxed in later versions.
 
-After [installing](https://mrc-ide.github.io/drjacoby/articles/installation.html) *drjacoby*, take at look at the first [exmample application](https://mrc-ide.github.io/drjacoby/articles/example.html).
+After [installing](https://mrc-ide.github.io/drjacoby/articles/installation.html) *drjacoby*, take at look at the first [example application](https://mrc-ide.github.io/drjacoby/articles/example.html).
