@@ -48,6 +48,7 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling") {
 #' @param lag Maximum lag. Must be an integer between 20 and 500.
 #' @param par Vector of parameter names.
 #'
+#'
 #' @export
 plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling") {
   # check inputs
@@ -74,14 +75,14 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   out <- tidyr::gather(out, "parameter", "Autocorrelation", -lag)
   
   ggplot2::ggplot(data = out,
-                  ggplot2::aes(x = lag, y = 0, xend = lag, yend = Autocorrelation)) + 
+                  ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$Autocorrelation)) + 
     ggplot2::geom_hline(yintercept = 0, lty = 2, col = "red") + 
     ggplot2::geom_segment(size = 1.5) +
     ggplot2::theme_bw() +
     ggplot2::ylab("Autocorrelation") +
     ggplot2::xlab("Lag") +
     ggplot2::ylim(min(out$Autocorrelation), 1) +
-    ggplot2::facet_wrap( ~ parameter)
+    ggplot2::facet_wrap( ~ .data$parameter)
 }
 
 #' @title Estimate autocorrelation
@@ -89,5 +90,5 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #' @inheritParams plot_autocorrelation
 #' @param x Single chain.
 acf_data <- function(x, lag){
-  acf(x, plot = FALSE, lag.max = lag)$acf
+  stats::acf(x, plot = FALSE, lag.max = lag)$acf
 }

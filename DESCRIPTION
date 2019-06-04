@@ -19,7 +19,9 @@ Imports:
     coda,
     parallel,
     ggplot2,
-    RcppXPtrUtils
+    RcppXPtrUtils,
+    tidyr,
+    rlang
 SystemRequirements: C++11
 Suggests: 
     testthat,
