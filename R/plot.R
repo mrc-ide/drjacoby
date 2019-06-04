@@ -40,3 +40,54 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling") {
   return(plot1)
 }
 
+#' @title Plot autocorrelation
+#'
+#' @description Plot autocorrelation for specified parameters
+#'
+#' @inheritParams plot_mc_acceptance
+#' @param lag Maximum lag. Must be an integer between 20 and 500.
+#' @param par Vector of parameter names.
+#'
+#' @export
+plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling") {
+  # check inputs
+  assert_custom_class(x, "drjacoby_output")
+  assert_single_pos_int(chain)
+  assert_leq(chain, length(x))
+  assert_in(phase, c("burnin", "sampling"))
+  assert_single_bounded(lag, 1, 500)
+  
+  # get values
+  if (phase == "burnin") {
+    data <- x[[chain]]$theta_burnin$rung1
+  } else {
+    data <- x[[chain]]$theta_sampling$rung1
+  }
+  # Select parameters
+  if(!is.null(par)){
+    data <- data[, colnames(data) %in% par, drop = FALSE]
+  }
+  # Estimate autocorrelation
+  out <- as.data.frame(apply(data, 2, acf_data, lag = lag))
+  # Format data for plotting
+  out$lag <- 0:lag
+  out <- tidyr::gather(out, "parameter", "Autocorrelation", -lag)
+  
+  ggplot2::ggplot(data = out,
+                  ggplot2::aes(x = lag, y = 0, xend = lag, yend = Autocorrelation)) + 
+    ggplot2::geom_hline(yintercept = 0, lty = 2, col = "red") + 
+    ggplot2::geom_segment(size = 1.5) +
+    ggplot2::theme_bw() +
+    ggplot2::ylab("Autocorrelation") +
+    ggplot2::xlab("Lag") +
+    ggplot2::ylim(min(out$Autocorrelation), 1) +
+    ggplot2::facet_wrap( ~ parameter)
+}
+
+#' @title Estimate autocorrelation
+#'
+#' @inheritParams plot_autocorrelation
+#' @param x Single chain.
+acf_data <- function(x, lag){
+  acf(x, plot = FALSE, lag.max = lag)$acf
+}
