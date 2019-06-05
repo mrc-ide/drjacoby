@@ -46,7 +46,7 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling") {
 #'
 #' @inheritParams plot_mc_acceptance
 #' @param lag Maximum lag. Must be an integer between 20 and 500.
-#' @param par Vector of parameter names.
+#' @param par Vector of parameter names. If NULL all parameters are plotted
 #'
 #'
 #' @export
