@@ -220,6 +220,15 @@ run_mcmc <- function(data,
     output_processed[[c]]$theta_sampling <- theta_sampling
   }
   
+  # Estimate rhat
+  if(chains > 1){
+    rhat_est <- set_rhat(output_processed, chains)
+    # Add rhat etimate to each chain diagnostic element
+    for (c in 1:chains) {
+      output_processed[[c]]$diagnostics$rhat <- rhat_est
+    }
+  }
+  
   # save output as custom class
   class(output_processed) <- "drjacoby_output"
   

@@ -12,7 +12,7 @@ plot_autocorrelation(x, lag = 20, par = NULL, chain = 1,
 
 \item{lag}{Maximum lag. Must be an integer between 20 and 500.}
 
-\item{par}{Vector of parameter names.}
+\item{par}{Vector of parameter names. If NULL all parameters are plotted}
 
 \item{chain}{which chain to plot.}
 
