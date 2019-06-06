@@ -81,7 +81,7 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
     ggplot2::theme_bw() +
     ggplot2::ylab("Autocorrelation") +
     ggplot2::xlab("Lag") +
-    ggplot2::ylim(min(0 ,min(out$Autocorrelation)), 1) +
+    ggplot2::ylim(min(0, min(out$Autocorrelation)), 1) +
     ggplot2::facet_wrap(~ parameter)
 }
 
