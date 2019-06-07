@@ -54,3 +54,32 @@ set_rhat <- function(output, chains){
   return(rhat)
 }
 
+#' @title Estimate autocorrelation
+#'
+#' @inheritParams plot_autocorrelation
+#' @param x Single chain.
+acf_data <- function(x, lag){
+  stats::acf(x, plot = FALSE, lag.max = lag)$acf
+}
+
+#' Effective sample size
+#' 
+#' Estimates effective sample size. 
+#' Note 1: Lag is trunctaed at when autocorrelation < 0.05, 
+#' if -ve autocorrelation occurs it is possible to get ess > N.
+#' Note 2: ESS estimates will be too optimistic for chains that haven’t mixed.
+#'
+#' @param x chain
+#'
+#' @return The efefctive sample size of a chain
+ess <- function(x){
+  ac <- acf_data(x, 500)
+  if(all(is.na(ac))){
+    warning("ESS not estimated: likely chain variance = 0")
+    return(NULL)
+  }
+  if(min(ac) < 0.05){
+    ac <- ac[1:which(ac < 0.05)[1]]
+  }
+  round(length(x) / (1 + 2 * sum(ac)))
+}

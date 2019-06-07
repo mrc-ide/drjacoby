@@ -209,11 +209,12 @@ run_mcmc <- function(data,
     beta_raised_vec <- output_raw[[c]]$beta_raised_vec
     mc_accept_burnin <- output_raw[[c]]$mc_accept_burnin/burnin
     mc_accept_sampling <- output_raw[[c]]$mc_accept_sampling/samples
-    
+
     # store in processed output list
     output_processed[[c]]$diagnostics <- list(beta_raised = beta_raised_vec,
                                               mc_accept_burnin = mc_accept_burnin,
-                                              mc_accept_sampling = mc_accept_sampling)
+                                              mc_accept_sampling = mc_accept_sampling,
+                                              ess = apply(theta_sampling$rung1, 2, ess))
     output_processed[[c]]$loglike_burnin <- loglike_burnin
     output_processed[[c]]$loglike_sampling <- loglike_sampling
     output_processed[[c]]$theta_burnin <- theta_burnin

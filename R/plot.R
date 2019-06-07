@@ -85,10 +85,4 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
     ggplot2::facet_wrap(~ parameter)
 }
 
-#' @title Estimate autocorrelation
-#'
-#' @inheritParams plot_autocorrelation
-#' @param x Single chain.
-acf_data <- function(x, lag){
-  stats::acf(x, plot = FALSE, lag.max = lag)$acf
-}
+
