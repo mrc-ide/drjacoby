@@ -21,7 +21,8 @@ Imports:
     ggplot2,
     RcppXPtrUtils,
     tidyr,
-    rlang
+    rlang,
+    cowplot
 SystemRequirements: C++11
 Suggests: 
     testthat,

@@ -48,7 +48,6 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling") {
 #' @param lag Maximum lag. Must be an integer between 20 and 500.
 #' @param par Vector of parameter names. If NULL all parameters are plotted
 #'
-#'
 #' @export
 plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling") {
   # check inputs
@@ -83,6 +82,51 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
     ggplot2::xlab("Lag") +
     ggplot2::ylim(min(0, min(out$Autocorrelation)), 1) +
     ggplot2::facet_wrap(~ parameter)
+}
+
+#' @title Plot parameter estimates
+#'
+#' @description Plot parameter estimates
+#'
+#' @inheritParams plot_mc_acceptance
+#' @param parameter Name of parameter
+#'
+#' @export
+plot_par <- function(x, parameter){
+  
+  # check inputs
+  assert_custom_class(x, "drjacoby_output")
+  assert_length(parameter, 1)
+  if(!parameter %in% names(x$chain1$theta_sampling$rung1)){
+    stop("Parameter name not recognised")
+  }
+  
+  # Combine chains
+  pd <- list()
+  for(i in 1:length(x)){
+    pd[[i]] <- data.frame(y = x[[i]]$theta_sampling$rung1[[parameter]])
+    pd[[i]]$chain <- i
+    pd[[i]]$x <- 1:nrow(pd[[i]])
+  }
+  pd <- do.call("rbind", pd)
+  pd$chain <- factor(pd$chain)
+  # Set minimum bin number
+  b <- min(nrow(pd) / 4, 40)
+  # Histogram
+  p1 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$y)) + 
+    ggplot2::geom_histogram(bins = b, fill = "deepskyblue3", col = "darkblue") + 
+    ggplot2::ylab("Count") + 
+    ggplot2::xlab(parameter) +
+    ggplot2::theme_bw()
+  # Chains
+  p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$x, y = .data$y, col = .data$chain)) + 
+    ggplot2::geom_line() +
+    ggplot2::xlab("Iteration") +
+    ggplot2::ylab(parameter) +
+    ggplot2::theme_bw()
+  # Side by side
+  par_plot <- cowplot::plot_grid(p1, p2, ncol = 2, rel_widths = c(1.5, 2))
+  return(par_plot)
 }
 
 
