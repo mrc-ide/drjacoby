@@ -72,15 +72,14 @@ mcmc_out <- run_mcmc(data = x,
                      pb_markdown = TRUE)
 ```
 
-When we look at our MCMC output we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple [temperature rungs](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) then these would also be duplicated over chains.
+When we look at our MCMC output (using the `plot_par()` function) we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple [temperature rungs](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) then these would also be duplicated over chains.
 
-```{r, fig.width=8, fig.height=4}
+```{r, fig.width=10, fig.height=4}
 # summarise output
 mcmc_out
 
 # compare mu over both chains
-plot(mcmc_out$chain1$theta_sampling$rung1$mu, type = "l")
-lines(mcmc_out$chain2$theta_sampling$rung1$mu, col = 2)
+plot_par(mcmc_out, "mu")
 ```
 
 Running in parallel is only slightly more complex. Before running anything we need to know how many cores our machine has. You may know this number already, but if you don't then the `parallel` package has a handy function for detecting the number of cores for you:
@@ -125,9 +124,22 @@ Running chains in parallel tends to be faster than running in serial, although r
 One method of evaluating convergence is the rhat statistic, initially proposed by Gelman & Rubin (1992). This method involves comparing the within-chain with the between-chain variance. Similar estimates for these two values (rhat -> 1) can be used as an indicator of convergence. An approximate rhat estimate is automatically generated in drjacoby:
 
 ```{r}
+# Rhat statistic
 mcmc_out$chain1$diagnostics$rhat
 ```
 
-- Autocorrelation & effective sample size
-- plots?
+Chains from the MCMC will be autocorrelated. To assess the extent of autocorrelation we can
+view the correlation betwen values at a range of lags usin the `plot_autocorrelation()` function, specifying the chain and parameter:
+
+```{r, fig.width=6, fig.height=4}
+plot_autocorrelation(mcmc_out, par = "mu", chain = 1)
+```
+
+Chain autocorrealtion can be incorporated into estimate of effective sample size, which are automatically calculated by drjacoby:
+
+```{r}
+# Effective sample size (from 1000 sampling iterations)
+mcmc_out$chain1$diagnostics$ess
+```
+
 

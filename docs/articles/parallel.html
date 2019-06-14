@@ -144,7 +144,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.4%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.000000 seconds</span>
+<span class="co">#&gt; completed in 0.001994 seconds</span>
 <span class="co">#&gt; MCMC chain 2</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -157,8 +157,8 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.5%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.000000 seconds</span></code></pre></div>
-<p>When we look at our MCMC output we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">temperature rungs</a> then these would also be duplicated over chains.</p>
+<span class="co">#&gt; completed in 0.001999 seconds</span></code></pre></div>
+<p>When we look at our MCMC output (using the <code><a href="../reference/plot_par.html">plot_par()</a></code> function) we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">temperature rungs</a> then these would also be duplicated over chains.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># summarise output</span>
 mcmc_out
 <span class="co">#&gt; drjacoby output:</span>
@@ -169,9 +169,8 @@ mcmc_out
 <span class="co">#&gt; 1 parameters</span>
 
 <span class="co"># compare mu over both chains</span>
-<span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1<span class="op">$</span>mu, <span class="dt">type =</span> <span class="st">"l"</span>)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/lines">lines</a></span>(mcmc_out<span class="op">$</span>chain2<span class="op">$</span>theta_sampling<span class="op">$</span>rung1<span class="op">$</span>mu, <span class="dt">col =</span> <span class="dv">2</span>)</code></pre></div>
-<p><img src="parallel_files/figure-html/unnamed-chunk-4-1.png" width="768"></p>
+<span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(mcmc_out, <span class="st">"mu"</span>)</code></pre></div>
+<p><img src="parallel_files/figure-html/unnamed-chunk-4-1.png" width="960"></p>
 <p>Running in parallel is only slightly more complex. Before running anything we need to know how many cores our machine has. You may know this number already, but if you don’t then the <code>parallel</code> package has a handy function for detecting the number of cores for you:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cores &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/detectCores">detectCores</a></span>()</code></pre></div>
 <p>Next we make a cluster object, which creates multiple copies of R running in parallel over different cores. Here we are using all available cores, but if you want to hold some back for other intensive tasks then simply use a smaller number of cores when specifying this cluster.</p>
@@ -196,13 +195,18 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <h2 class="hasAnchor">
 <a href="#comparing-chains" class="anchor"></a>Comparing chains</h2>
 <p>One method of evaluating convergence is the rhat statistic, initially proposed by Gelman &amp; Rubin (1992). This method involves comparing the within-chain with the between-chain variance. Similar estimates for these two values (rhat -&gt; 1) can be used as an indicator of convergence. An approximate rhat estimate is automatically generated in drjacoby:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mcmc_out<span class="op">$</span>chain1<span class="op">$</span>diagnostics<span class="op">$</span>rhat
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Rhat statistic</span>
+mcmc_out<span class="op">$</span>chain1<span class="op">$</span>diagnostics<span class="op">$</span>rhat
 <span class="co">#&gt;     mu </span>
 <span class="co">#&gt; 1.0152</span></code></pre></div>
-<ul>
-<li>Autocorrelation &amp; effective sample size</li>
-<li>plots?</li>
-</ul>
+<p>Chains from the MCMC will be autocorrelated. To assess the extent of autocorrelation we can view the correlation betwen values at a range of lags usin the <code><a href="../reference/plot_autocorrelation.html">plot_autocorrelation()</a></code> function, specifying the chain and parameter:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_autocorrelation.html">plot_autocorrelation</a></span>(mcmc_out, <span class="dt">par =</span> <span class="st">"mu"</span>, <span class="dt">chain =</span> <span class="dv">1</span>)</code></pre></div>
+<p><img src="parallel_files/figure-html/unnamed-chunk-10-1.png" width="576"></p>
+<p>Chain autocorrealtion can be incorporated into estimate of effective sample size, which are automatically calculated by drjacoby:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Effective sample size (from 1000 sampling iterations)</span>
+mcmc_out<span class="op">$</span>chain1<span class="op">$</span>diagnostics<span class="op">$</span>ess
+<span class="co">#&gt;  mu </span>
+<span class="co">#&gt; 130</span></code></pre></div>
 </div>
   </div>
 
