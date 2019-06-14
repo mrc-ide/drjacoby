@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function reference • drjacoby</title>
+<title>Plot autocorrelation — plot_autocorrelation • drjacoby</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,7 +30,10 @@
 
 
 
-<meta property="og:title" content="Function reference" />
+<meta property="og:title" content="Plot autocorrelation — plot_autocorrelation" />
+
+<meta property="og:description" content="Plot autocorrelation for specified parameters" />
+<meta name="twitter:card" content="summary" />
 
 
 
@@ -47,7 +50,7 @@
   </head>
 
   <body>
-    <div class="container template-reference-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -109,108 +112,55 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Reference</h1>
+    <h1>Plot autocorrelation</h1>
+    
+    <div class="hidden name"><code>plot_autocorrelation.Rd</code></div>
     </div>
 
-    <table class="ref-index">
+    <div class="ref-description">
+    
+    <p>Plot autocorrelation for specified parameters</p>
+    
+    </div>
 
-    <colgroup>
-      
-      <col class="alias" />
-      <col class="title" />
-    </colgroup>
-
-    <tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
-        </th>
-      </tr>
-      <tr>
-        
-        <td>
-          <p><code><a href="acf_data.html">acf_data()</a></code> </p>
-        </td>
-        <td><p>Estimate autocorrelation</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="check_drjacoby_loaded.html">check_drjacoby_loaded()</a></code> </p>
-        </td>
-        <td><p>Check that drjacoby package has loaded successfully</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="check_likelihood_compilation.html">check_likelihood_compilation()</a></code> </p>
-        </td>
-        <td><p>Check Cpp loglikelihood function</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="check_prior_compilation.html">check_prior_compilation()</a></code> </p>
-        </td>
-        <td><p>Check Cpp logprior function</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="drjacoby.html">drjacoby</a></code> </p>
-        </td>
-        <td><p>Flexible Markov Chain Monte Carlo via Reparameterization</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="ess.html">ess()</a></code> </p>
-        </td>
-        <td><p>Effective sample size</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="gelman_rubin.html">gelman_rubin()</a></code> </p>
-        </td>
-        <td><p>Gelman-Rubin statistic</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_autocorrelation.html">plot_autocorrelation()</a></code> </p>
-        </td>
-        <td><p>Plot autocorrelation</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_mc_acceptance.html">plot_mc_acceptance()</a></code> </p>
-        </td>
-        <td><p>Plot Metropolis Coupling Acceptance</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_par.html">plot_par()</a></code> </p>
-        </td>
-        <td><p>Plot parameter estimates</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="run_mcmc.html">run_mcmc()</a></code> </p>
-        </td>
-        <td><p>Run drjacoby MCMC</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="set_rhat.html">set_rhat()</a></code> </p>
-        </td>
-        <td><p>Gelman-Rubin statistic: all parameters</p></td>
-      </tr>
-    </tbody>
+    <pre class="usage"><span class='fu'>plot_autocorrelation</span>(<span class='no'>x</span>, <span class='kw'>lag</span> <span class='kw'>=</span> <span class='fl'>20</span>, <span class='kw'>par</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>chain</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>)</pre>
+    
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>x</th>
+      <td><p>an object of class <code>drjacoby_output</code></p></td>
+    </tr>
+    <tr>
+      <th>lag</th>
+      <td><p>Maximum lag. Must be an integer between 20 and 500.</p></td>
+    </tr>
+    <tr>
+      <th>par</th>
+      <td><p>Vector of parameter names. If NULL all parameters are plotted</p></td>
+    </tr>
+    <tr>
+      <th>chain</th>
+      <td><p>which chain to plot.</p></td>
+    </tr>
+    <tr>
+      <th>phase</th>
+      <td><p>which phase to plot. Must be either "burnin" or "sampling".</p></td>
+    </tr>
     </table>
-  </div>
+    
 
+  </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#section-all-functions">All functions</a></li>
-    </ul>
+      <li><a href="#arguments">Arguments</a></li>
+                </ul>
+
   </div>
 </div>
 

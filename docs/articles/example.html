@@ -83,7 +83,7 @@
       <h1>Example MCMC Implementation</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2019-05-31</h4>
+            <h4 class="date">2019-06-14</h4>
       
       
       <div class="hidden name"><code>example.Rmd</code></div>
@@ -183,7 +183,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.6%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.184437 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.231051 seconds</span></code></pre></div>
 <p>The raw output produced is essentially a large nested list, containing all log-likelihoods and parameter values. We can dig down to individual elements of this list using the <code>$</code> symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first few <code>mu</code> values from from first rung of the the first chain:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get first few mu values</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/head">head</a></span>(r_mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_burnin<span class="op">$</span>rung1<span class="op">$</span>mu)
@@ -265,14 +265,14 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                       </span>
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 22.7%</span>
+<span class="co">#&gt; acceptance rate: 23.1%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                       </span>
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.7%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.013952 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.000000 seconds</span></code></pre></div>
 <p>You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. We can quantify how much faster the C++ method is using the <code>microbenchmark</code> package. In the following we compare the MCMC evaluated over 100,000 iterations using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.</p>
 <p><img src="example_files/figure-html/unnamed-chunk-13-1.png" width="672"></p>
 <p>The pure C++ version was on average around 17.6 times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is your goal then C++ versions of <em>both</em> the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.</p>

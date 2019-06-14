@@ -124,8 +124,8 @@ Running chains in parallel tends to be faster than running in serial, although r
 
 One method of evaluating convergence is the rhat statistic, initially proposed by Gelman & Rubin (1992). This method involves comparing the within-chain with the between-chain variance. Similar estimates for these two values (rhat -> 1) can be used as an indicator of convergence. An approximate rhat estimate is automatically generated in drjacoby:
 
-```{r, eval = FALSE}
-r_mcmc_out$chain1$diagnostics$rhat
+```{r}
+mcmc_out$chain1$diagnostics$rhat
 ```
 
 - Autocorrelation & effective sample size

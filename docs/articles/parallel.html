@@ -83,7 +83,7 @@
       <h1>Running Multiple Chains</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2019-05-31</h4>
+            <h4 class="date">2019-06-14</h4>
       
       
       <div class="hidden name"><code>parallel.Rmd</code></div>
@@ -144,7 +144,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.4%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.006810 seconds</span>
+<span class="co">#&gt; completed in 0.000000 seconds</span>
 <span class="co">#&gt; MCMC chain 2</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -157,7 +157,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.5%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.005144 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.000000 seconds</span></code></pre></div>
 <p>When we look at our MCMC output we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">temperature rungs</a> then these would also be duplicated over chains.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># summarise output</span>
 mcmc_out
@@ -195,9 +195,12 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <div id="comparing-chains" class="section level2">
 <h2 class="hasAnchor">
 <a href="#comparing-chains" class="anchor"></a>Comparing chains</h2>
-<p>TODO!</p>
+<p>One method of evaluating convergence is the rhat statistic, initially proposed by Gelman &amp; Rubin (1992). This method involves comparing the within-chain with the between-chain variance. Similar estimates for these two values (rhat -&gt; 1) can be used as an indicator of convergence. An approximate rhat estimate is automatically generated in drjacoby:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mcmc_out<span class="op">$</span>chain1<span class="op">$</span>diagnostics<span class="op">$</span>rhat
+<span class="co">#&gt;     mu </span>
+<span class="co">#&gt; 1.0152</span></code></pre></div>
 <ul>
-<li>convergence statistics?</li>
+<li>Autocorrelation &amp; effective sample size</li>
 <li>plots?</li>
 </ul>
 </div>
