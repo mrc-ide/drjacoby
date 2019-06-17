@@ -89,44 +89,67 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #' @description Plot parameter estimates
 #'
 #' @inheritParams plot_mc_acceptance
-#' @param parameter Name of parameter
+#' @param parameter Name of parameter. If NULL (default) one plot for each parameter
+#' will be created.
 #'
 #' @export
-plot_par <- function(x, parameter){
+plot_par <- function(x, parameter = NULL){
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
-  assert_length(parameter, 1)
-  if(!parameter %in% names(x$chain1$theta_sampling$rung1)){
-    stop("Parameter name not recognised")
+  if(!is.null(parameter)){
+    assert_length(parameter, 1)
+    if(!parameter %in% names(x$chain1$theta_sampling$rung1)){
+      stop("Parameter name not recognised")
+    }
+  }
+  if(is.null(parameter)){
+    parameter <- names(x$chain1$theta_sampling$rung1)
   }
   
-  # Combine chains
-  pd <- list()
-  for(i in 1:length(x)){
-    pd[[i]] <- data.frame(y = x[[i]]$theta_sampling$rung1[[parameter]])
-    pd[[i]]$chain <- i
-    pd[[i]]$x <- 1:nrow(pd[[i]])
+  plot_list <- c()
+  for(j in 1:length(parameter)){
+    # Combine chains
+    pd <- list()
+    for(i in 1:length(x)){
+      pd[[i]] <- data.frame(y = x[[i]]$theta_sampling$rung1[[parameter[j]]])
+      pd[[i]]$chain <- i
+      pd[[i]]$x <- 1:nrow(pd[[i]])
+    }
+    pd <- do.call("rbind", pd)
+    pd$chain <- factor(pd$chain)
+    # Set minimum bin number
+    b <- min(nrow(pd) / 4, 40)
+    # Histogram
+    p1 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$y)) + 
+      ggplot2::geom_histogram(bins = b, fill = "deepskyblue3", col = "darkblue") + 
+      ggplot2::ylab("Count") + 
+      ggplot2::xlab(parameter[j]) +
+      ggplot2::theme_bw()
+    # Chains
+    p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$x, y = .data$y, col = .data$chain)) + 
+      ggplot2::geom_line() +
+      scale_color_discrete(name = "Chain") +
+      ggplot2::xlab("Iteration") +
+      ggplot2::ylab(parameter[j]) +
+      ggplot2::theme_bw()
+    # Side by side
+    plot_list[[j]] <- cowplot::plot_grid(p1, p2, ncol = 2, rel_widths = c(1.5, 2))
   }
-  pd <- do.call("rbind", pd)
-  pd$chain <- factor(pd$chain)
-  # Set minimum bin number
-  b <- min(nrow(pd) / 4, 40)
-  # Histogram
-  p1 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$y)) + 
-    ggplot2::geom_histogram(bins = b, fill = "deepskyblue3", col = "darkblue") + 
-    ggplot2::ylab("Count") + 
-    ggplot2::xlab(parameter) +
-    ggplot2::theme_bw()
-  # Chains
-  p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$x, y = .data$y, col = .data$chain)) + 
-    ggplot2::geom_line() +
-    ggplot2::xlab("Iteration") +
-    ggplot2::ylab(parameter) +
-    ggplot2::theme_bw()
-  # Side by side
-  par_plot <- cowplot::plot_grid(p1, p2, ncol = 2, rel_widths = c(1.5, 2))
-  return(par_plot)
+  names(plot_list) <- paste0("Plot_", parameter)
+  
+  # Display plots, asking user for next page if multiple parameters
+  for(j in 1:length(parameter)){
+    graphics::plot(plot_list[[j]])
+    if(j == 1){
+      default_ask <- grDevices::devAskNewPage()
+      on.exit(grDevices::devAskNewPage(default_ask))
+      grDevices::devAskNewPage(ask = TRUE)
+      
+    }
+  }
+ 
+  return(plot_list)
 }
 
 

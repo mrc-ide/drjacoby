@@ -4,12 +4,13 @@
 \alias{plot_par}
 \title{Plot parameter estimates}
 \usage{
-plot_par(x, parameter)
+plot_par(x, parameter = NULL)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
-\item{parameter}{Name of parameter}
+\item{parameter}{Name of parameter. If NULL (default) one plot for each parameter
+will be created.}
 }
 \description{
 Plot parameter estimates
