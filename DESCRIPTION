@@ -7,7 +7,7 @@ Authors@R: c(
     person("Pete", "Winskill", email = "p.winskill@imperial.ac.uk", role = c("aut"))
     )
 Description: Flexible Markov chain monte carlo via
-     reparameterization using the Jacobean matrix.
+     reparameterization using the Jacobian matrix.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
