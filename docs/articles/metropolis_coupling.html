@@ -83,7 +83,7 @@
       <h1>Metropolis Coupling</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2019-06-14</h4>
+            <h4 class="date">2019-06-25</h4>
       
       
       <div class="hidden name"><code>metropolis_coupling.Rmd</code></div>
@@ -148,7 +148,7 @@ x &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumenta
 <a href="#running-the-mcmc" class="anchor"></a>Running the MCMC</h2>
 <p>First, we will try running the basic MCMC without Metropolis coupling. The following block of code repeats the same MCMC analysis nine times, each time producing a plot of posterior <code>alpha</code> against <code>beta</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># create base plot object</span>
-plot_base &lt;-<span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/ggplot">ggplot</a></span>() <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/ggtheme">theme_bw</a></span>() <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/coord_cartesian">coord_cartesian</a></span>(<span class="dt">xlim =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">10</span>,<span class="dv">10</span>), <span class="dt">ylim =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>,<span class="dv">10</span>))
+plot_base &lt;-<span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>() <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span>() <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html">coord_cartesian</a></span>(<span class="dt">xlim =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="op">-</span><span class="dv">10</span>,<span class="dv">10</span>), <span class="dt">ylim =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">0</span>,<span class="dv">10</span>))
 
 <span class="co"># repeat analysis multiple times</span>
 plot_list &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>()
@@ -164,7 +164,7 @@ plot_list &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rd
                        <span class="dt">silent =</span> <span class="ot">TRUE</span>)
   
   <span class="co"># create plot of alpha against beta</span>
-  plot_list[[i]] &lt;-<span class="st"> </span>plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
+  plot_list[[i]] &lt;-<span class="st"> </span>plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
                                                     <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1)
 }
 
@@ -194,10 +194,10 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.4%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.709101 seconds</span>
+<span class="co">#&gt; completed in 0.668454 seconds</span>
 
 <span class="co"># create plot of alpha against beta</span>
-plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
+plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
                                 <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1)</code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-7-1.png" width="480"></p>
 <p>You should see a much better characterisation of the posterior distribution. The run time scales approximately linearly with the number of rungs, so there is a computational cost to using this method, but on the other hand our results are far better than we would obtain by simply increasing the number of samples by a factor of 20.</p>
@@ -223,7 +223,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-8-1.png" width="480"></p>
 <p>The 10 vertical grey bars in the above plot show the positions of our 10 rungs in the thermodynamic interval [0,1], and the red dots between them show the proportion of swaps that were accepted between rungs. Notice that the acceptance rate between the hottest and second-hottest rung is zero, meaning none of the information in the hottest rung made it up the ladder to the colder rungs. We can see the problems this causes when we plot the posterior parameter values:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># create plot of alpha against beta</span>
-plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
+plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
                                 <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1)</code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-9-1.png" width="480"></p>
 <p>Although we have some mixing between the left and right sides of the distribution, overall sampling is still a bit patchy.</p>
@@ -244,7 +244,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-10-1.png" width="480"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
 <span class="co"># create plot of alpha against beta</span>
-plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
+plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
                                 <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1)</code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-10-2.png" width="480"></p>
 <p>This mitigates the problem to some extent, as we now have acceptance rates going “deeper” towards the prior, however the hottest rung is still not passing information up the ladder. It comes at a high computational cost, as we are effectively running the MCMC 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter <code>GTI_pow</code>, in which higher values lead to more highly concentrated rungs. The previous two MCMCs had <code>GTI_pow</code> set to 1.0 leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with 20 rungs and <code>GTI_pow = 3.0</code>:</p>
@@ -264,7 +264,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-11-1.png" width="480"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
 <span class="co"># create plot of alpha against beta</span>
-plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
+plot_base <span class="op">+</span><span class="st"> </span>ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(ggplot2<span class="op">::</span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> alpha, <span class="dt">y =</span> beta),
                                 <span class="dt">data =</span> mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_sampling<span class="op">$</span>rung1)</code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-11-2.png" width="480"></p>
 <p>We find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder. We can therefore be condifent that the prior is “talking to” the posterior. When this is the case it is <em>unlikely</em> (but not impossible) that your MCMC is still missing large parts of the posterior distribution.</p>

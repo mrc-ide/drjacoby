@@ -4,7 +4,7 @@
 
 <br/>
 <br/>
-<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo.png" height="60px" width="300px" />
+<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo2.png" height="93px" width="300px" />
 <br/>
 
 The *drjacoby* package is designed to run a very simple, but very general form of Markov chain Monte Carlo (MCMC). The three ingredients that make up this flexible MCMC are:
