@@ -4,7 +4,7 @@
 
 <br/>
 <br/>
-<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo2.png" height="60px" width="300px" />
+<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo2.png" height="93px" width="300px" />
 <br/>
 
 Flexible Markov chain monte carlo via reparameterization
