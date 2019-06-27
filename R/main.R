@@ -67,9 +67,10 @@ run_mcmc <- function(data,
                      pb_markdown = FALSE,
                      silent = FALSE) {
   
+  # Cleanup pointers on exit
+  on.exit(gc())
   
   # ---------- check inputs ----------
-  
   # check data
   assert_vector(data)
   assert_numeric(data)
@@ -267,9 +268,8 @@ deploy_chain <- function(args) {
   # run C++ function
   ret <- main_cpp(args)
   
-  # remove and cleanup pointers
+  # remove arguments
   rm(args)
-  gc()
-  
+
   return(ret)
 }
