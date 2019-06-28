@@ -118,6 +118,7 @@ plot_par <- function(x, parameter = NULL,
       pd[[i]]$chain <- i
       pd[[i]]$x <- 1:nrow(pd[[i]])
       if(downsample & nrow(pd[[i]]) > 5000){
+        set.seed(1)
         pd[[i]] <- pd[[i]][sample(nrow(pd[[i]]),5000),]
       }
     }
@@ -170,6 +171,8 @@ plot_cor <- function(x, parameter1, parameter2,
                      downsample = TRUE){
   # check inputs
   assert_custom_class(x, "drjacoby_output")
+  assert_string(parameter1)
+  assert_string(parameter2)
   if(!parameter1 %in% names(x$chain1$theta_sampling$rung1)){
     stop("Parameter1 name not recognised")
   }
@@ -182,6 +185,7 @@ plot_cor <- function(x, parameter1, parameter2,
   colnames(data) <- c("x", "y")
   
   if(downsample & nrow(data) > 5000){
+    set.seed(1)
     data <- data[sample(nrow(data),5000),]
   }
   
