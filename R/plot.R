@@ -190,6 +190,6 @@ plot_cor <- function(x, parameter1, parameter2,
     ggplot2::geom_point(alpha = 0.5, col = "darkblue") + 
     ggplot2::theme_bw() +
     ggplot2::ylab(parameter2) +
-    ggplot2::xlab(parameter2)
+    ggplot2::xlab(parameter1)
 }
   
