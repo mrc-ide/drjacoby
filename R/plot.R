@@ -150,11 +150,10 @@ plot_par <- function(x, parameter = NULL,
       default_ask <- grDevices::devAskNewPage()
       on.exit(grDevices::devAskNewPage(default_ask))
       grDevices::devAskNewPage(ask = TRUE)
-      
     }
   }
   
-  return(plot_list)
+  return(invisible(plot_list))
 }
 
 
