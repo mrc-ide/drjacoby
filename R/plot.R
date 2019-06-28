@@ -91,9 +91,11 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #' @inheritParams plot_mc_acceptance
 #' @param parameter Name of parameter. If NULL (default) one plot for each parameter
 #' will be created.
+#' @param downsample Downsample chain for efficiency
 #'
 #' @export
-plot_par <- function(x, parameter = NULL){
+plot_par <- function(x, parameter = NULL,
+                     downsample = TRUE){
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
@@ -115,6 +117,9 @@ plot_par <- function(x, parameter = NULL){
       pd[[i]] <- data.frame(y = x[[i]]$theta_sampling$rung1[[parameter[j]]])
       pd[[i]]$chain <- i
       pd[[i]]$x <- 1:nrow(pd[[i]])
+      if(downsample & nrow(pd[[i]]) > 1000){
+        pd[[i]] <- pd[[i]][sample(nrow(pd[[i]]),1000),]
+      }
     }
     pd <- do.call("rbind", pd)
     pd$chain <- factor(pd$chain)
@@ -148,7 +153,7 @@ plot_par <- function(x, parameter = NULL){
       
     }
   }
- 
+  
   return(plot_list)
 }
 
