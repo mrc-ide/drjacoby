@@ -117,8 +117,8 @@ plot_par <- function(x, parameter = NULL,
       pd[[i]] <- data.frame(y = x[[i]]$theta_sampling$rung1[[parameter[j]]])
       pd[[i]]$chain <- i
       pd[[i]]$x <- 1:nrow(pd[[i]])
-      if(downsample & nrow(pd[[i]]) > 1000){
-        pd[[i]] <- pd[[i]][sample(nrow(pd[[i]]),1000),]
+      if(downsample & nrow(pd[[i]]) > 5000){
+        pd[[i]] <- pd[[i]][sample(nrow(pd[[i]]),5000),]
       }
     }
     pd <- do.call("rbind", pd)
@@ -156,4 +156,40 @@ plot_par <- function(x, parameter = NULL,
   return(invisible(plot_list))
 }
 
-
+#' @title Plot parameter correlation
+#'
+#' @description Plots correlation between two parameters
+#'
+#' @inheritParams plot_mc_acceptance
+#' @param parameter1 Name of parameter first parameter.
+#' @param parameter2 Name of parameter second parameter.
+#' @param downsample Downsample chain for efficiency
+#'
+#' @export
+plot_cor <- function(x, parameter1, parameter2,
+                     downsample = TRUE){
+  # check inputs
+  assert_custom_class(x, "drjacoby_output")
+  if(!parameter1 %in% names(x$chain1$theta_sampling$rung1)){
+    stop("Parameter1 name not recognised")
+  }
+  if(!parameter2 %in% names(x$chain1$theta_sampling$rung1)){
+    stop("Parameter2 name not recognised")
+  }
+  
+  data <- x$chain1$theta_sampling$rung1
+  data <- data[ ,c(parameter1, parameter2)]
+  colnames(data) <- c("x", "y")
+  
+  if(downsample & nrow(data) > 5000){
+    data <- data[sample(nrow(data),5000),]
+  }
+  
+  ggplot2::ggplot(data = data,
+                  ggplot2::aes(x = .data$x, y = .data$y)) + 
+    ggplot2::geom_point(alpha = 0.5, col = "darkblue") + 
+    ggplot2::theme_bw() +
+    ggplot2::ylab(parameter2) +
+    ggplot2::xlab(parameter2)
+}
+  

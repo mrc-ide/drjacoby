@@ -4,13 +4,15 @@
 \alias{plot_par}
 \title{Plot parameter estimates}
 \usage{
-plot_par(x, parameter = NULL)
+plot_par(x, parameter = NULL, downsample = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
 \item{parameter}{Name of parameter. If NULL (default) one plot for each parameter
 will be created.}
+
+\item{downsample}{Downsample chain for efficiency}
 }
 \description{
 Plot parameter estimates
