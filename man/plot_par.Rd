@@ -4,13 +4,16 @@
 \alias{plot_par}
 \title{Plot parameter estimates}
 \usage{
-plot_par(x, parameter = NULL, downsample = TRUE)
+plot_par(x, show = NULL, hide = NULL, downsample = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
-\item{parameter}{Name of parameter. If NULL (default) one plot for each parameter
-will be created.}
+\item{show}{Optional character (or vector of characters) to filter parameters by.
+Parameters matching show will be included.}
+
+\item{hide}{Optional character (or vector of characters) to filter parameters by.
+Parameters matching show will be hidden.}
 
 \item{downsample}{Downsample chain for efficiency}
 }

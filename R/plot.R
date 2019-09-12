@@ -89,24 +89,26 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #' @description Plot parameter estimates
 #'
 #' @inheritParams plot_mc_acceptance
-#' @param parameter Name of parameter. If NULL (default) one plot for each parameter
-#' will be created.
+#' @param show Optional character (or vector of characters) to filter parameters by.
+#'  Parameters matching show will be included.
+#' @param hide Optional character (or vector of characters) to filter parameters by.
+#'  Parameters matching show will be hidden.
 #' @param downsample Downsample chain for efficiency
 #'
 #' @export
-plot_par <- function(x, parameter = NULL,
+plot_par <- function(x, show = NULL, hide = NULL,
                      downsample = TRUE){
   
-  # check inputs
   assert_custom_class(x, "drjacoby_output")
-  if(!is.null(parameter)){
-    assert_length(parameter, 1)
-    if(!all(parameter %in% names(x$chain1$theta_sampling$rung1))){
-      stop("Parameter name(s) not recognised")
-    }
+  
+  parameter <- names(x$chain1$theta_sampling$rung1)
+  if(!is.null(show)){
+    stopifnot(is.character(show))
+    parameter <- parameter[grepl(paste(show, collapse = "|"), parameter)]
   }
-  if(is.null(parameter)){
-    parameter <- names(x$chain1$theta_sampling$rung1)
+  if(!is.null(hide)){
+    stopifnot(is.character(hide))
+    parameter <- parameter[!grepl(paste(hide, collapse = "|"), parameter)]
   }
   
   plot_list <- c()
@@ -117,9 +119,9 @@ plot_par <- function(x, parameter = NULL,
       pd[[i]] <- data.frame(y = x[[i]]$theta_sampling$rung1[[parameter[j]]])
       pd[[i]]$chain <- i
       pd[[i]]$x <- 1:nrow(pd[[i]])
-      if(downsample & nrow(pd[[i]]) > 1000){
+      if(downsample & nrow(pd[[i]]) > 2000){
         set.seed(1)
-        pd[[i]] <- pd[[i]][sample(nrow(pd[[i]]), 1000),]
+        pd[[i]] <- pd[[i]][sample(nrow(pd[[i]]), 2000),]
       }
     }
     pd <- do.call("rbind", pd)
