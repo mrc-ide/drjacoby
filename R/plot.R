@@ -101,8 +101,8 @@ plot_par <- function(x, parameter = NULL,
   assert_custom_class(x, "drjacoby_output")
   if(!is.null(parameter)){
     assert_length(parameter, 1)
-    if(!parameter %in% names(x$chain1$theta_sampling$rung1)){
-      stop("Parameter name not recognised")
+    if(!all(parameter %in% names(x$chain1$theta_sampling$rung1))){
+      stop("Parameter name(s) not recognised")
     }
   }
   if(is.null(parameter)){
@@ -117,9 +117,9 @@ plot_par <- function(x, parameter = NULL,
       pd[[i]] <- data.frame(y = x[[i]]$theta_sampling$rung1[[parameter[j]]])
       pd[[i]]$chain <- i
       pd[[i]]$x <- 1:nrow(pd[[i]])
-      if(downsample & nrow(pd[[i]]) > 5000){
+      if(downsample & nrow(pd[[i]]) > 1000){
         set.seed(1)
-        pd[[i]] <- pd[[i]][sample(nrow(pd[[i]]),5000),]
+        pd[[i]] <- pd[[i]][sample(nrow(pd[[i]]), 1000),]
       }
     }
     pd <- do.call("rbind", pd)
