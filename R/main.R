@@ -89,6 +89,12 @@ run_mcmc <- function(data,
   # check loglikelihood and logprior functions
   assert_custom_class(loglike, c("function", "character"))
   assert_custom_class(logprior, c("function", "character"))
+  assert_bounded(loglike(data, df_params$init), -Inf, Inf,
+                                inclusive_left = FALSE,
+                                inclusive_right = FALSE)
+  assert_bounded(logprior(df_params$init), -Inf, Inf,
+                                inclusive_left = FALSE,
+                                inclusive_right = FALSE)
   # TODO - further checks that these functions are defined correctly?
   
   # check MCMC parameters
