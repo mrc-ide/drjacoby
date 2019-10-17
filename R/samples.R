@@ -11,21 +11,20 @@ sample_chains <- function(x, sample_n) {
   assert_custom_class(x, "drjacoby_output")
   assert_int(sample_n, "sample_n")
   assert_gr(sample_n, 0)
-  assert_gr(nrow(x[[1]]$theta_sampling$rung1), sample_n / length(x))
   
-  # Number of samples from each chain
-  parts <- length(x)
-  d <- as.integer(sample_n / parts)
-  r <- as.integer(sample_n %% parts)
-  sample_n_chain <- c(rep(d + 1, r), rep(d, parts - r))
+  # Join chains
+  all_chains <- dplyr::bind_rows(lapply(x, function(x){
+    x$theta_sampling$rung1
+  }))
   
-  # Take sample_n samples from each chain and combine
-  samples <- list()
-  for(i in seq_along(x)){
-    samp <- seq.int(1, nrow(x[[i]]$theta_sampling$rung1), length.out = sample_n_chain[i])
-    samples[[i]] <- x[[i]]$theta_sampling$rung1[samp,]
-  }
-  samples <- dplyr::bind_rows(samples)
-  return(samples)
+  # Sample chains
+  sampled_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = sample_n),]
+  
+  # Ess
+  ess_est_sampled <- apply(sampled_chains, 2, ess)
+  message("Effective sample size range: ", min(ess_est_sampled), " to ",
+          max(ess_est_sampled), ". See function ess to estimate.")
+  
+  return(sampled_chains)
 }
 
