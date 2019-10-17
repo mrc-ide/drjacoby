@@ -190,20 +190,9 @@ run_mcmc <- function(data,
     loglike_sampling <- as.data.frame(t(rcpp_to_matrix(output_raw[[c]]$loglike_sampling)))
     names(loglike_burnin) <- names(loglike_sampling) <- rung_names
     
-    # function for extracting theta into list of matrices over rungs
-    get_theta_rungs <- function(theta_list) {
-      ret <- mapply(function(x) {
-        ret <- as.data.frame(rcpp_to_matrix(x))
-        names(ret) <- param_names
-        ret
-      }, theta_list, SIMPLIFY = FALSE)
-      names(ret) <- rung_names
-      ret
-    }
-    
     # get theta values
-    theta_burnin <- get_theta_rungs(output_raw[[c]]$theta_burnin)
-    theta_sampling <- get_theta_rungs(output_raw[[c]]$theta_sampling)
+    theta_burnin <- get_theta_rungs(output_raw[[c]]$theta_burnin, param_names, rung_names)
+    theta_sampling <- get_theta_rungs(output_raw[[c]]$theta_sampling, param_names, rung_names)
     names(theta_burnin) <- names(theta_sampling) <- rung_names
     
     # get Metropolis coupling acceptance rates
@@ -287,4 +276,21 @@ deploy_chain <- function(args) {
   rm(args)
   
   return(ret)
+}
+
+#' Extract theta into list of matrices over rungs
+#'
+#' @param theta_list List of thetas
+#' @param param_names Vector of parameter names
+#' @param rung_names Vector of rung names
+#'
+#' @return List of matrices
+get_theta_rungs <- function(theta_list, param_names, rung_names) {
+  ret <- mapply(function(x) {
+    ret <- as.data.frame(rcpp_to_matrix(x))
+    names(ret) <- param_names
+    ret
+  }, theta_list, SIMPLIFY = FALSE)
+  names(ret) <- rung_names
+  ret
 }

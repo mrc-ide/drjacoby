@@ -22,8 +22,8 @@ sample_chains <- function(x, sample_n) {
   
   # Ess
   ess_est_sampled <- apply(sampled_chains, 2, ess)
-  message("Effective sample size range: ", min(ess_est_sampled), " to ",
-          max(ess_est_sampled), ". See function ess to estimate.")
+  message("Effective sample size of sample has range: ", min(ess_est_sampled),
+          " to ", max(ess_est_sampled), ". See function ess to estimate.")
   
   return(sampled_chains)
 }
