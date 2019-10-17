@@ -10,7 +10,7 @@ ess(x)
 \item{x}{chain}
 }
 \value{
-The efefctive sample size of a chain
+The effective sample size of a chain
 }
 \description{
 Estimates effective sample size. 
