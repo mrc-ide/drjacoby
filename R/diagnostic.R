@@ -71,7 +71,7 @@ acf_data <- function(x, lag){
 #'
 #' @param x chain
 #'
-#' @return The efefctive sample size of a chain
+#' @return The effective sample size of a chain
 ess <- function(x){
   ac <- acf_data(x, 500)
   if(all(is.na(ac))){

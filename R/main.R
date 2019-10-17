@@ -210,12 +210,11 @@ run_mcmc <- function(data,
     beta_raised_vec <- output_raw[[c]]$beta_raised_vec
     mc_accept_burnin <- output_raw[[c]]$mc_accept_burnin/burnin
     mc_accept_sampling <- output_raw[[c]]$mc_accept_sampling/samples
-
+    
     # store in processed output list
     output_processed[[c]]$diagnostics <- list(beta_raised = beta_raised_vec,
                                               mc_accept_burnin = mc_accept_burnin,
-                                              mc_accept_sampling = mc_accept_sampling,
-                                              ess = apply(theta_sampling$rung1, 2, ess))
+                                              mc_accept_sampling = mc_accept_sampling)
     output_processed[[c]]$loglike_burnin <- loglike_burnin
     output_processed[[c]]$loglike_sampling <- loglike_sampling
     output_processed[[c]]$theta_burnin <- theta_burnin
@@ -225,17 +224,33 @@ run_mcmc <- function(data,
   # Estimate rhat
   if(chains > 1){
     rhat_est <- set_rhat(output_processed, chains)
+    all_chains <- dplyr::bind_rows(lapply(output_processed, function(x){
+      x$theta_sampling$rung1
+    }))
+    ess_est <- apply(all_chains, 2, ess)
     # Add rhat etimate to each chain diagnostic element
     for (c in 1:chains) {
       output_processed[[c]]$diagnostics$rhat <- rhat_est
+      output_processed[[c]]$diagnostics$ess <- ess_est
     }
   }
   
-  # save output as custom class
-  class(output_processed) <- "drjacoby_output"
-  
-  # return
-  return(output_processed)
+  # Estimate ESS
+  all_chains <- dplyr::bind_rows(lapply(output_processed, function(x){
+    x$theta_sampling$rung1
+  }))
+  ess_est <- apply(all_chains, 2, ess)
+  # Add rhat etimate to each chain diagnostic element
+  for (c in 1:chains) {
+    output_processed[[c]]$diagnostics$ess <- ess_est
+  }
+
+
+# save output as custom class
+class(output_processed) <- "drjacoby_output"
+
+# return
+return(output_processed)
 }
 
 #------------------------------------------------
@@ -253,7 +268,7 @@ deploy_chain <- function(args) {
     args$args_functions$logprior <- RcppXPtrUtils::cppXPtr(args$args_functions$logprior)
     RcppXPtrUtils::checkXPtr(args$args_functions$logprior, "SEXP", "std::vector<double>")
   }
-
+  
   # get parameters
   burnin <- args$args_params$burnin
   samples <- args$args_params$samples
@@ -270,6 +285,6 @@ deploy_chain <- function(args) {
   
   # remove arguments
   rm(args)
-
+  
   return(ret)
 }
