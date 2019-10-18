@@ -70,4 +70,35 @@ test_that("Cpp likelihood and prior", {
   posterior_estimate2 <- apply(cpp_mcmc_data$chain1$theta_sampling$rung1, 2, median)
   expect_lt(posterior_estimate2[1] - 3, 0.1)
   expect_lt(posterior_estimate2[2] - 2, 0.1)
+  
+  ## Multiple chains
+  cpp_mcmc_chains <- run_mcmc(data = x,
+                            df_params = df_params,
+                            loglike = cpp_loglike,
+                            logprior = cpp_logprior_null,
+                            chains = 2,
+                            burnin = 1e3,
+                            samples = 1e4,
+                            silent = TRUE)
+  expect_length(cpp_mcmc_chains, 2)
+  posterior_estimate3a <- apply(cpp_mcmc_chains$chain1$theta_sampling$rung1, 2, median)
+  expect_lt(posterior_estimate3a[1] - 3, 0.1)
+  expect_lt(posterior_estimate3a[2] - 2, 0.1)
+  posterior_estimate3b <- apply(cpp_mcmc_chains$chain2$theta_sampling$rung1, 2, median)
+  expect_lt(posterior_estimate3b[1] - 3, 0.1)
+  expect_lt(posterior_estimate3b[2] - 2, 0.1)
+  
+  ## Metropolis coupling
+  mcmc_out_MC <- run_mcmc(data = x,
+                       df_params = df_params,
+                       loglike = cpp_loglike,
+                       logprior = cpp_logprior_null,
+                       burnin = 1e3,
+                       samples = 1e4,
+                       rungs = 4,
+                       silent = TRUE)
+  expect_length(mcmc_out_MC$chain1$theta_sampling, 4)
+  posterior_estimate4 <- apply(mcmc_out_MC$chain1$theta_sampling$rung1, 2, median)
+  expect_lt(posterior_estimate4[1] - 3, 0.1)
+  expect_lt(posterior_estimate4[2] - 2, 0.1)
 })
