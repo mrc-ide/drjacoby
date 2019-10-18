@@ -12,20 +12,20 @@ test_that("Cpp likelihood and prior", {
                           min = c(-10, 0),
                           max = c(10, Inf),
                           init = c(5, 1))
-  # Null lL
+  # Null log likelihood
   cpp_loglike_null <- "SEXP loglike(std::vector<double> params, std::vector<double> x) {
   double out = 0.0;
   return Rcpp::wrap(out);
-}"
-  # lL
+    }"
+  # Log likelihood
   cpp_loglike <- "SEXP loglike(std::vector<double> params, std::vector<double> x) {
   double ret = 0.0;
   for (int i = 0; i < x.size(); ++i) {
   ret += R::dnorm(x[i], params[0], params[1], 1);
   }
   return Rcpp::wrap(ret);
-}"
-  # lPrior
+    }"
+  # Log prior
   cpp_logprior_strong <- "SEXP logprior(std::vector<double> params){
   
   // calculate logprior
@@ -34,13 +34,13 @@ test_that("Cpp likelihood and prior", {
   
   // return as SEXP
   return Rcpp::wrap(ret);
-}"
+    }"
 
-  # LPrior
+  # Null log prior
   cpp_logprior_null <- "SEXP loglike(std::vector<double> params) {
   double out = 0.0;
   return Rcpp::wrap(out);
-}"
+    }"
   
   cpp_mcmc_null <- run_mcmc(data = x,
                             df_params = df_params,

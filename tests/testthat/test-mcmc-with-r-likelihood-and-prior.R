@@ -12,20 +12,20 @@ test_that("R likelihood and prior", {
                           min = c(-10, 0),
                           max = c(10, Inf),
                           init = c(5, 1))
-  # Null lL
+  # Null log likelihood
   r_loglike_null <- function(params, x) {
     return(0)
   }
-  # lL
+  # Log likelihood
   r_loglike <- function(params, x) {
     sum(dnorm(x, mean = params[1], sd = params[2], log = TRUE))
   }
-  # lPrior
+  # Log prior
   r_logprior_strong <- function(params) {
     dnorm(params[1], 6, 0.1, log = TRUE) +
       dnorm(params[2], 1, 0.1, log = TRUE)
   }
-  # LPrior
+  # Null log prior
   r_logprior_null <- function(params) {
     return(0)
   }
