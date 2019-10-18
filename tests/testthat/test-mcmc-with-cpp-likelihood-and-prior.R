@@ -42,6 +42,12 @@ test_that("Cpp likelihood and prior", {
   return Rcpp::wrap(out);
     }"
   
+  # Compilation checks
+  expect_null(check_likelihood_compilation(cpp_loglike))
+  expect_null(check_prior_compilation(cpp_logprior_strong))
+  expect_error(check_likelihood_compilation(1:2))
+  expect_error(check_prior_compilation(1:2))
+  
   cpp_mcmc_null <- run_mcmc(data = x,
                             df_params = df_params,
                             loglike = cpp_loglike_null,
