@@ -93,7 +93,7 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #'  Parameters matching show will be included.
 #' @param hide Optional character (or vector of characters) to filter parameters by.
 #'  Parameters matching show will be hidden.
-#'  @param lag Maximum lag. Must be an integer between 20 and 500
+#' @param lag Maximum lag. Must be an integer between 20 and 500
 #' @param downsample Downsample chain for efficiency
 #'
 #' @export
