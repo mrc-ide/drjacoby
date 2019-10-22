@@ -126,10 +126,9 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   if(nrow(all_chains) > 2000){
     all_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = 2000),]
   }
-  all_chains <- all_chains %>%
-    dplyr::group_by(chain) %>%
-    dplyr::mutate(x = 1:dplyr::n()) %>%
-    dplyr::ungroup()
+  all_chains <- dplyr::group_by(all_chains, chain)
+  all_chains <- dplyr::mutate(all_chains, x = 1:dplyr::n())
+  all_chains <- dplyr::ungroup(all_chains)
   
   # Autocorrealtion (on downsample)
   ac_data <- as.data.frame(apply(dplyr::select(all_chains, -chain), 2, acf_data, lag = lag))
