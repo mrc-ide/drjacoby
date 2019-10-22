@@ -110,6 +110,10 @@ plot_par <- function(x, show = NULL, hide = NULL,
     stopifnot(is.character(hide))
     parameter <- parameter[!grepl(paste(hide, collapse = "|"), parameter)]
   }
+  if(length(parameter) > 10){
+    warning("More than 10 parameters to summarise, consider using the show or hide arguments 
+            to select parameters and reduce computation time.")
+  }
   
   plot_list <- c()
   for(j in 1:length(parameter)){
