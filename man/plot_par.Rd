@@ -4,7 +4,7 @@
 \alias{plot_par}
 \title{Plot parameter estimates}
 \usage{
-plot_par(x, show = NULL, hide = NULL, downsample = TRUE)
+plot_par(x, show = NULL, hide = NULL, lag = 20, downsample = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
@@ -13,7 +13,8 @@ plot_par(x, show = NULL, hide = NULL, downsample = TRUE)
 Parameters matching show will be included.}
 
 \item{hide}{Optional character (or vector of characters) to filter parameters by.
-Parameters matching show will be hidden.}
+Parameters matching show will be hidden.
+@param lag Maximum lag. Must be an integer between 20 and 500}
 
 \item{downsample}{Downsample chain for efficiency}
 }
