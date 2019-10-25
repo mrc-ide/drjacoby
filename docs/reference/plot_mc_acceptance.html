@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot Metropolis Coupling Acceptance — plot_mc_acceptance • drjacoby</title>
+<title>Plot Metropolis coupling acceptance rates — plot_mc_acceptance • drjacoby</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Plot Metropolis Coupling Acceptance — plot_mc_acceptance" />
+<meta property="og:title" content="Plot Metropolis coupling acceptance rates — plot_mc_acceptance" />
 
-<meta property="og:description" content="Plot Metropolis Coupling Acceptance." />
+<meta property="og:description" content="Plot Metropolis coupling acceptance rates between all rungs." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -114,18 +114,18 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot Metropolis Coupling Acceptance</h1>
+    <h1>Plot Metropolis coupling acceptance rates</h1>
     
     <div class="hidden name"><code>plot_mc_acceptance.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Plot Metropolis Coupling Acceptance.</p>
+    <p>Plot Metropolis coupling acceptance rates between all rungs.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>plot_mc_acceptance</span>(<span class='no'>x</span>, <span class='kw'>chain</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>)</pre>
+    <pre class="usage"><span class='fu'>plot_mc_acceptance</span>(<span class='no'>x</span>, <span class='kw'>chain</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>, <span class='kw'>x_axis_type</span> <span class='kw'>=</span> <span class='fl'>1</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -141,6 +141,11 @@
     <tr>
       <th>phase</th>
       <td><p>which phase to plot. Must be either "burnin" or "sampling".</p></td>
+    </tr>
+    <tr>
+      <th>x_axis_type</th>
+      <td><p>how to format the x-axis. 1 = integer rungs, 2 = values of
+the thermodynamic power.</p></td>
     </tr>
     </table>
     

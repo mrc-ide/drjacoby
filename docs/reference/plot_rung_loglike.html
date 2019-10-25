@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Effective sample size — ess • drjacoby</title>
+<title>Plot loglikelihood 95% credible intervals — plot_rung_loglike • drjacoby</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,12 +30,9 @@
 
 
 
-<meta property="og:title" content="Effective sample size — ess" />
+<meta property="og:title" content="Plot loglikelihood 95% credible intervals — plot_rung_loglike" />
 
-<meta property="og:description" content="Estimates effective sample size. 
-Note 1: Lag is trunctaed at when autocorrelation &amp;lt; 0.05, 
-if -ve autocorrelation occurs it is possible to get ess &amp;gt; N.
-Note 2: ESS estimates will be too optimistic for chains that haven’t mixed." />
+<meta property="og:description" content="Plot loglikelihood 95% credible intervals." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -117,34 +114,46 @@ Note 2: ESS estimates will be too optimistic for chains that haven’t mixed." /
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Effective sample size</h1>
+    <h1>Plot loglikelihood 95% credible intervals</h1>
     
-    <div class="hidden name"><code>ess.Rd</code></div>
+    <div class="hidden name"><code>plot_rung_loglike.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Estimates effective sample size. 
-Note 1: Lag is trunctaed at when autocorrelation &lt; 0.05, 
-if -ve autocorrelation occurs it is possible to get ess &gt; N.
-Note 2: ESS estimates will be too optimistic for chains that haven’t mixed.</p>
+    <p>Plot loglikelihood 95% credible intervals.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>ess</span>(<span class='no'>x</span>)</pre>
+    <pre class="usage"><span class='fu'>plot_rung_loglike</span>(<span class='no'>x</span>, <span class='kw'>chain</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>, <span class='kw'>x_axis_type</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>y_axis_type</span> <span class='kw'>=</span> <span class='fl'>1</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>chain</p></td>
+      <td><p>an object of class <code>drjacoby_output</code></p></td>
+    </tr>
+    <tr>
+      <th>chain</th>
+      <td><p>which chain to plot.</p></td>
+    </tr>
+    <tr>
+      <th>phase</th>
+      <td><p>which phase to plot. Must be either "burnin" or "sampling".</p></td>
+    </tr>
+    <tr>
+      <th>x_axis_type</th>
+      <td><p>how to format the x-axis. 1 = integer rungs, 2 = values of
+the thermodynamic power.</p></td>
+    </tr>
+    <tr>
+      <th>y_axis_type</th>
+      <td><p>how to format the y-axis. 1 = raw values, 2 = truncated at
+auto-chosen lower limit. 3 = double-log scale.</p></td>
     </tr>
     </table>
-    
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>The effective sample size of a chain</p>
     
 
   </div>
@@ -152,9 +161,7 @@ Note 2: ESS estimates will be too optimistic for chains that haven’t mixed.</p
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      
-      <li><a href="#value">Value</a></li>
-          </ul>
+                </ul>
 
   </div>
 </div>

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Effective sample size — ess • drjacoby</title>
+<title>Sample N draws from all available chains — sample_chains • drjacoby</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,12 +30,9 @@
 
 
 
-<meta property="og:title" content="Effective sample size — ess" />
+<meta property="og:title" content="Sample N draws from all available chains — sample_chains" />
 
-<meta property="og:description" content="Estimates effective sample size. 
-Note 1: Lag is trunctaed at when autocorrelation &amp;lt; 0.05, 
-if -ve autocorrelation occurs it is possible to get ess &amp;gt; N.
-Note 2: ESS estimates will be too optimistic for chains that haven’t mixed." />
+<meta property="og:description" content="Sample N draws from all available chains" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -117,34 +114,35 @@ Note 2: ESS estimates will be too optimistic for chains that haven’t mixed." /
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Effective sample size</h1>
+    <h1>Sample N draws from all available chains</h1>
     
-    <div class="hidden name"><code>ess.Rd</code></div>
+    <div class="hidden name"><code>sample_chains.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Estimates effective sample size. 
-Note 1: Lag is trunctaed at when autocorrelation &lt; 0.05, 
-if -ve autocorrelation occurs it is possible to get ess &gt; N.
-Note 2: ESS estimates will be too optimistic for chains that haven’t mixed.</p>
+    <p>Sample N draws from all available chains</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>ess</span>(<span class='no'>x</span>)</pre>
+    <pre class="usage"><span class='fu'>sample_chains</span>(<span class='no'>x</span>, <span class='no'>sample_n</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>chain</p></td>
+      <td><p>an object of class <code>drjacoby_output</code></p></td>
+    </tr>
+    <tr>
+      <th>sample_n</th>
+      <td><p>An integer number of samples</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The effective sample size of a chain</p>
+    <p>A dataframe of posterior samples</p>
     
 
   </div>

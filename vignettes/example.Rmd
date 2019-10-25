@@ -50,7 +50,7 @@ sigma_true <- 2
 x <- rnorm(10, mean = mu_true, sd = sigma_true)
 ```
 
-For our example MCMC we will assume that we know the correct distribution of the data (i.e. the normal distribution), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the parameters of the distribution are unknown. Parameters within *drjacoby* are defined in dataframe format, where we specify minimum, maximum, and initial values of all parameters:
+For our example MCMC we will assume that we know the correct distribution of the data (i.e. we know the data is normally distributed), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the parameters of the distribution are unknown. Parameters within *drjacoby* are defined in dataframe format, where we specify minimum, maximum, and initial values of all parameters:
 
 ```{r}
 # define parameters dataframe
@@ -62,13 +62,13 @@ df_params <- data.frame(name = c("mu", "sigma"),
 print(df_params)
 ```
 
-In this example we have one parameter (`mu`) that occupies a finite range [-10, 10], and one parameter (`sigma`) that can take any positive value. *drjacoby* deals with different parameter ranges using reparameterisation, which all occurs internally meaning we don't need to worry about these constraints affecting our inference.
+In this example we have one parameter (`mu`) that occupies a finite range [-10, 10], and another parameter (`sigma`) that can take any positive value. *drjacoby* deals with different parameter ranges using reparameterisation, which all occurs internally meaning we don't need to worry about these constraints affecting our inference.
 
 Next, we need a likelihood function. This **must** have two input arguments: 1) a vector of parameters, 2) a vector of data, and these **must** be input **in that order**. It also **must** return a single value for the likelihood **in log space**. These constraints on the format of the likelihood function might seem a bit restrictive, but they are needed in order for *drjacoby* to know how to use the function internally. The issue of taking logs is particularly important, as the MCMC will still run even if we forget to take logs, but the results produced will be nonsense!
 
 ![Do not underestimate the importance of taking logs.](https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/loglady.jpg)
 
-A good way of structuring our likelihood function is to split the input vector of parameters into individual elements before calculating the probability of the data. In our example, the likelihood function is quite simple thanks to the `dnorm()` function which can return the density of the normal distribution already in log space:
+Inside the likelihood function we can extract individual parameter values from the input vector, and then use these values to calculate the probability of the data. In our example, the likelihood function is quite simple thanks to the `dnorm()` function which can return the density of the normal distribution already in log space:
 
 ```{r}
 # define log-likelihood function
@@ -109,7 +109,7 @@ Be careful to ensure that your prior is defined over the same range as specified
 
 ## Running the MCMC
 
-Once we have all the elements above it is straightforward to run a basic MCMC. We input the four elements listed above, along with the number of burn-in and sampling iterations that. By default *drjacoby* prints progress bars to the console to keep you updated on the progress of the MCMC. When running in R markdown we can use the option `pb_markdown = TRUE` to print progress bars in a markdown-friendly way, although you will probably want to leave this option turned off when running interactively (simply delete this argument).
+Once we have all the elements above it is straightforward to run a basic MCMC. We simply input the four elements listed above, along with the number of burn-in and sampling iterations By default *drjacoby* prints progress bars to the console to keep you updated on the progress of the MCMC. When running in R markdown we can use the option `pb_markdown = TRUE` to print progress bars in a markdown-friendly way, although you will probably want to leave this option turned off when running interactively (simply delete this argument).
 
 ```{r}
 # run MCMC
@@ -122,7 +122,7 @@ r_mcmc_out <- run_mcmc(data = x,
                        pb_markdown = TRUE)
 ```
 
-The raw output produced is essentially a large nested list, containing all log-likelihoods and parameter values. We can dig down to individual elements of this list using the `$` symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first few `mu` values from from first rung of the the first chain:
+The raw output produced is essentially a large nested list, containing diagnostics, log-likelihoods and parameter values. We can dig down to individual elements of this list using the `$` symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first few `mu` values from from first rung of the the first chain:
 
 ```{r}
 # get first few mu values
@@ -134,31 +134,20 @@ Note that the first value is 5.0, which is the initial value for `mu` that we sp
 
 ## Exploring outputs and checking MCMC performance
 
-We can produce simple trace plots of output, e.g. the log-likelihood:
+We can produce simple trace plots of output, e.g. the parameter `mu`:
+
+(TODO - should show trace plot over burn-in before showing sampling iterations)
 
 ```{r, fig.width=8, fig.height=4}
-# extract and plot log-likelihood in first burn-in phase, and in the sampling phase
-loglike_burnin <- r_mcmc_out$chain1$loglike_burnin$rung1
-loglike_sampling <- r_mcmc_out$chain1$loglike_sampling$rung1
-
-plot(loglike_burnin, type = 'l')
-plot(loglike_sampling, type = 'l')
+plot_par(r_mcmc_out, "mu")
 ```
 
-and paramters:
+(TODO - talk about each of these plots)
 
 ```{r, fig.width=8, fig.height=4}
-# extract and plot posterior parameter draws
-theta <- r_mcmc_out$chain1$theta_sampling$rung1
-mu <- theta$mu
-sigma <- theta$sigma
-
-plot(mu, type = 'l', ylim = c(0,10))
-abline(h = mu_true, col = 2)
-
-plot(sigma, type = 'l', ylim = c(0,10))
-abline(h = sigma_true, col = 2)
+plot_par(r_mcmc_out, "sigma")
 ```
+
 
 
 ## Using C++ functions

@@ -125,7 +125,7 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>plot_par</span>(<span class='no'>x</span>, <span class='kw'>parameter</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>plot_par</span>(<span class='no'>x</span>, <span class='kw'>show</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>hide</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>lag</span> <span class='kw'>=</span> <span class='fl'>20</span>, <span class='kw'>downsample</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -135,9 +135,22 @@
       <td><p>an object of class <code>drjacoby_output</code></p></td>
     </tr>
     <tr>
-      <th>parameter</th>
-      <td><p>Name of parameter. If NULL (default) one plot for each parameter
-will be created.</p></td>
+      <th>show</th>
+      <td><p>Optional character (or vector of characters) to filter parameters by.
+Parameters matching show will be included.</p></td>
+    </tr>
+    <tr>
+      <th>hide</th>
+      <td><p>Optional character (or vector of characters) to filter parameters by.
+Parameters matching show will be hidden.</p></td>
+    </tr>
+    <tr>
+      <th>lag</th>
+      <td><p>Maximum lag. Must be an integer between 20 and 500</p></td>
+    </tr>
+    <tr>
+      <th>downsample</th>
+      <td><p>Downsample chain for efficiency</p></td>
     </tr>
     </table>
     

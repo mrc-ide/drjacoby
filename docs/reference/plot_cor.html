@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Effective sample size — ess • drjacoby</title>
+<title>Plot parameter correlation — plot_cor • drjacoby</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,12 +30,9 @@
 
 
 
-<meta property="og:title" content="Effective sample size — ess" />
+<meta property="og:title" content="Plot parameter correlation — plot_cor" />
 
-<meta property="og:description" content="Estimates effective sample size. 
-Note 1: Lag is trunctaed at when autocorrelation &amp;lt; 0.05, 
-if -ve autocorrelation occurs it is possible to get ess &amp;gt; N.
-Note 2: ESS estimates will be too optimistic for chains that haven’t mixed." />
+<meta property="og:description" content="Plots correlation between two parameters" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -117,34 +114,39 @@ Note 2: ESS estimates will be too optimistic for chains that haven’t mixed." /
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Effective sample size</h1>
+    <h1>Plot parameter correlation</h1>
     
-    <div class="hidden name"><code>ess.Rd</code></div>
+    <div class="hidden name"><code>plot_cor.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Estimates effective sample size. 
-Note 1: Lag is trunctaed at when autocorrelation &lt; 0.05, 
-if -ve autocorrelation occurs it is possible to get ess &gt; N.
-Note 2: ESS estimates will be too optimistic for chains that haven’t mixed.</p>
+    <p>Plots correlation between two parameters</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>ess</span>(<span class='no'>x</span>)</pre>
+    <pre class="usage"><span class='fu'>plot_cor</span>(<span class='no'>x</span>, <span class='no'>parameter1</span>, <span class='no'>parameter2</span>, <span class='kw'>downsample</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>chain</p></td>
+      <td><p>an object of class <code>drjacoby_output</code></p></td>
+    </tr>
+    <tr>
+      <th>parameter1</th>
+      <td><p>Name of parameter first parameter.</p></td>
+    </tr>
+    <tr>
+      <th>parameter2</th>
+      <td><p>Name of parameter second parameter.</p></td>
+    </tr>
+    <tr>
+      <th>downsample</th>
+      <td><p>Downsample chain for efficiency</p></td>
     </tr>
     </table>
-    
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>The effective sample size of a chain</p>
     
 
   </div>
@@ -152,9 +154,7 @@ Note 2: ESS estimates will be too optimistic for chains that haven’t mixed.</p
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      
-      <li><a href="#value">Value</a></li>
-          </ul>
+                </ul>
 
   </div>
 </div>

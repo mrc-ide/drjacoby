@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Effective sample size — ess • drjacoby</title>
+<title>Extract theta into list of matrices over rungs — get_theta_rungs • drjacoby</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,12 +30,9 @@
 
 
 
-<meta property="og:title" content="Effective sample size — ess" />
+<meta property="og:title" content="Extract theta into list of matrices over rungs — get_theta_rungs" />
 
-<meta property="og:description" content="Estimates effective sample size. 
-Note 1: Lag is trunctaed at when autocorrelation &amp;lt; 0.05, 
-if -ve autocorrelation occurs it is possible to get ess &amp;gt; N.
-Note 2: ESS estimates will be too optimistic for chains that haven’t mixed." />
+<meta property="og:description" content="Extract theta into list of matrices over rungs" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -117,34 +114,39 @@ Note 2: ESS estimates will be too optimistic for chains that haven’t mixed." /
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Effective sample size</h1>
+    <h1>Extract theta into list of matrices over rungs</h1>
     
-    <div class="hidden name"><code>ess.Rd</code></div>
+    <div class="hidden name"><code>get_theta_rungs.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Estimates effective sample size. 
-Note 1: Lag is trunctaed at when autocorrelation &lt; 0.05, 
-if -ve autocorrelation occurs it is possible to get ess &gt; N.
-Note 2: ESS estimates will be too optimistic for chains that haven’t mixed.</p>
+    <p>Extract theta into list of matrices over rungs</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>ess</span>(<span class='no'>x</span>)</pre>
+    <pre class="usage"><span class='fu'>get_theta_rungs</span>(<span class='no'>theta_list</span>, <span class='no'>param_names</span>, <span class='no'>rung_names</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>chain</p></td>
+      <th>theta_list</th>
+      <td><p>List of thetas</p></td>
+    </tr>
+    <tr>
+      <th>param_names</th>
+      <td><p>Vector of parameter names</p></td>
+    </tr>
+    <tr>
+      <th>rung_names</th>
+      <td><p>Vector of rung names</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The effective sample size of a chain</p>
+    <p>List of matrices</p>
     
 
   </div>

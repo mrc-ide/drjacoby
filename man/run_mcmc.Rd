@@ -5,7 +5,7 @@
 \title{Run drjacoby MCMC}
 \usage{
 run_mcmc(data, df_params, loglike, logprior, burnin = 1000,
-  samples = 10000, rungs = 1, chains = 1, coupling_on = TRUE,
+  samples = 10000, rungs = 1, chains = 5, coupling_on = TRUE,
   GTI_pow = 3, cluster = NULL, pb_markdown = FALSE, silent = FALSE)
 }
 \arguments{
