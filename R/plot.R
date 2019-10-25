@@ -1,55 +1,160 @@
 
 #------------------------------------------------
-#' @title Plot Metropolis Coupling Acceptance
-#'
-#' @description Plot Metropolis Coupling Acceptance.
-#'
+#' @title Plot loglikelihood 95\% credible intervals
+#'   
+#' @description Plot loglikelihood 95\% credible intervals.
+#'   
 #' @param x an object of class \code{drjacoby_output}
 #' @param chain which chain to plot.
 #' @param phase which phase to plot. Must be either "burnin" or "sampling".
+#' @param x_axis_type how to format the x-axis. 1 = integer rungs, 2 = values of
+#'   the thermodynamic power.
+#' @param y_axis_type how to format the y-axis. 1 = raw values, 2 = truncated at
+#'   auto-chosen lower limit. 3 = double-log scale.
 #'
-#' @import ggplot2
-#' @importFrom grDevices grey
 #' @export
 
-plot_mc_acceptance <- function(x, chain = 1, phase = "sampling") {
+plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1, y_axis_type = 1) {
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
   assert_in(phase, c("burnin", "sampling"))
+  assert_single_pos_int(x_axis_type)
+  assert_in(x_axis_type, 1:2)
+  assert_single_pos_int(y_axis_type)
+  assert_in(y_axis_type, 1:3)
   
-  # get values
+  # get useful quantities
+  beta_raised <- x[[chain]]$diagnostics$beta_raised
+  rungs <- length(beta_raised)
+  
+  # define x-axis type
+  if (x_axis_type == 1) {
+    x_vec <- rungs:1
+    x_lab <- "rung"
+  } else {
+    x_vec <- beta_raised
+    x_lab <- "thermodynamic power"
+  }
+  
+  # get loglikelihoods
+  if (phase == "burnin") {
+    loglike <- x[[chain]]$loglike_burnin
+  } else {
+    loglike <- x[[chain]]$loglike_sampling
+  }
+  
+  # take double-logs if needed
+  y_lab <- "log-likelihood"
+  if (y_axis_type == 3) {
+    loglike <- -2*loglike
+    y_lab <- "deviance"
+  }
+  
+  # get 95% credible intervals over sampling loglikelihoods
+  loglike_intervals <- t(apply(loglike, 2, quantile_95))
+  
+  # get data into ggplot format and define temperature colours
+  df <- as.data.frame(loglike_intervals)
+  df$col <- beta_raised
+  
+  # produce plot
+  plot1 <- ggplot(df) + theme_bw() + theme(panel.grid.minor.x = element_blank(),
+                                         panel.grid.major.x = element_blank())
+  plot1 <- plot1 + geom_vline(aes(xintercept = x_vec), col = grey(0.9))
+  plot1 <- plot1 + geom_segment(aes_(x = ~x_vec, y = ~Q2.5, xend = ~x_vec, yend = ~Q97.5))
+  plot1 <- plot1 + geom_point(aes_(x = ~x_vec, y = ~Q50, color = ~col))
+  plot1 <- plot1 + xlab(x_lab) + ylab(y_lab)
+  plot1 <- plot1 + scale_colour_gradientn(colours = c("red", "blue"), name = "thermodynamic\npower", limits = c(0,1))
+  
+  # define y-axis
+  if (y_axis_type == 2) {
+    y_min <- quantile(df$Q2.5, probs = 0.5)
+    y_max <- max(df$Q97.5)
+    plot1 <- plot1 + coord_cartesian(ylim = c(y_min, y_max))
+  } else if (y_axis_type == 3) {
+    plot1 <- plot1 + scale_y_continuous(trans = "log10")
+  }
+  
+  # return plot object
+  return(plot1)
+}
+
+#------------------------------------------------
+#' @title Plot Metropolis coupling acceptance rates
+#'
+#' @description Plot Metropolis coupling acceptance rates between all rungs.
+#'
+#' @inheritParams plot_rung_loglike
+#'
+#' @import ggplot2
+#' @importFrom grDevices grey
+#' @export
+
+plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1) {
+  
+  # check inputs
+  assert_custom_class(x, "drjacoby_output")
+  assert_single_pos_int(chain)
+  assert_leq(chain, length(x))
+  assert_in(phase, c("burnin", "sampling"))
+  assert_single_pos_int(x_axis_type)
+  assert_in(x_axis_type, 1:2)
+  
+  # get useful quantities
   beta_raised <- x[[chain]]$diagnostics$beta_raised
   beta_raised_mid <- beta_raised[-1] - diff(beta_raised)/2
+  rungs <- length(beta_raised)
+  
+  # define x-axis type
+  if (x_axis_type == 1) {
+    breaks_vec <- rungs:2
+    x_vec <- (rungs:2) - 0.5
+    x_lab <- "rung"
+  } else {
+    breaks_vec <- beta_raised
+    x_vec <- beta_raised_mid
+    x_lab <- "thermodynamic power"
+  }
+  
+  # get acceptance rates
   if (phase == "burnin") {
     mc_accept <- x[[chain]]$diagnostics$mc_accept_burnin
   } else {
     mc_accept <- x[[chain]]$diagnostics$mc_accept_sampling
   }
   
+  # get data into ggplot format and define temperature colours
+  df <- as.data.frame(mc_accept)
+  df$col <- beta_raised_mid
+  
   # produce plot
-  plot1 <- ggplot() + theme_bw() + theme(panel.grid.minor.x = element_blank(),
+  plot1 <- ggplot(df) + theme_bw() + theme(panel.grid.minor.x = element_blank(),
                                          panel.grid.major.x = element_blank())
-  plot1 <- plot1 + geom_vline(aes(xintercept = beta_raised), col = grey(0.9))
-  plot1 <- plot1 + scale_x_continuous(limits = c(0,1)) + scale_y_continuous(limits = c(0,1), expand = c(0,0))
-  plot1 <- plot1 + geom_point(aes(x = beta_raised_mid, y = mc_accept), col = "red")
-  plot1 <- plot1 + xlab("thermodynamic power") + ylab("coupling acceptance rate")
+  plot1 <- plot1 + geom_vline(aes(xintercept = breaks_vec), col = grey(0.9))
+  plot1 <- plot1 + scale_y_continuous(limits = c(0,1), expand = c(0,0))
+  plot1 <- plot1 + geom_point(aes(x = x_vec, y = mc_accept, color = col))
+  plot1 <- plot1 + xlab(x_lab) + ylab("coupling acceptance rate")
+  plot1 <- plot1 + scale_colour_gradientn(colours = c("red", "blue"), name = "thermodynamic\npower", limits = c(0,1))
   
   return(plot1)
 }
 
+#------------------------------------------------
 #' @title Plot autocorrelation
 #'
 #' @description Plot autocorrelation for specified parameters
 #'
-#' @inheritParams plot_mc_acceptance
+#' @inheritParams plot_rung_loglike
 #' @param lag Maximum lag. Must be an integer between 20 and 500.
 #' @param par Vector of parameter names. If NULL all parameters are plotted
 #'
 #' @export
+ 
 plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling") {
+  
   # check inputs
   assert_custom_class(x, "drjacoby_output")
   assert_single_pos_int(chain)
@@ -63,12 +168,15 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   } else {
     data <- x[[chain]]$theta_sampling$rung1
   }
+  
   # Select parameters
   if(!is.null(par)){
     data <- data[, colnames(data) %in% par, drop = FALSE]
   }
+  
   # Estimate autocorrelation
   out <- as.data.frame(apply(data, 2, acf_data, lag = lag))
+  
   # Format data for plotting
   out$lag <- 0:lag
   out <- tidyr::gather(out, "parameter", "Autocorrelation", -lag)
@@ -84,11 +192,12 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
     ggplot2::facet_wrap(~ parameter)
 }
 
+#------------------------------------------------
 #' @title Plot parameter estimates
 #'
 #' @description Plot parameter estimates
 #'
-#' @inheritParams plot_mc_acceptance
+#' @inheritParams plot_rung_loglike
 #' @param show Optional character (or vector of characters) to filter parameters by.
 #'  Parameters matching show will be included.
 #' @param hide Optional character (or vector of characters) to filter parameters by.
@@ -97,6 +206,7 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #' @param downsample Downsample chain for efficiency
 #'
 #' @export
+
 plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
                      downsample = TRUE){
   
@@ -185,16 +295,18 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   return(invisible(plot_list))
 }
 
+#------------------------------------------------
 #' @title Plot parameter correlation
 #'
 #' @description Plots correlation between two parameters
 #'
-#' @inheritParams plot_mc_acceptance
+#' @inheritParams plot_rung_loglike
 #' @param parameter1 Name of parameter first parameter.
 #' @param parameter2 Name of parameter second parameter.
 #' @param downsample Downsample chain for efficiency
 #'
 #' @export
+
 plot_cor <- function(x, parameter1, parameter2,
                      downsample = TRUE){
   # check inputs
