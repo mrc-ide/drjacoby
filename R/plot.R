@@ -50,7 +50,8 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   y_lab <- "log-likelihood"
   if (y_axis_type == 3) {
     loglike <- -2*loglike
-    y_lab <- "deviance"
+    loglike <- loglike - min(loglike)
+    y_lab <- "scaled deviance"
   }
   
   # get 95% credible intervals over sampling loglikelihoods
@@ -325,7 +326,6 @@ plot_cor <- function(x, parameter1, parameter2,
   colnames(data) <- c("x", "y")
   
   if(downsample & nrow(data) > 5000){
-    set.seed(1)
     data <- data[sample(nrow(data),5000),]
   }
   
