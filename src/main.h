@@ -4,7 +4,6 @@
 
 #include <Rcpp.h>
 
-Rcpp::List test_cpp(Rcpp::List args);
 
 //------------------------------------------------
 // main Rcpp function, deployed from R

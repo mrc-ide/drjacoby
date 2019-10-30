@@ -233,13 +233,13 @@ run_mcmc <- function(data,
   for (c in 1:chains) {
     output_processed[[c]]$diagnostics$ess <- ess_est
   }
-
-
-# save output as custom class
-class(output_processed) <- "drjacoby_output"
-
-# return
-return(output_processed)
+  
+  
+  # save output as custom class
+  class(output_processed) <- "drjacoby_output"
+  
+  # return
+  return(output_processed)
 }
 
 #------------------------------------------------

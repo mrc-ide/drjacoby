@@ -208,8 +208,8 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #'
 #' @export
 
-plot_par <- function(x, phase = "sampling", show = NULL, hide = NULL, lag = 20,
-                     downsample = TRUE) {
+plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
+                     downsample = TRUE, phase = "sampling") {
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
@@ -247,6 +247,7 @@ plot_par <- function(x, phase = "sampling", show = NULL, hide = NULL, lag = 20,
   if(nrow(all_chains) > 2000){
     all_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = 2000),]
   }
+  chain <- NULL # to remove warning no visible binding
   all_chains <- dplyr::group_by(all_chains, chain)
   all_chains <- dplyr::mutate(all_chains, x = 1:dplyr::n())
   all_chains <- dplyr::ungroup(all_chains)
