@@ -4,10 +4,13 @@
 \alias{plot_par}
 \title{Plot parameter estimates}
 \usage{
-plot_par(x, show = NULL, hide = NULL, lag = 20, downsample = TRUE)
+plot_par(x, phase = "sampling", show = NULL, hide = NULL, lag = 20,
+  downsample = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
+
+\item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
 \item{show}{Optional character (or vector of characters) to filter parameters by.
 Parameters matching show will be included.}

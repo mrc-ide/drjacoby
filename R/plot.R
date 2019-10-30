@@ -208,12 +208,16 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #'
 #' @export
 
-plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
-                     downsample = TRUE){
+plot_par <- function(x, phase = "sampling", show = NULL, hide = NULL, lag = 20,
+                     downsample = TRUE) {
   
+  # check inputs
   assert_custom_class(x, "drjacoby_output")
+  assert_in(phase, c("burnin", "sampling"))
   assert_single_bounded(lag, 1, 500)
+  assert_single_logical(downsample)
   
+  # choose which parameters to plot
   parameter <- names(x$chain1$theta_sampling$rung1)
   if(!is.null(show)){
     stopifnot(is.character(show))
@@ -228,11 +232,17 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
             to select parameters and reduce computation time.")
   }
   
+  # get all chains into single dataframe
   all_chains <- dplyr::bind_rows(lapply(x, function(y){
-    y$theta_sampling$rung1
+    if (phase == "sampling") {
+      y$theta_sampling$rung1
+    } else {
+      y$theta_burnin$rung1
+    }
   }))
-  # Add chain
-  all_chains$chain <- factor(rep(1:length(x), each = nrow(x[[1]]$theta_sampling$rung1)))
+  chains <- length(x)
+  all_chains$chain <- factor(rep(1:chains, each = nrow(all_chains)/chains))
+  
   # Downsample
   if(nrow(all_chains) > 2000){
     all_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = 2000),]
@@ -248,18 +258,21 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   # Set minimum bin number
   b <- min(nrow(all_chains) / 4, 40)
   
+  # produce plots over all parameters
   plot_list <- c()
   for(j in 1:length(parameter)){
     pd <- all_chains[, c("chain", "x", parameter[j])]
     names(pd) <- c("chain", "x", "y")
     pd2 <- ac_data[, c("lag", parameter[j])]
     names(pd2) <- c("lag", "Autocorrelation")
+    
     # Histogram
     p1 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$y)) + 
       ggplot2::geom_histogram(bins = b, fill = "deepskyblue3", col = "darkblue") + 
       ggplot2::ylab("Count") + 
       ggplot2::xlab(parameter[j]) +
       ggplot2::theme_bw()
+    
     # Chains
     p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$x, y = .data$y, col = .data$chain)) + 
       ggplot2::geom_line() +
@@ -267,6 +280,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
       ggplot2::xlab("Iteration") +
       ggplot2::ylab(parameter[j]) +
       ggplot2::theme_bw()
+    
     # Autocorrealtion
     p3 <- ggplot2::ggplot(data = pd2,
                             ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$Autocorrelation)) + 
@@ -277,8 +291,8 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
       ggplot2::xlab("Lag") +
       ggplot2::ylim(min(0, min(pd2$Autocorrelation)), 1)
     
+    # Arrange
     pc1 <- cowplot::plot_grid(p1, p3, ncol = 2)
-    # Side by side
     plot_list[[j]] <- cowplot::plot_grid(p2, pc1, nrow = 2)
   }
   names(plot_list) <- paste0("Plot_", parameter)
