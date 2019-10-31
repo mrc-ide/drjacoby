@@ -39,26 +39,26 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
     x_lab <- "thermodynamic power"
   }
   
-  # get loglikelihoods
-  if (phase == "burnin") {
-    loglike <- x[[chain]]$loglike_burnin
-  } else {
-    loglike <- x[[chain]]$loglike_sampling
-  }
-  
-  # take double-logs if needed
+  # get plotting values (loglikelihoods)
   y_lab <- "log-likelihood"
-  if (y_axis_type == 3) {
-    loglike <- -2*loglike
-    loglike <- loglike - min(loglike)
-    y_lab <- "scaled deviance"
+  if (phase == "burnin") {
+    y <- x[[chain]]$loglike_burnin
+  } else {
+    y <- x[[chain]]$loglike_sampling
   }
   
-  # get 95% credible intervals over sampling loglikelihoods
-  loglike_intervals <- t(apply(loglike, 2, quantile_95))
+  # move to plotting deviance if specified
+  if (y_axis_type == 3) {
+    deviance <- -2*y
+    y <- deviance - min(deviance)
+    y_lab <- "deviance - min(deviance)"
+  }
+  
+  # get 95% credible intervals over plotting values
+  y_intervals <- t(apply(y, 2, quantile_95))
   
   # get data into ggplot format and define temperature colours
-  df <- as.data.frame(loglike_intervals)
+  df <- as.data.frame(y_intervals)
   df$col <- beta_raised
   
   # produce plot
@@ -325,25 +325,25 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 
 plot_cor <- function(x, parameter1, parameter2,
                      downsample = TRUE){
+  
   # check inputs
   assert_custom_class(x, "drjacoby_output")
   assert_string(parameter1)
   assert_string(parameter2)
-  if(!parameter1 %in% names(x$chain1$theta_sampling$rung1)){
-    stop("Parameter1 name not recognised")
-  }
-  if(!parameter2 %in% names(x$chain1$theta_sampling$rung1)){
-    stop("Parameter2 name not recognised")
-  }
+  assert_in(parameter1, names(x$chain1$theta_sampling$rung1))
+  assert_in(parameter2, names(x$chain1$theta_sampling$rung1))
   
+  # extract plotting data
   data <- x$chain1$theta_sampling$rung1
   data <- data[ ,c(parameter1, parameter2)]
   colnames(data) <- c("x", "y")
   
+  # downsample as needed
   if(downsample & nrow(data) > 5000){
     data <- data[sample(nrow(data),5000),]
   }
   
+  # produce plot
   ggplot2::ggplot(data = data,
                   ggplot2::aes(x = .data$x, y = .data$y)) + 
     ggplot2::geom_point(alpha = 0.5, col = "darkblue") + 
@@ -353,3 +353,47 @@ plot_cor <- function(x, parameter1, parameter2,
   
 }
 
+#------------------------------------------------
+#' @title Contour plot of two parameters
+#'
+#' @description Produces contour plot from the posterior draws of two
+#'   parameters.
+#'
+#' @inheritParams plot_rung_loglike
+#' @param parameter1,parameter2 Name of parameters to plot.
+#' @param n_levels Number of contour levels.
+#'
+#' @export
+
+plot_contour <- function(x, parameter1, parameter2, n_levels = 10) {
+  
+  # check inputs
+  assert_custom_class(x, "drjacoby_output")
+  assert_string(parameter1)
+  assert_string(parameter2)
+  assert_in(parameter1, names(x$chain1$theta_sampling$rung1))
+  assert_in(parameter2, names(x$chain1$theta_sampling$rung1))
+  
+  # extract plotting data
+  data <- x$chain1$theta_sampling$rung1
+  data <- data[ ,c(parameter1, parameter2)]
+  colnames(data) <- c("x", "y")
+  
+  # required to remove no visible binding warning
+  level <- NULL
+  
+  # produce plot
+  ggplot2::ggplot(data = data,
+                  ggplot2::aes(x = .data$x, y = .data$y)) + 
+    ggplot2::stat_density_2d(aes(fill = stat(level)), geom = "polygon", bins = n_levels) +
+    ggplot2::geom_density_2d(bins = n_levels, colour = "black") +
+    ggplot2::xlab(parameter1) +
+    ggplot2::ylab(parameter2) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(panel.background = element_rect(fill = NA),
+                   panel.ontop = TRUE,
+                   panel.grid = element_line(colour = '#00000020')) +
+    ggplot2::scale_fill_gradientn(colours = c("white", "#FEE090", "#FC8D59", "#D73027"),
+                                  name = "posterior\ndensity", limits = c(0,NA))
+  
+}

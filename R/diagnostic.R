@@ -1,3 +1,4 @@
+#------------------------------------------------
 #' Gelman-Rubin statistic
 #' 
 #' Estimate sthe Gelman-Rubin (rhat) convergence statistic for a single parameter
@@ -26,6 +27,7 @@ gelman_rubin <- function(par_matrix){
   round(sqrt(V / W), 4)
 }
 
+#------------------------------------------------
 #' Gelman-Rubin statistic: all parameters
 #' 
 #' Estimates the Gelman-Rubin (rhat) convergence statistic for a all parameters
@@ -54,6 +56,7 @@ set_rhat <- function(output, chains){
   return(rhat)
 }
 
+#------------------------------------------------
 #' @title Estimate autocorrelation
 #'
 #' @inheritParams plot_autocorrelation
@@ -62,6 +65,7 @@ acf_data <- function(x, lag){
   stats::acf(x, plot = FALSE, lag.max = lag)$acf
 }
 
+#------------------------------------------------
 #' Effective sample size
 #' 
 #' Estimates effective sample size. 

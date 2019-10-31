@@ -23,7 +23,8 @@ Imports:
     tidyr,
     rlang,
     cowplot,
-    dplyr
+    dplyr,
+    fftwtools
 SystemRequirements: C++11
 Suggests: 
     testthat,

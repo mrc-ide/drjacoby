@@ -21,6 +21,13 @@ force_vector <- function(x, n) {
   }
 }
 
+#------------------------------------------------
+# calculate midpoints of a vector
+#' @noRd
+midpoints <- function(x) {
+  return((x[-1] + x[-length(x)])/2)
+}
+
 # -----------------------------------
 # takes matrix as input, converts to list format for use within Rcpp code
 #' @noRd
@@ -37,10 +44,13 @@ rcpp_to_matrix <- function(x) {
 }
 
 # -----------------------------------
-# takes list format returned from Rcpp and converts to three-dimensional array
+# takes list format returned from Rcpp and converts to three-dimensional array.
+# Array indexing is in the same order as the underlying list, for example
+# x[i,j,k] is equivalent to l[[i]][[j]][[k]]
 #' @noRd
 rcpp_to_array <- function(x) {
-  ret <- array(unlist(x), dim = c(length(x[[1]][[1]]), length(x), length(x[[1]])))
+  ret <- array(unlist(x), dim = c(length(x[[1]][[1]]), length(x[[1]]), length(x)))
+  ret <- aperm(ret, perm = c(3,2,1))
   return(ret)
 }
 

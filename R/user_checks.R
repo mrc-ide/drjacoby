@@ -1,3 +1,4 @@
+#------------------------------------------------
 #' Check Cpp loglikelihood function
 #' 
 #' Peforms compilation, return type and argument type checks
@@ -15,6 +16,7 @@ check_likelihood_compilation <- function(cpp_loglike){
   cat(sprintf("\rChecking types...success\n"))
 }
 
+#------------------------------------------------
 #' Check Cpp logprior function
 #' 
 #' Peforms compilation, return type and argument type checks
