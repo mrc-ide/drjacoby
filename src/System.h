@@ -20,6 +20,7 @@ public:
   std::vector<double> theta_min;
   std::vector<double> theta_max;
   std::vector<int> trans_type;
+  std::vector<bool> skip_param;
   int d;
   
   // MCMC parameters

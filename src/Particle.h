@@ -72,6 +72,9 @@ public:
     
     // loop through parameters
     for (int i = 0; i < d; ++i) {
+      if (s_ptr->skip_param[i]) {
+        continue;
+      }
       
       // generate new phi_prop[i]
       propose_phi(i);

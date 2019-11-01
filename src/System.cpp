@@ -20,7 +20,9 @@ void System::load(Rcpp::List args) {
   theta_min = rcpp_to_vector_double(args_params["theta_min"]);
   theta_max = rcpp_to_vector_double(args_params["theta_max"]);
   trans_type = rcpp_to_vector_int(args_params["trans_type"]);
-  d = theta_init.size();
+  skip_param = rcpp_to_vector_bool(args_params["skip_param"]);
+  //d = sum(skip_param);
+  d = int(theta_init.size());
   
   // MCMC parameters
   burnin = rcpp_to_int(args_params["burnin"]);

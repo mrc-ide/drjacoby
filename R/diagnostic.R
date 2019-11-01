@@ -15,10 +15,13 @@
 gelman_rubin <- function(par_matrix){
   chains <- ncol(par_matrix)
   n <- nrow(par_matrix)
+  
   # Mean over all samples
   all_mean <- mean(par_matrix)
+  
   # Mean of each chain
   chain_mean <- apply(par_matrix, 2, mean)
+  
   # Variance of each chain
   chain_var <- apply(par_matrix, 2, stats::var)
   W <- (1 / chains) * sum(chain_var)
@@ -36,21 +39,27 @@ gelman_rubin <- function(par_matrix){
 #' @inheritParams run_mcmc
 #'
 #' @return Vector of Gelman-Rubin statistics
+#' 
 set_rhat <- function(output, chains){
+  
   # Extract theta matrix for each chain
   out <- c()
   for(i in 1:chains){
     out[[i]] <- output[[i]]$theta_sampling$rung1
   }
+  
   # Number of parameters
   n_par <- ncol(out[[1]])
+  
   # Empty vector to store rhat estimates
   rhat <- vector(mode = "numeric", length = n_par)
+  
   # Estimate Rhat for each parameter
   for(j in 1:n_par){
-    par_matrix <- sapply(out, function(x, n){x[,n]}, n = j)
+    par_matrix <- sapply(out, function(x, n) {x[,n]}, n = j)
     rhat[j] <- gelman_rubin(par_matrix)
   }
+  
   # Add parameter names
   names(rhat) <- names(out[[1]])
   return(rhat)

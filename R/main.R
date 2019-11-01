@@ -81,14 +81,15 @@ run_mcmc <- function(data,
             message = "df_params must contain the columns 'name', 'min', 'max', 'init'")
   assert_numeric(df_params$min)
   assert_numeric(df_params$max)
-  assert_le(df_params$min, df_params$max)
+  assert_leq(df_params$min, df_params$max)
   assert_numeric(df_params$init)
-  assert_gr(df_params$init, df_params$min)
-  assert_le(df_params$init, df_params$max)
+  assert_greq(df_params$init, df_params$min)
+  assert_leq(df_params$init, df_params$max)
   
   # check loglikelihood and logprior functions
   assert_custom_class(loglike, c("function", "character"))
   assert_custom_class(logprior, c("function", "character"))
+  
   # TODO - further checks that these functions are defined correctly?
   
   # check MCMC parameters
@@ -116,6 +117,9 @@ run_mcmc <- function(data,
   # 3 = [a,b]      -> phi = log((theta - a)/(b - theta))
   df_params$trans_type <- 2*is.finite(df_params$min) + is.finite(df_params$max)
   
+  # flag to skip over fixed parameters
+  skip_param <- (df_params$min == df_params$max)
+  
   # flag whether likelihood/prior are C++ functions
   loglike_use_cpp <- inherits(loglike, "character")
   logprior_use_cpp <- inherits(logprior, "character")
@@ -131,6 +135,7 @@ run_mcmc <- function(data,
                       theta_min = df_params$min,
                       theta_max = df_params$max,
                       trans_type = df_params$trans_type,
+                      skip_param = skip_param,
                       burnin = burnin,
                       samples = samples,
                       rungs = rungs,
@@ -211,29 +216,19 @@ run_mcmc <- function(data,
   }
   
   # Estimate rhat
-  if(chains > 1){
+  if (chains > 1) {
     rhat_est <- set_rhat(output_processed, chains)
-    all_chains <- dplyr::bind_rows(lapply(output_processed, function(x){
-      x$theta_sampling$rung1
-    }))
-    ess_est <- apply(all_chains, 2, ess)
-    # Add rhat etimate to each chain diagnostic element
-    for (c in 1:chains) {
-      output_processed[[c]]$diagnostics$rhat <- rhat_est
-      output_processed[[c]]$diagnostics$ess <- ess_est
-    }
+    rhat_est[skip_param] <- NA
+    output_processed$all_chains$diagnostics$rhat <- rhat_est
   }
   
   # Estimate ESS
   all_chains <- dplyr::bind_rows(lapply(output_processed, function(x){
     x$theta_sampling$rung1
   }))
-  ess_est <- apply(all_chains, 2, ess)
-  # Add rhat etimate to each chain diagnostic element
-  for (c in 1:chains) {
-    output_processed[[c]]$diagnostics$ess <- ess_est
-  }
-  
+  ess_est <- apply(all_chains, 2, coda::effectiveSize)
+  ess_est[skip_param] <- NA
+  output_processed$all_chains$diagnostics$ess <- ess_est
   
   # save output as custom class
   class(output_processed) <- "drjacoby_output"
@@ -278,6 +273,7 @@ deploy_chain <- function(args) {
   return(ret)
 }
 
+#------------------------------------------------
 #' Extract theta into list of matrices over rungs
 #'
 #' @param theta_list List of thetas
