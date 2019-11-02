@@ -14,7 +14,6 @@ typedef SEXP (*pattern_cpp_logprior)(std::vector<double>);
 
 //------------------------------------------------
 // main MCMC function
-// [[Rcpp::export]]
 Rcpp::List main_cpp(Rcpp::List args) {
   
   // get flags for R vs. C++ likelihood and prior functions
@@ -310,3 +309,4 @@ void coupling(vector<Particle> &particle_vec, vector<int> &mc_accept) {
   }  // end loop over rungs
   
 }
+

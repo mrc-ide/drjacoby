@@ -7,6 +7,7 @@
 
 //------------------------------------------------
 // main Rcpp function, deployed from R
+// [[Rcpp::export]]
 Rcpp::List main_cpp(Rcpp::List args);
 
 //------------------------------------------------

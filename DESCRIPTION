@@ -23,7 +23,8 @@ Imports:
     tidyr,
     rlang,
     cowplot,
-    dplyr
+    dplyr,
+    ggisoband
 SystemRequirements: C++11
 Suggests: 
     testthat,
@@ -35,3 +36,4 @@ Suggests:
 BugReports: https://github.com/mrc-ide/drjacoby/issues
 VignetteBuilder: knitr
 Depends: R (>= 3.1.0)
+Remotes: clauswilke/ggisoband

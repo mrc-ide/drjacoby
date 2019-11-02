@@ -240,7 +240,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
       y$theta_burnin$rung1
     }
   }))
-  chains <- length(x)
+  chains <- length(x) - 1
   all_chains$chain <- factor(rep(1:chains, each = nrow(all_chains)/chains))
   
   # Downsample
@@ -363,6 +363,7 @@ plot_cor <- function(x, parameter1, parameter2,
 #' @param parameter1,parameter2 Name of parameters to plot.
 #' @param n_levels Number of contour levels.
 #'
+#' @importFrom stats density
 #' @export
 
 plot_contour <- function(x, parameter1, parameter2, n_levels = 10) {
@@ -385,8 +386,7 @@ plot_contour <- function(x, parameter1, parameter2, n_levels = 10) {
   # produce plot
   ggplot2::ggplot(data = data,
                   ggplot2::aes(x = .data$x, y = .data$y)) + 
-    ggplot2::stat_density_2d(aes(fill = stat(level)), geom = "polygon", bins = n_levels) +
-    ggplot2::geom_density_2d(bins = n_levels, colour = "black") +
+    ggisoband::geom_density_bands(aes(fill = stat(density)), size = 0.2) +
     ggplot2::xlab(parameter1) +
     ggplot2::ylab(parameter2) +
     ggplot2::theme_bw() +
