@@ -77,14 +77,17 @@ run_mcmc <- function(data,
   
   # check df_params
   assert_dataframe(df_params)
-  assert_in(c("name", "min", "max", "init"), names(df_params),
-            message = "df_params must contain the columns 'name', 'min', 'max', 'init'")
+  assert_in(c("name", "min", "max"), names(df_params),
+            message = "df_params must contain the columns 'name', 'min', 'max'")
   assert_numeric(df_params$min)
   assert_numeric(df_params$max)
   assert_leq(df_params$min, df_params$max)
-  assert_numeric(df_params$init)
-  assert_greq(df_params$init, df_params$min)
-  assert_leq(df_params$init, df_params$max)
+  theta_init_defined <- ("init" %in% names(df_params))
+  if (theta_init_defined) {
+    assert_numeric(df_params$init)
+    assert_greq(df_params$init, df_params$min)
+    assert_leq(df_params$init, df_params$max)
+  }
   
   # check loglikelihood and logprior functions
   assert_custom_class(loglike, c("function", "character"))
@@ -131,9 +134,10 @@ run_mcmc <- function(data,
   args_params <- list(x = data,
                       loglike_use_cpp = loglike_use_cpp,
                       logprior_use_cpp = logprior_use_cpp,
-                      theta_init = df_params$init,
                       theta_min = df_params$min,
                       theta_max = df_params$max,
+                      theta_init = df_params$init,
+                      theta_init_defined = theta_init_defined,
                       trans_type = df_params$trans_type,
                       skip_param = skip_param,
                       burnin = burnin,

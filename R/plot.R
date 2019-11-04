@@ -387,6 +387,8 @@ plot_contour <- function(x, parameter1, parameter2, n_levels = 10) {
   ggplot2::ggplot(data = data,
                   ggplot2::aes(x = .data$x, y = .data$y)) + 
     ggisoband::geom_density_bands(aes(fill = stat(density)), size = 0.2) +
+    ggplot2::scale_x_continuous(expand = c(0, 0)) +
+    ggplot2::scale_y_continuous(expand = c(0, 0)) +
     ggplot2::xlab(parameter1) +
     ggplot2::ylab(parameter2) +
     ggplot2::theme_bw() +

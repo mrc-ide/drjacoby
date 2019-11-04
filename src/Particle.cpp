@@ -18,7 +18,14 @@ void Particle::init(System &s, double beta_raised) {
   this->beta_raised = beta_raised;
   
   // theta is the parameter vector in natural space
-  theta = s_ptr->theta_init;
+  if (s_ptr->theta_init_defined) {
+    theta = s_ptr->theta_init;
+  } else {
+    theta = vector<double>(d);
+    for (int i = 0; i < d; ++i) {
+      theta[i] = runif1(s_ptr->theta_min[i], s_ptr->theta_max[i]);
+    }
+  }
   theta_prop = vector<double>(d);
   
   // phi is a vector of transformed parameters
