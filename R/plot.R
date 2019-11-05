@@ -49,9 +49,22 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   
   # move to plotting deviance if specified
   if (y_axis_type == 3) {
-    deviance <- -2*y
-    y <- deviance - min(deviance)
-    y_lab <- "deviance - min(deviance)"
+    dev <- -2*y
+    y <- dev
+    y_lab <- "deviance"
+    
+    # if needed, scale by adding/subtracting a power of ten until all values are
+    # positive
+    if (min(dev) < 0) {
+      dev_scale_power <- ceiling(log(abs(min(dev)))/log(10))
+      dev_scale_sign <- -sign(min(dev))
+      y <- dev + dev_scale_sign*10^dev_scale_power
+      
+      dev_scale_base <- ifelse(dev_scale_power == 0, 1, 10)
+      dev_scale_power_char <- ifelse(dev_scale_power <= 1, "", paste("^", dev_scale_power))
+      dev_scale_sign_char <- ifelse(dev_scale_sign < 0, "-", "+")
+      y_lab <- parse(text = paste("deviance", dev_scale_sign_char, dev_scale_base, dev_scale_power_char))
+    }
   }
   
   # get 95% credible intervals over plotting values
@@ -108,6 +121,11 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
   beta_raised <- x[[chain]]$diagnostics$beta_raised
   beta_raised_mid <- beta_raised[-1] - diff(beta_raised)/2
   rungs <- length(beta_raised)
+  
+  # exit if rungs = 1
+  if (rungs == 1) {
+    stop("no metropolis coupling when rungs = 1")
+  }
   
   # define x-axis type
   if (x_axis_type == 1) {
