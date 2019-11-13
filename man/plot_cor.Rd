@@ -4,7 +4,8 @@
 \alias{plot_cor}
 \title{Plot parameter correlation}
 \usage{
-plot_cor(x, parameter1, parameter2, downsample = TRUE)
+plot_cor(x, parameter1, parameter2, downsample = TRUE,
+  phase = "sampling")
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
@@ -14,6 +15,8 @@ plot_cor(x, parameter1, parameter2, downsample = TRUE)
 \item{parameter2}{Name of parameter second parameter.}
 
 \item{downsample}{Downsample chain for efficiency}
+
+\item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 }
 \description{
 Plots correlation between two parameters

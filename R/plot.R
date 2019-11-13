@@ -231,9 +231,9 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
-  assert_in(phase, c("burnin", "sampling"))
   assert_single_bounded(lag, 1, 500)
   assert_single_logical(downsample)
+  assert_in(phase, c("burnin", "sampling"))
   
   # choose which parameters to plot
   parameter <- names(x$chain1$theta_sampling$rung1)
@@ -262,7 +262,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   all_chains$chain <- factor(rep(1:chains, each = nrow(all_chains)/chains))
   
   # Downsample
-  if(nrow(all_chains) > 2000){
+  if(downsample & nrow(all_chains) > 2000){
     all_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = 2000),]
   }
   chain <- NULL # to remove warning no visible binding
@@ -342,7 +342,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 #' @export
 
 plot_cor <- function(x, parameter1, parameter2,
-                     downsample = TRUE){
+                     downsample = TRUE, phase = "sampling"){
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
@@ -350,23 +350,35 @@ plot_cor <- function(x, parameter1, parameter2,
   assert_string(parameter2)
   assert_in(parameter1, names(x$chain1$theta_sampling$rung1))
   assert_in(parameter2, names(x$chain1$theta_sampling$rung1))
+  assert_single_logical(downsample)
+  assert_in(phase, c("burnin", "sampling"))
   
-  # extract plotting data
-  data <- x$chain1$theta_sampling$rung1
-  data <- data[ ,c(parameter1, parameter2)]
-  colnames(data) <- c("x", "y")
+  # get all chains into single dataframe
+  all_chains <- dplyr::bind_rows(lapply(x, function(y){
+    if (phase == "sampling") {
+      y$theta_sampling$rung1
+    } else {
+      y$theta_burnin$rung1
+    }
+  }))
+  all_chains <- all_chains[,c(parameter1, parameter2)]
+  chains <- length(x) - 1
+  all_chains$chain <- factor(rep(1:chains, each = nrow(all_chains)/chains))
+  names(all_chains) <- c("x", "y", "chain")
   
-  # downsample as needed
-  if(downsample & nrow(data) > 5000){
-    data <- data[sample(nrow(data),5000),]
+  # Downsample
+  if(downsample & nrow(all_chains) > 2000){
+    all_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = 2000),]
   }
+  #chain <- NULL # to remove warning no visible binding
   
   # produce plot
-  ggplot2::ggplot(data = data,
-                  ggplot2::aes(x = .data$x, y = .data$y)) + 
-    ggplot2::geom_point(alpha = 0.5, col = "darkblue") + 
+  ggplot2::ggplot(data = all_chains,
+                  ggplot2::aes(x = .data$x, y = .data$y, col = as.factor(.data$chain))) + 
+    ggplot2::geom_point(alpha = 0.5) + 
     ggplot2::xlab(parameter1) +
     ggplot2::ylab(parameter2) +
+    scale_color_discrete(name = "Chain") +
     ggplot2::theme_bw()
   
 }
