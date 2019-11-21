@@ -77,7 +77,7 @@ run_mcmc <- function(data,
   
   # check df_params
   assert_dataframe(df_params)
-  assert_in(c("name", "min", "max"), names(df_params),
+  assert_in(names(df_params), c("name", "min", "max"),
             message = "df_params must contain the columns 'name', 'min', 'max'")
   assert_numeric(df_params$min)
   assert_numeric(df_params$max)
@@ -87,6 +87,10 @@ run_mcmc <- function(data,
     assert_numeric(df_params$init)
     assert_greq(df_params$init, df_params$min)
     assert_leq(df_params$init, df_params$max)
+  } else {
+    this_message <- "all min and max values must be finite when init value is not specified"
+    assert_eq(all(is.finite(df_params$min)), TRUE, message = this_message)
+    assert_eq(all(is.finite(df_params$max)), TRUE, message = this_message)
   }
   
   # check loglikelihood and logprior functions

@@ -16,8 +16,6 @@ typedef SEXP (*pattern_cpp_logprior)(std::vector<double>);
 // main MCMC function
 Rcpp::List main_cpp(Rcpp::List args) {
   
-  
-  
   // get flags for R vs. C++ likelihood and prior functions
   Rcpp::List args_params = args["args_params"];
   bool loglike_use_cpp = rcpp_to_bool(args_params["loglike_use_cpp"]);
