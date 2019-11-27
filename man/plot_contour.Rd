@@ -16,6 +16,8 @@ plot_contour(x, parameter1, parameter2, n_levels = 10,
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
+\item{rung}{Rung}
+
 \item{chain}{which chain to plot.}
 }
 \description{

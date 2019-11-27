@@ -168,6 +168,7 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
 #' @inheritParams plot_rung_loglike
 #' @param lag Maximum lag. Must be an integer between 20 and 500.
 #' @param par Vector of parameter names. If NULL all parameters are plotted
+#' @param rung Rung
 #' 
 #' @export
 
@@ -223,6 +224,7 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #' @param lag Maximum lag. Must be an integer between 20 and 500
 #' @param downsample Downsample chain for efficiency
 #' @param display Show plots
+#' @param rung Rung
 #'
 #' @export
 
@@ -335,6 +337,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 #' @param parameter1 Name of parameter first parameter.
 #' @param parameter2 Name of parameter second parameter.
 #' @param downsample Downsample chain for efficiency
+#' @param rung Rung
 #'
 #' @export
 
@@ -380,6 +383,7 @@ plot_cor <- function(x, parameter1, parameter2,
 #' @inheritParams plot_rung_loglike
 #' @param parameter1,parameter2 Name of parameters to plot.
 #' @param n_levels Number of contour levels.
+#' @param rung Rung
 #'
 #' @importFrom stats density
 #' @export

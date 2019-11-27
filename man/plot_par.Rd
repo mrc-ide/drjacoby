@@ -22,6 +22,8 @@ Parameters matching show will be hidden.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
+\item{rung}{Rung}
+
 \item{display}{Show plots}
 }
 \description{

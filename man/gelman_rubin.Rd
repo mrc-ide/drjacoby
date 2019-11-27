@@ -8,6 +8,10 @@ gelman_rubin(par_matrix, chains, samples)
 }
 \arguments{
 \item{par_matrix}{Matrix (interations x chains)}
+
+\item{chains}{number of chains}
+
+\item{samples}{number of samples}
 }
 \value{
 Gelman-Rubin statistic

@@ -17,6 +17,8 @@ plot_autocorrelation(x, lag = 20, par = NULL, chain = 1,
 \item{chain}{which chain to plot.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
+
+\item{rung}{Rung}
 }
 \description{
 Plot autocorrelation for specified parameters

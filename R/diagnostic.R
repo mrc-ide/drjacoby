@@ -10,6 +10,8 @@
 #' @references \url{https://astrostatistics.psu.edu/RLectures/diagnosticsMCMC.pdf}
 #'
 #' @param par_matrix Matrix (interations x chains)
+#' @param chains number of chains
+#' @param samples number of samples
 #'
 #' @return Gelman-Rubin statistic
 gelman_rubin <- function(par_matrix, chains, samples){
@@ -21,7 +23,7 @@ gelman_rubin <- function(par_matrix, chains, samples){
   chain_mean <- tapply(par_matrix[,2], par_matrix[,1], mean)
   
   # Variance of each chain
-  chain_var <- tapply(par_matrix[,2], par_matrix[,1], var)
+  chain_var <- tapply(par_matrix[,2], par_matrix[,1], stats::var)
   W <- (1 / chains) * sum(chain_var)
   B <- samples / (chains - 1) * sum((chain_mean - all_mean)^2)
   V <- (1 - 1 / samples) * W + (1 / samples) * B

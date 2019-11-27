@@ -17,6 +17,8 @@ plot_cor(x, parameter1, parameter2, downsample = TRUE,
 \item{downsample}{Downsample chain for efficiency}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
+
+\item{rung}{Rung}
 }
 \description{
 Plots correlation between two parameters
