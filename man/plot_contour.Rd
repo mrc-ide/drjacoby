@@ -4,7 +4,8 @@
 \alias{plot_contour}
 \title{Contour plot of two parameters}
 \usage{
-plot_contour(x, parameter1, parameter2, n_levels = 10)
+plot_contour(x, parameter1, parameter2, n_levels = 10,
+  phase = "sampling", rung = 1, chain = 1)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
@@ -12,6 +13,10 @@ plot_contour(x, parameter1, parameter2, n_levels = 10)
 \item{parameter1, parameter2}{Name of parameters to plot.}
 
 \item{n_levels}{Number of contour levels.}
+
+\item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
+
+\item{chain}{which chain to plot.}
 }
 \description{
 Produces contour plot from the posterior draws of two

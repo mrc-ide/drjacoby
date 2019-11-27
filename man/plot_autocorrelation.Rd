@@ -5,7 +5,7 @@
 \title{Plot autocorrelation}
 \usage{
 plot_autocorrelation(x, lag = 20, par = NULL, chain = 1,
-  phase = "sampling")
+  phase = "sampling", rung = 1)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}

@@ -4,7 +4,7 @@
 \alias{gelman_rubin}
 \title{Gelman-Rubin statistic}
 \usage{
-gelman_rubin(par_matrix)
+gelman_rubin(par_matrix, chains, samples)
 }
 \arguments{
 \item{par_matrix}{Matrix (interations x chains)}
