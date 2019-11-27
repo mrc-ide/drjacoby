@@ -1,4 +1,3 @@
-
 #------------------------------------------------
 #' @title Plot loglikelihood 95\% credible intervals
 #'   
@@ -169,10 +168,10 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
 #' @inheritParams plot_rung_loglike
 #' @param lag Maximum lag. Must be an integer between 20 and 500.
 #' @param par Vector of parameter names. If NULL all parameters are plotted
-#'
+#' 
 #' @export
 
-plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling") {
+plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling", rung = 1) {
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
@@ -182,11 +181,11 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   assert_single_bounded(lag, 1, 500)
   
   # get values
-  if (phase == "burnin") {
-    data <- x[[chain]]$theta_burnin$rung1
-  } else {
-    data <- x[[chain]]$theta_sampling$rung1
-  }
+  chain_get <- paste0("chain", chain)
+  rung_get <- paste0("rung", rung)
+  data <- dplyr::filter(x$output, chain == chain_get, rung == rung_get, stage == phase) %>%
+    dplyr::select(-chain, -rung, -iteration, -stage, -loglikelihood) %>%
+    as.data.frame()
   
   # Select parameters
   if(!is.null(par)){

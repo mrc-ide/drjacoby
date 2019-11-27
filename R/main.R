@@ -214,7 +214,9 @@ run_mcmc <- function(data,
   # Output all
   output_processed <- list(output = dplyr::left_join(df_ll, df_theta, by = c("chain", "rung", "iteration", "stage")))
   output_processed$diagnostics <- list()
-  # Estimate rhat
+  
+  ## Diagnostics
+  # Rhat
   if (chains > 1) {
     rhat_est <- c()
     for(p in seq_along(param_names)){
@@ -224,11 +226,24 @@ run_mcmc <- function(data,
     rhat_est[skip_param] <- NA
     output_processed$diagnostics$rhat <- rhat_est
   }
-  
-  # Estimate ESS
+  # ESS
   ess_est <- apply(output_processed$output[output_processed$output$stage == "sampling",as.character(param_names)], 2, coda::effectiveSize)
   ess_est[skip_param] <- NA
   output_processed$diagnostics$ess <- ess_est
+  # MC
+  if(rungs > 1){
+    # Beta raised
+    output_processed$diagnostics$beta_raised <- tidyr::expand_grid(chain = chain_names, rung = rung_names)
+    output_processed$diagnostics$beta_raised$value <- unlist(lapply(output_raw, function(x){x$beta_raised}))
+    # MC accept
+    mc_accept <- tidyr::expand_grid(chain = chain_names, link = 1:(length(rung_names) - 1))
+    mc_accept$burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin
+    mc_accept$sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
+    mc_accept <- tidyr::gather(mc_accept, stage, value, -chain, -link)
+    
+    output_processed$diagnostics$mc_accept <- mc_accept
+  }
+
   
   # save output as custom class
   class(output_processed) <- "drjacoby_output"
