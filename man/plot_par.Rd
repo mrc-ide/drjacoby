@@ -5,7 +5,7 @@
 \title{Plot parameter estimates}
 \usage{
 plot_par(x, show = NULL, hide = NULL, lag = 20, downsample = TRUE,
-  phase = "sampling")
+  phase = "sampling", display = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
@@ -21,6 +21,8 @@ Parameters matching show will be hidden.}
 \item{downsample}{Downsample chain for efficiency}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
+
+\item{display}{Show plots}
 }
 \description{
 Plot parameter estimates

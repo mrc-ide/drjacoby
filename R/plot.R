@@ -76,7 +76,7 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   
   # produce plot
   plot1 <- ggplot(df) + theme_bw() + theme(panel.grid.minor.x = element_blank(),
-                                         panel.grid.major.x = element_blank())
+                                           panel.grid.major.x = element_blank())
   plot1 <- plot1 + geom_vline(aes(xintercept = x_vec), col = grey(0.9))
   plot1 <- plot1 + geom_segment(aes_(x = ~x_vec, y = ~Q2.5, xend = ~x_vec, yend = ~Q97.5))
   plot1 <- plot1 + geom_point(aes_(x = ~x_vec, y = ~Q50, color = ~col))
@@ -151,7 +151,7 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
   
   # produce plot
   plot1 <- ggplot(df) + theme_bw() + theme(panel.grid.minor.x = element_blank(),
-                                         panel.grid.major.x = element_blank())
+                                           panel.grid.major.x = element_blank())
   plot1 <- plot1 + geom_vline(aes(xintercept = breaks_vec), col = grey(0.9))
   plot1 <- plot1 + scale_y_continuous(limits = c(0,1), expand = c(0,0))
   plot1 <- plot1 + geom_point(aes(x = x_vec, y = mc_accept, color = col))
@@ -171,7 +171,7 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
 #' @param par Vector of parameter names. If NULL all parameters are plotted
 #'
 #' @export
- 
+
 plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling") {
   
   # check inputs
@@ -223,11 +223,13 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #'  Parameters matching show will be hidden.
 #' @param lag Maximum lag. Must be an integer between 20 and 500
 #' @param downsample Downsample chain for efficiency
+#' @param display Show plots
 #'
 #' @export
 
 plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
-                     downsample = TRUE, phase = "sampling") {
+                     downsample = TRUE, phase = "sampling",
+                     display = TRUE) {
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
@@ -273,7 +275,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   # Autocorrealtion (on downsample)
   ac_data <- as.data.frame(apply(dplyr::select(all_chains, -chain), 2, acf_data, lag = lag))
   ac_data$lag <- 0:lag
-
+  
   # Set minimum bin number
   b <- min(nrow(all_chains) / 4, 40)
   
@@ -302,7 +304,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
     
     # Autocorrealtion
     p3 <- ggplot2::ggplot(data = pd2,
-                            ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$Autocorrelation)) + 
+                          ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$Autocorrelation)) + 
       ggplot2::geom_hline(yintercept = 0, lty = 2, col = "red") + 
       ggplot2::geom_segment(size = 1.5) +
       ggplot2::theme_bw() +
@@ -316,13 +318,17 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   }
   names(plot_list) <- paste0("Plot_", parameter)
   
-  # Display plots, asking user for next page if multiple parameters
-  for(j in 1:length(parameter)){
-    graphics::plot(plot_list[[j]])
-    if(j == 1){
-      default_ask <- grDevices::devAskNewPage()
-      on.exit(grDevices::devAskNewPage(default_ask))
-      grDevices::devAskNewPage(ask = TRUE)
+  if(!display){
+    return(invisible(plot_list))
+  } else {
+    # Display plots, asking user for next page if multiple parameters
+    for(j in 1:length(parameter)){
+      graphics::plot(plot_list[[j]])
+      if(j == 1){
+        default_ask <- grDevices::devAskNewPage()
+        on.exit(grDevices::devAskNewPage(default_ask))
+        grDevices::devAskNewPage(ask = TRUE)
+      }
     }
   }
   
