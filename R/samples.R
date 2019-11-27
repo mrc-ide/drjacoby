@@ -11,19 +11,18 @@ sample_chains <- function(x, sample_n) {
   assert_custom_class(x, "drjacoby_output")
   assert_int(sample_n, "sample_n")
   assert_gr(sample_n, 0)
-  assert_leq(sample_n, nrow(x[[1]]$theta_sampling$rung1) * length(x))
+  
   
   # Join chains
-  all_chains <- dplyr::bind_rows(lapply(x, function(x){
-    x$theta_sampling$rung1
-  }))
-  
+  all_chains <- dplyr::filter(x$output, stage == "sampling") %>%
+    dplyr::select(-chain, -rung, -iteration, -stage, -loglikelihood)
+  assert_leq(sample_n, nrow(all_chains))
   # Sample chains
   sampled_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = sample_n),]
-  rownames(sampled_chains) <- 1:nrow(sampled_chains)
+  sampled_chains$sample <- 1:nrow(sampled_chains)
   
   # Ess
-  ess_est_sampled <- apply(sampled_chains, 2, ess)
+  ess_est_sampled <- round(apply(sampled_chains[,1:2], 2, coda::effectiveSize))
   message("Effective sample size of sample has range: ", min(ess_est_sampled),
           " to ", max(ess_est_sampled), ". See function ess to estimate.")
   

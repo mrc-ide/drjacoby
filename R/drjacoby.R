@@ -11,6 +11,7 @@ NULL
 #------------------------------------------------
 #' @useDynLib drjacoby, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
+#' @importFrom magrittr %>%
 NULL
 
 #------------------------------------------------

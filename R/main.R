@@ -227,7 +227,7 @@ run_mcmc <- function(data,
     output_processed$diagnostics$rhat <- rhat_est
   }
   # ESS
-  ess_est <- apply(output_processed$output[output_processed$output$stage == "sampling",as.character(param_names)], 2, coda::effectiveSize)
+  ess_est <- apply(output_processed$output[output_processed$output$stage == "sampling" & output_processed$output$rung == "rung1", as.character(param_names)], 2, coda::effectiveSize)
   ess_est[skip_param] <- NA
   output_processed$diagnostics$ess <- ess_est
   # MC

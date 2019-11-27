@@ -37,8 +37,9 @@ test_that("R likelihood and prior", {
                          burnin = 1e3,
                          samples = 1e3,
                          silent = TRUE)
-  
-  posterior_estimate <- apply(r_mcmc_null$chain1$theta_sampling$rung1, 2, median)
+  pe <- dplyr::filter(r_mcmc_null$output, stage == "sampling", chain == "chain1") %>%
+    dplyr::select(mu, sigma)
+  posterior_estimate <- apply(pe, 2, median)
   expect_lt(posterior_estimate[1] - 6, 0.1)
   expect_lt(posterior_estimate[2] - 1, 0.1)
   
@@ -49,7 +50,9 @@ test_that("R likelihood and prior", {
                           burnin = 1e3,
                           samples = 1e3,
                           silent = TRUE)
-  posterior_estimate2 <- apply(r_mcmc_data$chain1$theta_sampling$rung1, 2, median)
+  pe <- dplyr::filter(r_mcmc_data$output, stage == "sampling", chain == "chain1") %>%
+    dplyr::select(mu, sigma)
+  posterior_estimate2 <- apply(pe, 2, median)
   expect_lt(posterior_estimate2[1] - 3, 0.25)
   expect_lt(posterior_estimate2[2] - 2, 0.25)
   
@@ -57,7 +60,7 @@ test_that("R likelihood and prior", {
   sampled <- sample_chains(r_mcmc_data, 100)
   expect_type(sampled, "list")
   expect_equal(nrow(sampled), 100)  
-  expect_equal(ncol(sampled), 2)
+  expect_equal(ncol(sampled), 3)
   expect_error(sample_chains(r_mcmc_data, 1000000))
   expect_error(sample_chains(r_mcmc_data, -1))
   expect_error(sample_chains(r_mcmc_data, "Q"))

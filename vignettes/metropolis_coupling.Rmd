@@ -98,10 +98,6 @@ x <- rnorm(100, mean = 10)
 First, we will try running the basic MCMC without Metropolis coupling. The following block of code repeats the same MCMC analysis nine times, each time producing a plot of posterior `alpha` against `beta`:
 
 ```{r, fig.width=8, fig.height=7}
-# create base plot object
-plot_base <- ggplot2::ggplot() + ggplot2::theme_bw() + ggplot2::coord_cartesian(xlim = c(-10,10), ylim = c(0,10))
-
-# repeat analysis multiple times
 plot_list <- list()
 for (i in 1:9) {
   
@@ -112,11 +108,12 @@ for (i in 1:9) {
                        logprior = logprior,
                        burnin = 1e3,
                        samples = 1e4,
+                       chain = 1,
                        silent = TRUE)
   
   # create plot of alpha against beta
-  plot_list[[i]] <- plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
-                                                    data = mcmc_out$chain1$theta_sampling$rung1)
+  plot_list[[i]] <- plot_cor(mcmc_out, parameter1 = "alpha", "beta") +
+    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position="none")
 }
 
 # plot grid
@@ -136,11 +133,12 @@ mcmc_out <- run_mcmc(data = x,
                      burnin = 1e3,
                      samples = 1e4,
                      rungs = 20,
+                     chains = 1,
                      pb_markdown = TRUE)
 
 # create plot of alpha against beta
-plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
-                                data = mcmc_out$chain1$theta_sampling$rung1)
+plot_cor(mcmc_out, parameter1 = "alpha", "beta") +
+    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position="none")
 ```
 
 You should see a much better characterisation of the posterior distribution. The run time scales approximately linearly with the number of rungs, so there is a computational cost to using this method, but on the other hand our results are far better than we would obtain by simply increasing the number of samples by a factor of 20.
@@ -161,6 +159,7 @@ mcmc_out <- run_mcmc(data = x,
                      burnin = 1e3,
                      samples = 1e3,
                      rungs = 10,
+                     chains = 1,
                      GTI_pow = 1.0,
                      silent = TRUE)
 
@@ -171,9 +170,8 @@ plot_mc_acceptance(mcmc_out)
 The 10 vertical grey bars in the above plot show the positions of our 10 rungs in the thermodynamic interval [0,1], and the red dots between them show the proportion of swaps that were accepted between rungs. Notice that the acceptance rate between the hottest and second-hottest rung is zero, meaning none of the information in the hottest rung made it up the ladder to the colder rungs. We can see the problems this causes when we plot the posterior parameter values:
 
 ```{r, fig.width=5, fig.height=4}
-# create plot of alpha against beta
-plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
-                                data = mcmc_out$chain1$theta_sampling$rung1)
+plot_cor(mcmc_out, parameter1 = "alpha", "beta") +
+    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position="none")
 ```
 
 Although we have some mixing between the left and right sides of the distribution, overall sampling is still a bit patchy.
@@ -189,6 +187,7 @@ mcmc_out <- run_mcmc(data = x,
                      burnin = 1e3,
                      samples = 1e3,
                      rungs = 50,
+                     chains = 1,
                      GTI_pow = 1.0,
                      silent = TRUE)
 
@@ -196,8 +195,8 @@ mcmc_out <- run_mcmc(data = x,
 plot_mc_acceptance(mcmc_out)
 
 # create plot of alpha against beta
-plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
-                                data = mcmc_out$chain1$theta_sampling$rung1)
+plot_cor(mcmc_out, parameter1 = "alpha", "beta") +
+    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position="none")
 ```
 
 This mitigates the problem to some extent, as we now have acceptance rates going "deeper" towards the prior, however the hottest rung is still not passing information up the ladder. It comes at a high computational cost, as we are effectively running the MCMC 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter `GTI_pow`, in which higher values lead to more highly concentrated rungs. The previous two MCMCs had `GTI_pow` set to 1.0 leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with 20 rungs and `GTI_pow = 3.0`:
@@ -211,6 +210,7 @@ mcmc_out <- run_mcmc(data = x,
                      burnin = 1e3,
                      samples = 1e3,
                      rungs = 20,
+                     chains = 1,
                      GTI_pow = 3.0,
                      silent = TRUE)
 
@@ -218,8 +218,8 @@ mcmc_out <- run_mcmc(data = x,
 plot_mc_acceptance(mcmc_out)
 
 # create plot of alpha against beta
-plot_base + ggplot2::geom_point(ggplot2::aes(x = alpha, y = beta),
-                                data = mcmc_out$chain1$theta_sampling$rung1)
+plot_cor(mcmc_out, parameter1 = "alpha", "beta") +
+    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position="none")
 ```
 
 We find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder. We can therefore be condifent that the prior is "talking to" the posterior. When this is the case it is *unlikely* (but not impossible) that your MCMC is still missing large parts of the posterior distribution.

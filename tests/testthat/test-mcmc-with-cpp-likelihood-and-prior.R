@@ -54,9 +54,12 @@ test_that("Cpp likelihood and prior", {
                             logprior = cpp_logprior_strong,
                             burnin = 1e3,
                             samples = 1e3,
+                            chains = 1,
                             silent = TRUE)
   
-  posterior_estimate <- apply(cpp_mcmc_null$chain1$theta_sampling$rung1, 2, median)
+  pe <- dplyr::filter(cpp_mcmc_null$output, stage == "sampling") %>%
+    dplyr::select(mu, sigma)
+  posterior_estimate <- apply(pe, 2, median)
   expect_lt(posterior_estimate[1] - 6, 0.1)
   expect_lt(posterior_estimate[2] - 1, 0.1)
   
@@ -67,7 +70,9 @@ test_that("Cpp likelihood and prior", {
                             burnin = 1e3,
                             samples = 1e4,
                             silent = TRUE)
-  posterior_estimate2 <- apply(cpp_mcmc_data$chain1$theta_sampling$rung1, 2, median)
+  pe <- dplyr::filter(cpp_mcmc_data$output, stage == "sampling") %>%
+    dplyr::select(mu, sigma)
+  posterior_estimate2 <- apply(pe, 2, median)
   expect_lt(posterior_estimate2[1] - 3, 0.1)
   expect_lt(posterior_estimate2[2] - 2, 0.1)
   
@@ -80,11 +85,15 @@ test_that("Cpp likelihood and prior", {
                             burnin = 1e3,
                             samples = 1e4,
                             silent = TRUE)
-  expect_length(cpp_mcmc_chains, 2)
-  posterior_estimate3a <- apply(cpp_mcmc_chains$chain1$theta_sampling$rung1, 2, median)
+  expect_length(cpp_mcmc_chains, 3)
+  pe <- dplyr::filter(cpp_mcmc_chains$output, stage == "sampling", chain == "chain1") %>%
+    dplyr::select(mu, sigma)
+  posterior_estimate3a <- apply(pe, 2, median)
   expect_lt(posterior_estimate3a[1] - 3, 0.1)
   expect_lt(posterior_estimate3a[2] - 2, 0.1)
-  posterior_estimate3b <- apply(cpp_mcmc_chains$chain2$theta_sampling$rung1, 2, median)
+  pe <- dplyr::filter(cpp_mcmc_chains$output, stage == "sampling", chain == "chain2") %>%
+    dplyr::select(mu, sigma)
+  posterior_estimate3b <- apply(pe, 2, median)
   expect_lt(posterior_estimate3b[1] - 3, 0.1)
   expect_lt(posterior_estimate3b[2] - 2, 0.1)
   
@@ -97,8 +106,9 @@ test_that("Cpp likelihood and prior", {
                        samples = 1e4,
                        rungs = 4,
                        silent = TRUE)
-  expect_length(mcmc_out_MC$chain1$theta_sampling, 4)
-  posterior_estimate4 <- apply(mcmc_out_MC$chain1$theta_sampling$rung1, 2, median)
+  pe <- dplyr::filter(mcmc_out_MC$output, stage == "sampling", chain == "chain1", rung == "rung1") %>%
+    dplyr::select(mu, sigma)
+  posterior_estimate4 <- apply(pe, 2, median)
   expect_lt(posterior_estimate4[1] - 3, 0.1)
   expect_lt(posterior_estimate4[2] - 2, 0.1)
 })
