@@ -339,38 +339,29 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 #' @export
 
 plot_cor <- function(x, parameter1, parameter2,
-                     downsample = TRUE, phase = "sampling"){
+                     downsample = TRUE, phase = "sampling",
+                     rung = 1){
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
   assert_string(parameter1)
   assert_string(parameter2)
-  assert_in(parameter1, names(x$chain1$theta_sampling$rung1))
-  assert_in(parameter2, names(x$chain1$theta_sampling$rung1))
+  assert_in(parameter1, names(x$output))
+  assert_in(parameter2, names(x$output))
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling"))
   
-  # get all chains into single dataframe
-  all_chains <- dplyr::bind_rows(lapply(x, function(y){
-    if (phase == "sampling") {
-      y$theta_sampling$rung1
-    } else {
-      y$theta_burnin$rung1
-    }
-  }))
-  all_chains <- all_chains[,c(parameter1, parameter2)]
-  chains <- length(x) - 1
-  all_chains$chain <- factor(rep(1:chains, each = nrow(all_chains)/chains))
-  names(all_chains) <- c("x", "y", "chain")
-  
+  rung_get <- paste0("rung", rung)
+  data <- dplyr::filter(x$output, rung == rung_get, stage == phase) 
+  data <- data[,c("chain", parameter1, parameter2)]  
+  colnames(data) <- c("chain", "x", "y")
   # Downsample
-  if(downsample & nrow(all_chains) > 2000){
-    all_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = 2000),]
+  if(downsample & nrow(data) > 2000){
+    data <- data[seq.int(1, nrow(data), length.out = 2000),]
   }
-  #chain <- NULL # to remove warning no visible binding
-  
+
   # produce plot
-  ggplot2::ggplot(data = all_chains,
+  ggplot2::ggplot(data = data,
                   ggplot2::aes(x = .data$x, y = .data$y, col = as.factor(.data$chain))) + 
     ggplot2::geom_point(alpha = 0.5) + 
     ggplot2::xlab(parameter1) +
