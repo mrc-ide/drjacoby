@@ -25,8 +25,11 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   assert_single_pos_int(y_axis_type)
   assert_in(y_axis_type, 1:3)
   
+  chain_get <- paste0("chain", chain)
+  
   # get useful quantities
-  beta_raised <- x[[chain]]$diagnostics$beta_raised
+  beta_raised <- dplyr::filter(x$diagnostics$beta_raised, chain == chain_get) %>%
+    dplyr::pull(value)
   rungs <- length(beta_raised)
   
   # define x-axis type
@@ -39,25 +42,20 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   }
   
   # get plotting values (loglikelihoods)
+  data <- dplyr::filter(x$output, chain == chain_get, stage == phase)
   y_lab <- "log-likelihood"
-  if (phase == "burnin") {
-    y <- x[[chain]]$loglike_burnin
-  } else {
-    y <- x[[chain]]$loglike_sampling
-  }
   
   # move to plotting deviance if specified
   if (y_axis_type == 3) {
-    dev <- -2*y
-    y <- dev
+    data$loglikelihood <- -2 * data$loglikelihood
     y_lab <- "deviance"
     
     # if needed, scale by adding/subtracting a power of ten until all values are
     # positive
-    if (min(dev) < 0) {
-      dev_scale_power <- ceiling(log(abs(min(dev)))/log(10))
-      dev_scale_sign <- -sign(min(dev))
-      y <- dev + dev_scale_sign*10^dev_scale_power
+    if (min(data$loglikelihood) < 0) {
+      dev_scale_power <- ceiling(log(abs(min(data$loglikelihood)))/log(10))
+      dev_scale_sign <- -sign(min(data$loglikelihood))
+      data$loglikelihood <- data$loglikelihood + dev_scale_sign*10^dev_scale_power
       
       dev_scale_base <- ifelse(dev_scale_power == 0, 1, 10)
       dev_scale_power_char <- ifelse(dev_scale_power <= 1, "", paste("^", dev_scale_power))
@@ -67,10 +65,14 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   }
   
   # get 95% credible intervals over plotting values
-  y_intervals <- t(apply(y, 2, quantile_95))
+  y_intervals <- data %>%
+    dplyr::group_by(rung) %>%
+    dplyr::summarise(Q2.5 = quantile(loglikelihood, 0.025),
+                     Q50 =  quantile(loglikelihood, 0.5),
+                     Q97.5 = quantile(loglikelihood, 0.975))
   
   # get data into ggplot format and define temperature colours
-  df <- as.data.frame(y_intervals)
+  df <- y_intervals
   df$col <- beta_raised
   
   # produce plot
