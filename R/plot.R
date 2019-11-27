@@ -113,13 +113,14 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
   # check inputs
   assert_custom_class(x, "drjacoby_output")
   assert_single_pos_int(chain)
-  assert_leq(chain, length(x))
   assert_in(phase, c("burnin", "sampling"))
   assert_single_pos_int(x_axis_type)
   assert_in(x_axis_type, 1:2)
   
   # get useful quantities
-  beta_raised <- x[[chain]]$diagnostics$beta_raised
+  chain_get <- paste0("chain", chain)
+  beta_raised <- dplyr::filter(x$diagnostics$beta_raised, chain == chain_get) %>%
+    dplyr::pull(value)
   beta_raised_mid <- beta_raised[-1] - diff(beta_raised)/2
   rungs <- length(beta_raised)
   
@@ -140,11 +141,8 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
   }
   
   # get acceptance rates
-  if (phase == "burnin") {
-    mc_accept <- x[[chain]]$diagnostics$mc_accept_burnin
-  } else {
-    mc_accept <- x[[chain]]$diagnostics$mc_accept_sampling
-  }
+  mc_accept <- dplyr::filter(x$diagnostics$mc_accept, stage == phase, chain == chain_get) %>%
+    dplyr::pull(value)
   
   # get data into ggplot format and define temperature colours
   df <- as.data.frame(mc_accept)
