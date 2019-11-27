@@ -77,7 +77,7 @@ run_mcmc <- function(data,
   
   # check df_params
   assert_dataframe(df_params)
-  assert_in(names(df_params), c("name", "min", "max"),
+  assert_in(c("name", "min", "max"), names(df_params),
             message = "df_params must contain the columns 'name', 'min', 'max'")
   assert_numeric(df_params$min)
   assert_numeric(df_params$max)

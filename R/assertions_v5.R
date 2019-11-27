@@ -366,7 +366,7 @@ assert_in <- function(x, y, message = "all %s must be in %s",
                       name_x = deparse(substitute(x)), name_y = nice_format(y)) {
   assert_non_null(x, name = name_x)
   assert_non_null(y, name = name_y)
-  if (!all(y %in% x)) {
+  if (!all(x %in% y)) {
     stop(sprintf(message, name_x, name_y), call. = FALSE)
   }
   return(TRUE)
