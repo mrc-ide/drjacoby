@@ -227,7 +227,7 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #' @export
 
 plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
-                     downsample = TRUE, phase = "sampling",
+                     downsample = TRUE, phase = "sampling", rung = 1,
                      display = TRUE) {
   
   # check inputs
@@ -235,9 +235,12 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   assert_single_bounded(lag, 1, 500)
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling"))
+
+  rung_get <- paste0("rung", rung)
+  data <- dplyr::filter(x$output, rung == rung_get, stage == phase) 
   
   # choose which parameters to plot
-  parameter <- names(x$chain1$theta_sampling$rung1)
+  parameter <- names(data)[6:ncol(data)]
   if(!is.null(show)){
     stopifnot(is.character(show))
     parameter <- parameter[grepl(paste(show, collapse = "|"), parameter)]
@@ -251,37 +254,26 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
             to select parameters and reduce computation time.")
   }
   
-  # get all chains into single dataframe
-  all_chains <- dplyr::bind_rows(lapply(x, function(y){
-    if (phase == "sampling") {
-      y$theta_sampling$rung1
-    } else {
-      y$theta_burnin$rung1
-    }
-  }))
-  chains <- length(x) - 1
-  all_chains$chain <- factor(rep(1:chains, each = nrow(all_chains)/chains))
-  
   # Downsample
-  if(downsample & nrow(all_chains) > 2000){
-    all_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = 2000),]
+  if(downsample & nrow(data) > 2000){
+    data <- data[seq.int(1, nrow(data), length.out = 2000),]
   }
-  chain <- NULL # to remove warning no visible binding
-  all_chains <- dplyr::group_by(all_chains, chain)
-  all_chains <- dplyr::mutate(all_chains, x = 1:dplyr::n())
-  all_chains <- dplyr::ungroup(all_chains)
+  #chain <- NULL # to remove warning no visible binding
+  data <- dplyr::group_by(data, chain)
+  data <- dplyr::mutate(data, x = 1:dplyr::n())
+  data <- dplyr::ungroup(data)
   
   # Autocorrealtion (on downsample)
-  ac_data <- as.data.frame(apply(dplyr::select(all_chains, -chain), 2, acf_data, lag = lag))
+  ac_data <- as.data.frame(apply(data[,parameter], 2, acf_data, lag = lag))
   ac_data$lag <- 0:lag
   
   # Set minimum bin number
-  b <- min(nrow(all_chains) / 4, 40)
+  b <- min(nrow(data) / 4, 40)
   
   # produce plots over all parameters
   plot_list <- c()
   for(j in 1:length(parameter)){
-    pd <- all_chains[, c("chain", "x", parameter[j])]
+    pd <- data[, c("chain", "x", parameter[j])]
     names(pd) <- c("chain", "x", "y")
     pd2 <- ac_data[, c("lag", parameter[j])]
     names(pd2) <- c("lag", "Autocorrelation")
