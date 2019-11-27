@@ -243,6 +243,18 @@ run_mcmc <- function(data,
     
     output_processed$diagnostics$mc_accept <- mc_accept
   }
+  
+  ## Parameters
+  output_processed$parameters <- list(data = data,
+                                      df_params = df_params,
+                                      loglike = loglike,
+                                      logprior = logprior,
+                                      burnin = burnin,
+                                      samples = samples,
+                                      rungs = rungs,
+                                      chains = chains,
+                                      coupling_on = coupling_on,
+                                      GTI_pow = GTI_pow)
 
   
   # save output as custom class

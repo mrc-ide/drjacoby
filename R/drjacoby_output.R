@@ -20,11 +20,11 @@ summary.drjacoby_output <- function(object, ...) {
   
   # print summary
   message("drjacoby output:")
-  message(sprintf("%s chains", length(object)))
-  message(sprintf("%s rungs", length(object[[1]]$loglike_burnin)))
-  message(sprintf("%s burn-in iterations", length(object[[1]]$loglike_burnin[[1]])))
-  message(sprintf("%s sampling iterations", length(object[[1]]$loglike_sampling[[1]])))
-  message(sprintf("%s parameters", ncol(object[[1]]$theta_sampling[[1]])))
+  message(sprintf("%s chains", object$parameters$chains))
+  message(sprintf("%s rungs", object$parameters$rungs))
+  message(sprintf("%s burn-in iterations", object$parameters$burnin))
+  message(sprintf("%s sampling iterations", object$parameters$samples))
+  message(sprintf("%s parameters", length(object$parameters$df_params$name)))
   
   # return invisibly
   invisible(object)
