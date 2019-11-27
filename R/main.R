@@ -191,52 +191,44 @@ run_mcmc <- function(data,
   rung_names <- sprintf("rung%s", 1:rungs)
   param_names <- df_params$name
   
-  # define processed output list
-  output_processed <- replicate(chains, list())
-  names(output_processed) <- chain_names
+  # Loglikelihood Burnin
+  df_ll_bi <- tidyr::expand_grid(chain = chain_names, rung = rung_names, iteration = 1:burnin, stage = "burnin")
+  df_ll_bi$loglikelihood <- unlist(lapply(output_raw, function(x){x$loglike_burnin}))
+  # Loglikelihood Sampling
+  df_ll_sa <- tidyr::expand_grid(chain = chain_names, rung = rung_names, iteration = burnin + (1:samples), stage = "sampling")
+  df_ll_sa$loglikelihood <- unlist(lapply(output_raw, function(x){x$loglike_sampling}))
+  # Loglikelihood all
+  df_ll <- dplyr::bind_rows(df_ll_bi, df_ll_sa)
   
-  # loop through chains
-  for (c in 1:chains) {
-    
-    # get loglikelihoods
-    loglike_burnin <- as.data.frame(t(rcpp_to_matrix(output_raw[[c]]$loglike_burnin)))
-    loglike_sampling <- as.data.frame(t(rcpp_to_matrix(output_raw[[c]]$loglike_sampling)))
-    names(loglike_burnin) <- names(loglike_sampling) <- rung_names
-    
-    # get theta values
-    theta_burnin <- get_theta_rungs(output_raw[[c]]$theta_burnin, param_names, rung_names)
-    theta_sampling <- get_theta_rungs(output_raw[[c]]$theta_sampling, param_names, rung_names)
-    names(theta_burnin) <- names(theta_sampling) <- rung_names
-    
-    # get Metropolis coupling acceptance rates
-    beta_raised_vec <- output_raw[[c]]$beta_raised_vec
-    mc_accept_burnin <- output_raw[[c]]$mc_accept_burnin/burnin
-    mc_accept_sampling <- output_raw[[c]]$mc_accept_sampling/samples
-    
-    # store in processed output list
-    output_processed[[c]]$diagnostics <- list(beta_raised = beta_raised_vec,
-                                              mc_accept_burnin = mc_accept_burnin,
-                                              mc_accept_sampling = mc_accept_sampling)
-    output_processed[[c]]$loglike_burnin <- loglike_burnin
-    output_processed[[c]]$loglike_sampling <- loglike_sampling
-    output_processed[[c]]$theta_burnin <- theta_burnin
-    output_processed[[c]]$theta_sampling <- theta_sampling
-  }
-  
+  # Theta burnin
+  df_theta_bi <- tidyr::expand_grid(chain = chain_names, rung = rung_names, iteration = 1:burnin, stage = "burnin",
+                                    parameter = param_names)
+  df_theta_bi$estimate <- unlist(lapply(output_raw, function(x){x$theta_burnin}))
+  # Theta sampling
+  df_theta_sa <- tidyr::expand_grid(chain = chain_names, rung = rung_names, iteration = burnin + (1:samples), stage = "sampling",
+                                    parameter = param_names)
+  df_theta_sa$estimate <- unlist(lapply(output_raw, function(x){x$theta_sampling}))
+  # Theta all
+  df_theta <- dplyr::bind_rows(df_theta_bi, df_theta_sa) %>%
+    tidyr::spread(parameter, estimate)
+  # Output all
+  output_processed <- list(output = dplyr::left_join(df_ll, df_theta, by = c("chain", "rung", "iteration", "stage")))
+  output_processed$diagnostics <- list()
   # Estimate rhat
   if (chains > 1) {
-    rhat_est <- set_rhat(output_processed, chains)
+    rhat_est <- c()
+    for(p in seq_along(param_names)){
+      pm <- output_processed$output[output_processed$output$stage == "sampling",c("chain", as.character(param_names[p]))]
+      rhat_est[p] <- gelman_rubin(pm, chains, samples)
+    }
     rhat_est[skip_param] <- NA
-    output_processed$all_chains$diagnostics$rhat <- rhat_est
+    output_processed$diagnostics$rhat <- rhat_est
   }
   
   # Estimate ESS
-  all_chains <- dplyr::bind_rows(lapply(output_processed, function(x){
-    x$theta_sampling$rung1
-  }))
-  ess_est <- apply(all_chains, 2, coda::effectiveSize)
+  ess_est <- apply(output_processed$output[output_processed$output$stage == "sampling",as.character(param_names)], 2, coda::effectiveSize)
   ess_est[skip_param] <- NA
-  output_processed$all_chains$diagnostics$ess <- ess_est
+  output_processed$diagnostics$ess <- ess_est
   
   # save output as custom class
   class(output_processed) <- "drjacoby_output"
