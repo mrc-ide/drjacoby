@@ -384,18 +384,20 @@ plot_cor <- function(x, parameter1, parameter2,
 #' @importFrom stats density
 #' @export
 
-plot_contour <- function(x, parameter1, parameter2, n_levels = 10) {
+plot_contour <- function(x, parameter1, parameter2, n_levels = 10, phase = "sampling", rung = 1, chain = 1) {
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
   assert_string(parameter1)
   assert_string(parameter2)
-  assert_in(parameter1, names(x$chain1$theta_sampling$rung1))
-  assert_in(parameter2, names(x$chain1$theta_sampling$rung1))
+  assert_in(parameter1, names(x$output))
+  assert_in(parameter2, names(x$output))
   
   # extract plotting data
-  data <- x$chain1$theta_sampling$rung1
-  data <- data[ ,c(parameter1, parameter2)]
+  chain_get <- paste0("chain", chain)
+  rung_get <- paste0("rung", rung)
+  data <- dplyr::filter(x$output, rung == rung_get, stage == phase, chain == chain_get) 
+  data <- data[,c(parameter1, parameter2)]  
   colnames(data) <- c("x", "y")
   
   # required to remove no visible binding warning
