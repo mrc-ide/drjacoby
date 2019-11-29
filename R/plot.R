@@ -260,6 +260,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   if(downsample & nrow(data) > 2000){
     data <- data[seq.int(1, nrow(data), length.out = 2000),]
   }
+  
   #chain <- NULL # to remove warning no visible binding
   data <- dplyr::group_by(data, chain)
   data <- dplyr::mutate(data, x = 1:dplyr::n())
