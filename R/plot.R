@@ -1,3 +1,20 @@
+
+#------------------------------------------------
+#' @title Series of standard colours used within the drjacoby package
+#'   
+#' @description Returns a series of standard colours used within the drjacoby
+#'   package.
+#'
+#' @export
+
+drjacoby_cols <- function() {
+  ret <- c(rgb(159, 196, 232, maxColorValue = 255),
+           rgb(78, 122, 166, maxColorValue = 255),
+           rgb(202, 90, 106, maxColorValue = 255),
+           rgb(195, 42, 85, maxColorValue = 255))
+  return(ret)
+}
+
 #------------------------------------------------
 #' @title Plot loglikelihood 95\% credible intervals
 #'   
