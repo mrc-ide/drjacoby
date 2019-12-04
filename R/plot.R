@@ -280,7 +280,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   
   #chain <- NULL # to remove warning no visible binding
   data <- dplyr::group_by(data, chain)
-  data <- dplyr::mutate(data, x = 1:dplyr::n())
+  data <- dplyr::mutate(data, plot_par_x = 1:dplyr::n())
   data <- dplyr::ungroup(data)
   
   # Autocorrealtion (on downsample)
@@ -293,8 +293,8 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   # produce plots over all parameters
   plot_list <- c()
   for(j in 1:length(parameter)){
-    pd <- data[, c("chain", "x", parameter[j])]
-    names(pd) <- c("chain", "x", "y")
+    pd <- data[, c("chain", "plot_par_x", parameter[j])]
+    names(pd) <- c("chain", "plot_par_x", "y")
     pd2 <- ac_data[, c("lag", parameter[j])]
     names(pd2) <- c("lag", "Autocorrelation")
     
@@ -306,7 +306,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
       ggplot2::theme_bw()
     
     # Chains
-    p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$x, y = .data$y, col = .data$chain)) + 
+    p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$plot_par_x, y = .data$y, col = .data$chain)) + 
       ggplot2::geom_line() +
       scale_color_discrete(name = "Chain") +
       ggplot2::xlab("Iteration") +
