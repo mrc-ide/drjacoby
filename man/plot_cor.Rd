@@ -4,8 +4,14 @@
 \alias{plot_cor}
 \title{Plot parameter correlation}
 \usage{
-plot_cor(x, parameter1, parameter2, downsample = TRUE,
-  phase = "sampling", rung = 1)
+plot_cor(
+  x,
+  parameter1,
+  parameter2,
+  downsample = TRUE,
+  phase = "sampling",
+  rung = 1
+)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}

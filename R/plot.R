@@ -4,7 +4,8 @@
 #'   
 #' @description Returns a series of standard colours used within the drjacoby
 #'   package.
-#'
+#' 
+#' @importFrom grDevices rgb
 #' @export
 
 drjacoby_cols <- function() {

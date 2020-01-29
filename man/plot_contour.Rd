@@ -4,8 +4,15 @@
 \alias{plot_contour}
 \title{Contour plot of two parameters}
 \usage{
-plot_contour(x, parameter1, parameter2, n_levels = 10,
-  phase = "sampling", rung = 1, chain = 1)
+plot_contour(
+  x,
+  parameter1,
+  parameter2,
+  n_levels = 10,
+  phase = "sampling",
+  rung = 1,
+  chain = 1
+)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}

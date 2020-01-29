@@ -4,8 +4,13 @@
 \alias{plot_rung_loglike}
 \title{Plot loglikelihood 95\% credible intervals}
 \usage{
-plot_rung_loglike(x, chain = 1, phase = "sampling", x_axis_type = 1,
-  y_axis_type = 1)
+plot_rung_loglike(
+  x,
+  chain = 1,
+  phase = "sampling",
+  x_axis_type = 1,
+  y_axis_type = 1
+)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}

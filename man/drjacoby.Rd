@@ -3,7 +3,6 @@
 \docType{package}
 \name{drjacoby}
 \alias{drjacoby}
-\alias{drjacoby-package}
 \title{Flexible Markov Chain Monte Carlo via Reparameterization}
 \description{
 Flexible Markov chain monte carlo via reparameterization using

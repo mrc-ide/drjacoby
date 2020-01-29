@@ -4,8 +4,16 @@
 \alias{plot_par}
 \title{Plot parameter estimates}
 \usage{
-plot_par(x, show = NULL, hide = NULL, lag = 20, downsample = TRUE,
-  phase = "sampling", rung = 1, display = TRUE)
+plot_par(
+  x,
+  show = NULL,
+  hide = NULL,
+  lag = 20,
+  downsample = TRUE,
+  phase = "sampling",
+  rung = 1,
+  display = TRUE
+)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
