@@ -210,7 +210,7 @@ run_mcmc <- function(data,
   df_theta_sa$estimate <- unlist(lapply(output_raw, function(x){x$theta_sampling}))
   # Theta all
   df_theta <- dplyr::bind_rows(df_theta_bi, df_theta_sa) %>%
-    tidyr::spread(parameter, estimate)
+    tidyr::pivot_wider(names_from = parameter, values_from = estimate)
   # Output all
   output_processed <- list(output = dplyr::left_join(df_ll, df_theta, by = c("chain", "rung", "iteration", "stage")))
   output_processed$diagnostics <- list()
