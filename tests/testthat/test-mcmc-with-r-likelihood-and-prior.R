@@ -43,6 +43,11 @@ test_that("R likelihood and prior", {
   expect_lt(posterior_estimate[1] - 6, 0.1)
   expect_lt(posterior_estimate[2] - 1, 0.1)
   
+  # Test parameter names are ordered correctly
+  namei <- match(df_params$name, names(r_mcmc_null$output))
+  namei <- 1 + namei - min(namei)
+  expect_equal(namei, 1:length(namei))
+  
   r_mcmc_data <- run_mcmc(data = x,
                           df_params = df_params,
                           loglike = r_loglike,
@@ -55,6 +60,11 @@ test_that("R likelihood and prior", {
   posterior_estimate2 <- apply(pe, 2, median)
   expect_lt(posterior_estimate2[1] - 3, 0.25)
   expect_lt(posterior_estimate2[2] - 2, 0.25)
+  
+  # Test parameter names are ordered correctly
+  namei <- match(df_params$name, names(r_mcmc_data$output))
+  namei <- 1 + namei - min(namei)
+  expect_equal(namei, 1:length(namei))
   
   ## Sample chains
   sampled <- sample_chains(r_mcmc_data, 100)

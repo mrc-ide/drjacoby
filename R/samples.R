@@ -22,7 +22,7 @@ sample_chains <- function(x, sample_n) {
   sampled_chains$sample <- 1:nrow(sampled_chains)
   
   # Ess
-  ess_est_sampled <- round(apply(sampled_chains[,1:2], 2, coda::effectiveSize))
+  ess_est_sampled <- round(apply(sampled_chains[,1:(ncol(sampled_chains) - 1)], 2, coda::effectiveSize))
   message("Effective sample size of sample has range: ", min(ess_est_sampled),
           " to ", max(ess_est_sampled), ". See function ess to estimate.")
   
