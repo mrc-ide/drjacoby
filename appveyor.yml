@@ -11,9 +11,13 @@ install:
   ps: Bootstrap
 
 #cache:
-  - C:\RLibrary -> appveyor_cache.txt
+#  - C:\RLibrary
 
 # Adapt as necessary starting from here
+environment:
+  global:
+    R_ARCH: x64
+    R_REMOTES_STANDALONE: true
 
 build_script:
   - travis-tool.sh install_deps
