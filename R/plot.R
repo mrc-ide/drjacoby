@@ -326,7 +326,11 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
     
     # Arrange
     pc1 <- cowplot::plot_grid(p1, p3, ncol = 2)
-    plot_list[[j]] <- cowplot::plot_grid(p2, pc1, nrow = 2)
+    pc2 <- cowplot::plot_grid(p2, pc1, nrow = 2)
+    plot_list[[j]] <- list(trace = p2,
+                           hist = p1,
+                           acf = p3,
+                           combined = pc2)
   }
   names(plot_list) <- paste0("Plot_", parameter)
   
@@ -335,7 +339,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   } else {
     # Display plots, asking user for next page if multiple parameters
     for(j in 1:length(parameter)){
-      graphics::plot(plot_list[[j]])
+      graphics::plot(plot_list[[j]]$combined)
       if(j == 1){
         default_ask <- grDevices::devAskNewPage()
         on.exit(grDevices::devAskNewPage(default_ask))
