@@ -120,14 +120,17 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   
   // objects for storing loglikelihood and theta values over iterations
   vector<vector<double>> loglike_burnin(rungs, vector<double>(s.burnin));
+  vector<vector<double>> logprior_burnin(rungs, vector<double>(s.burnin));
   vector<vector<vector<double>>> theta_burnin(rungs, vector<vector<double>>(s.burnin, vector<double>(d)));
   vector<vector<double>> loglike_sampling(rungs, vector<double>(s.samples));
+  vector<vector<double>> logprior_sampling(rungs, vector<double>(s.samples));
   vector<vector<vector<double>>> theta_sampling(rungs, vector<vector<double>>(s.samples, vector<double>(d)));
   
   // specify stored values at first iteration. Ensures that user-defined initial
   // values are the first stored values
   for (int r = 0; r < rungs; ++r) {
     loglike_burnin[r][0] = particle_vec[r].loglike;
+    logprior_burnin[r][0] = particle_vec[r].logprior;
     theta_burnin[r][0] = particle_vec[r].theta;
   }
   
@@ -155,6 +158,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       
       // store results
       loglike_burnin[r][rep] = particle_vec[r].loglike;
+      logprior_burnin[r][rep] = particle_vec[r].logprior;
       theta_burnin[r][rep] = particle_vec[r].theta;
     }
     
@@ -206,6 +210,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       
       // store results
       loglike_sampling[r][rep] = particle_vec[r].loglike;
+      logprior_sampling[r][rep] = particle_vec[r].logprior;
       theta_sampling[r][rep] = particle_vec[r].theta;
     }
     
@@ -244,8 +249,10 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   
   // return as Rcpp list
   Rcpp::List ret = Rcpp::List::create(Rcpp::Named("loglike_burnin") = loglike_burnin,
+                                      Rcpp::Named("logprior_burnin") = logprior_burnin,
                                       Rcpp::Named("theta_burnin") = theta_burnin,
                                       Rcpp::Named("loglike_sampling") = loglike_sampling,
+                                      Rcpp::Named("logprior_sampling") = logprior_sampling,
                                       Rcpp::Named("theta_sampling") = theta_sampling,
                                       Rcpp::Named("beta_raised_vec") = beta_raised_vec,
                                       Rcpp::Named("mc_accept_burnin") = mc_accept_burnin,
