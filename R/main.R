@@ -184,6 +184,7 @@ run_mcmc <- function(data,
     output_raw <- lapply(parallel_args, deploy_chain)
   }
   
+  
   # ---------- process output ----------
   
   # define names
@@ -194,25 +195,44 @@ run_mcmc <- function(data,
   # Loglikelihood Burnin
   df_ll_bi <- tidyr::expand_grid(chain = chain_names, rung = rung_names, iteration = 1:burnin, stage = "burnin")
   df_ll_bi$loglikelihood <- unlist(lapply(output_raw, function(x){x$loglike_burnin}))
+  
   # Loglikelihood Sampling
   df_ll_sa <- tidyr::expand_grid(chain = chain_names, rung = rung_names, iteration = burnin + (1:samples), stage = "sampling")
   df_ll_sa$loglikelihood <- unlist(lapply(output_raw, function(x){x$loglike_sampling}))
+  
   # Loglikelihood all
   df_ll <- dplyr::bind_rows(df_ll_bi, df_ll_sa)
+  
+  # Logprior Burnin
+  df_lp_bi <- tidyr::expand_grid(chain = chain_names, rung = rung_names, iteration = 1:burnin, stage = "burnin")
+  df_lp_bi$logprior <- unlist(lapply(output_raw, function(x){x$logprior_burnin}))
+  
+  # Logprior Sampling
+  df_lp_sa <- tidyr::expand_grid(chain = chain_names, rung = rung_names, iteration = burnin + (1:samples), stage = "sampling")
+  df_lp_sa$logprior <- unlist(lapply(output_raw, function(x){x$logprior_sampling}))
+  
+  
+  # Logprior all
+  df_lp <- dplyr::bind_rows(df_lp_bi, df_lp_sa)
   
   # Theta burnin
   df_theta_bi <- tidyr::expand_grid(chain = chain_names, rung = rung_names, iteration = 1:burnin, stage = "burnin",
                                     parameter = param_names)
   df_theta_bi$estimate <- unlist(lapply(output_raw, function(x){x$theta_burnin}))
+  
   # Theta sampling
   df_theta_sa <- tidyr::expand_grid(chain = chain_names, rung = rung_names, iteration = burnin + (1:samples), stage = "sampling",
                                     parameter = param_names)
   df_theta_sa$estimate <- unlist(lapply(output_raw, function(x){x$theta_sampling}))
+  
   # Theta all
   df_theta <- dplyr::bind_rows(df_theta_bi, df_theta_sa) %>%
     tidyr::pivot_wider(names_from = parameter, values_from = estimate)
+  
   # Output all
-  output_processed <- list(output = dplyr::left_join(df_ll, df_theta, by = c("chain", "rung", "iteration", "stage")))
+  df_combined <- dplyr::left_join(df_ll, df_lp, by = c("chain", "rung", "iteration", "stage"))
+  df_combined <- dplyr::left_join(df_combined, df_theta, by = c("chain", "rung", "iteration", "stage"))
+  output_processed <- list(output = df_combined)
   output_processed$diagnostics <- list()
   
   ## Diagnostics
@@ -226,15 +246,19 @@ run_mcmc <- function(data,
     rhat_est[skip_param] <- NA
     output_processed$diagnostics$rhat <- rhat_est
   }
+  
   # ESS
   ess_est <- apply(output_processed$output[output_processed$output$stage == "sampling" & output_processed$output$rung == "rung1", as.character(param_names)], 2, coda::effectiveSize)
   ess_est[skip_param] <- NA
   output_processed$diagnostics$ess <- ess_est
+  
   # MC
-  if(rungs > 1){
+  if (rungs > 1) {
+    
     # Beta raised
     output_processed$diagnostics$beta_raised <- tidyr::expand_grid(chain = chain_names, rung = rung_names)
     output_processed$diagnostics$beta_raised$value <- unlist(lapply(output_raw, function(x){x$beta_raised}))
+    
     # MC accept
     mc_accept <- tidyr::expand_grid(chain = chain_names, link = 1:(length(rung_names) - 1))
     mc_accept$burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin

@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Running Multiple Chains • drjacoby</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Running Multiple Chains">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
@@ -30,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -77,13 +78,14 @@
 <!--/.navbar -->
 
       
+
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>Running Multiple Chains</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2019-10-25</h4>
+            <h4 class="date">2020-03-05</h4>
       
       
       <div class="hidden name"><code>parallel.Rmd</code></div>
@@ -99,10 +101,10 @@
 <a href="#setup" class="anchor"></a>Setup</h2>
 <p>As always, we require some data, some parameters, and some functions to work with (see <a href="https://mrc-ide.github.io/drjacoby/articles/example.html">earlier examples</a>). The underlying model is not our focus here, so we will use a very basic setup</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define data</span>
-x &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>(<span class="dv">10</span>)
+x &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(<span class="dv">10</span>)
 
 <span class="co"># define parameters dataframe</span>
-df_params &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.frame">data.frame</a></span>(<span class="dt">name =</span> <span class="st">"mu"</span>, <span class="dt">min =</span> <span class="op">-</span><span class="dv">10</span>, <span class="dt">max =</span> <span class="dv">10</span>, <span class="dt">init =</span> <span class="dv">0</span>)
+df_params &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">name =</span> <span class="st">"mu"</span>, <span class="dt">min =</span> <span class="op">-</span><span class="dv">10</span>, <span class="dt">max =</span> <span class="dv">10</span>, <span class="dt">init =</span> <span class="dv">0</span>)
 
 <span class="co"># define cpp loglike function</span>
 loglike &lt;-<span class="st"> "SEXP loglike(std::vector&lt;double&gt; params, std::vector&lt;double&gt; x) {</span>
@@ -135,29 +137,29 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="co">#&gt; MCMC chain 1</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                       </span>
-<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
+  <span class="op">|</span><span class="st">                                                                            </span>
+<span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 22.8%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                       </span>
-<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
+  <span class="op">|</span><span class="st">                                                                            </span>
+<span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.4%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.001765 seconds</span>
+<span class="co">#&gt; completed in 0.001926 seconds</span>
 <span class="co">#&gt; MCMC chain 2</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                       </span>
-<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
+  <span class="op">|</span><span class="st">                                                                            </span>
+<span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.1%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                       </span>
-<span class="st">  </span><span class="er">|=================================================================|</span><span class="st"> </span><span class="dv">100</span>%
+  <span class="op">|</span><span class="st">                                                                            </span>
+<span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.5%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.001857 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.001799 seconds</span></code></pre></div>
 <p>When we look at our MCMC output (using the <code><a href="../reference/plot_par.html">plot_par()</a></code> function) we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">temperature rungs</a> then these would also be duplicated over chains.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># summarise output</span>
 mcmc_out
@@ -172,10 +174,10 @@ mcmc_out
 <span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(mcmc_out, <span class="st">"mu"</span>)</code></pre></div>
 <p><img src="parallel_files/figure-html/unnamed-chunk-4-1.png" width="960"></p>
 <p>Running in parallel is only slightly more complex. Before running anything we need to know how many cores our machine has. You may know this number already, but if you don’t then the <code>parallel</code> package has a handy function for detecting the number of cores for you:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cores &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/detectCores">detectCores</a></span>()</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cores &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="https://rdrr.io/r/parallel/detectCores.html">detectCores</a></span>()</code></pre></div>
 <p>Next we make a cluster object, which creates multiple copies of R running in parallel over different cores. Here we are using all available cores, but if you want to hold some back for other intensive tasks then simply use a smaller number of cores when specifying this cluster.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cl &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/makeCluster">makeCluster</a></span>(cores)</code></pre></div>
-<p>We then run the usual <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> function, this time passing in the cluster as an argument. This causes <em>drjacoby</em> to use a <code>clusterApplyLB()</code> call rather than an ordinary <code><a href="https://www.rdocumentation.org/packages/base/topics/lapply">lapply()</a></code> call over different chains. Each chain is added to a queue over the specified number of cores - when the first job completes, the next job is placed on the node that has become free and this continues until all jobs are complete.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cl &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="https://rdrr.io/r/parallel/makeCluster.html">makeCluster</a></span>(cores)</code></pre></div>
+<p>We then run the usual <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> function, this time passing in the cluster as an argument. This causes <em>drjacoby</em> to use a <code>clusterApplyLB()</code> call rather than an ordinary <code><a href="https://rdrr.io/r/base/lapply.html">lapply()</a></code> call over different chains. Each chain is added to a queue over the specified number of cores - when the first job completes, the next job is placed on the node that has become free and this continues until all jobs are complete.</p>
 <p>Note that output is supressed when running in parallel to avoid sending print commands to multiple cores, so you will not see the usual progress bars.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC in parallel</span>
 mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
@@ -188,7 +190,7 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
                      <span class="dt">cluster =</span> cl,
                      <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)</code></pre></div>
 <p>Finally, it is good practice to shut down the workers once we are finished:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/makeCluster">stopCluster</a></span>(cl)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">parallel<span class="op">::</span><span class="kw"><a href="https://rdrr.io/r/parallel/makeCluster.html">stopCluster</a></span>(cl)</code></pre></div>
 <p>Running chains in parallel tends to be faster than running in serial, although remember that you will see a delay the first time you run a new set of functions as the likelihood and prior must compile on every chain.</p>
 </div>
 <div id="comparing-chains" class="section level2">
@@ -197,20 +199,19 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <p>One method of evaluating convergence is the rhat statistic, initially proposed by Gelman &amp; Rubin (1992). This method involves comparing the within-chain with the between-chain variance. Similar estimates for these two values (rhat -&gt; 1) can be used as an indicator of convergence. An approximate rhat estimate is automatically generated in drjacoby:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Rhat statistic</span>
 mcmc_out<span class="op">$</span>chain1<span class="op">$</span>diagnostics<span class="op">$</span>rhat
-<span class="co">#&gt;     mu </span>
-<span class="co">#&gt; 1.0152</span></code></pre></div>
+<span class="co">#&gt; NULL</span></code></pre></div>
 <p>Chains from the MCMC will be autocorrelated. To assess the extent of autocorrelation we can view the correlation betwen values at a range of lags usin the <code><a href="../reference/plot_autocorrelation.html">plot_autocorrelation()</a></code> function, specifying the chain and parameter:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_autocorrelation.html">plot_autocorrelation</a></span>(mcmc_out, <span class="dt">par =</span> <span class="st">"mu"</span>, <span class="dt">chain =</span> <span class="dv">1</span>)</code></pre></div>
 <p><img src="parallel_files/figure-html/unnamed-chunk-10-1.png" width="576"></p>
 <p>Chain autocorrealtion can be incorporated into estimate of effective sample size, which are automatically calculated by drjacoby:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Effective sample size (from 1000 sampling iterations)</span>
 mcmc_out<span class="op">$</span>chain1<span class="op">$</span>diagnostics<span class="op">$</span>ess
-<span class="co">#&gt;  mu </span>
-<span class="co">#&gt; 255</span></code></pre></div>
+<span class="co">#&gt; NULL</span></code></pre></div>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+
         <div id="tocnav">
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
@@ -225,17 +226,20 @@ mcmc_out<span class="op">$</span>chain1<span class="op">$</span>diagnostics<span
 </div>
 
 
+
       <footer><div class="copyright">
   <p>Developed by Bob Verity, Pete Winskill.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
 </div>
 
   
+
 
   </body>
 </html>

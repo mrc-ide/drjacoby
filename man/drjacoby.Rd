@@ -5,6 +5,5 @@
 \alias{drjacoby}
 \title{Flexible Markov Chain Monte Carlo via Reparameterization}
 \description{
-Flexible Markov chain monte carlo via reparameterization using
-  the Jacobean matrix.
+Flexible Markov chain monte carlo via reparameterization.
 }

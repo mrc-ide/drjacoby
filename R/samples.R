@@ -15,7 +15,7 @@ sample_chains <- function(x, sample_n) {
   
   # Join chains
   all_chains <- dplyr::filter(x$output, stage == "sampling") %>%
-    dplyr::select(-chain, -rung, -iteration, -stage, -loglikelihood)
+    dplyr::select(-chain, -rung, -iteration, -stage, -loglikelihood, -logprior)
   assert_leq(sample_n, nrow(all_chains))
   # Sample chains
   sampled_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = sample_n),]
