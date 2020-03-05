@@ -21,6 +21,7 @@ Imports:
     ggplot2,
     RcppXPtrUtils,
     tidyr,
+    rlang,
     cowplot,
     dplyr,
     magrittr
