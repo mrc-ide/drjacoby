@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Check that drjacoby package has loaded successfully — check_drjacoby_loaded • drjacoby</title>
+<title>Contour plot of two parameters — plot_contour • drjacoby</title>
 
 
 <!-- jquery -->
@@ -35,9 +35,9 @@
 
 
 
-<meta property="og:title" content="Check that drjacoby package has loaded successfully — check_drjacoby_loaded" />
-<meta property="og:description" content="Simple function to check that drjacoby package has loaded 
-  successfully. Prints &quot;drjacoby loaded successfully!&quot; if so." />
+<meta property="og:title" content="Contour plot of two parameters — plot_contour" />
+<meta property="og:description" content="Produces contour plot from the posterior draws of two
+  parameters." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -121,24 +121,61 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Check that drjacoby package has loaded successfully</h1>
+    <h1>Contour plot of two parameters</h1>
     
-    <div class="hidden name"><code>check_drjacoby_loaded.Rd</code></div>
+    <div class="hidden name"><code>plot_contour.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Simple function to check that drjacoby package has loaded 
-  successfully. Prints "drjacoby loaded successfully!" if so.</p>
+    <p>Produces contour plot from the posterior draws of two
+  parameters.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>check_drjacoby_loaded</span>()</pre>
+    <pre class="usage"><span class='fu'>plot_contour</span>(
+  <span class='no'>x</span>,
+  <span class='no'>parameter1</span>,
+  <span class='no'>parameter2</span>,
+  <span class='kw'>n_levels</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>,
+  <span class='kw'>rung</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>chain</span> <span class='kw'>=</span> <span class='fl'>1</span>
+)</pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>x</th>
+      <td><p>an object of class <code>drjacoby_output</code></p></td>
+    </tr>
+    <tr>
+      <th>parameter1, parameter2</th>
+      <td><p>Name of parameters to plot.</p></td>
+    </tr>
+    <tr>
+      <th>n_levels</th>
+      <td><p>Number of contour levels.</p></td>
+    </tr>
+    <tr>
+      <th>phase</th>
+      <td><p>which phase to plot. Must be either "burnin" or "sampling".</p></td>
+    </tr>
+    <tr>
+      <th>rung</th>
+      <td><p>Rung</p></td>
+    </tr>
+    <tr>
+      <th>chain</th>
+      <td><p>which chain to plot.</p></td>
+    </tr>
+    </table>
 
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
+      <li><a href="#arguments">Arguments</a></li>
     </ul>
 
   </div>
