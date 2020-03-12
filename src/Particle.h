@@ -96,6 +96,15 @@ public:
       // accept or reject move
       bool MH_accept = (log(runif_0_1()) < MH);
       
+      if (i == 0 && false) {
+        print_stars(50);
+        print(i);
+        print_vector(theta);
+        print_vector(theta_prop);
+        print(loglike, loglike_prop, logprior, logprior_prop, adj);
+        print(MH, MH_accept);
+      }
+      
       // implement changes
       if (MH_accept) {
         
