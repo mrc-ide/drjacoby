@@ -7,13 +7,13 @@
 #'
 #' @export
 check_likelihood_compilation <- function(cpp_loglike){
-  cat(sprintf("Checking compilation..."))
+  message(sprintf("Checking compilation..."))
   temp <- RcppXPtrUtils::cppXPtr(cpp_loglike)
-  cat(sprintf("\rChecking compilation...success\n"))
-  cat(sprintf("Checking types..."))
+  message(sprintf("\rChecking compilation...success\n"))
+  message(sprintf("Checking types..."))
   RcppXPtrUtils::checkXPtr(temp, "SEXP", c("std::vector<double>",
                                            "std::vector<double>"))
-  cat(sprintf("\rChecking types...success\n"))
+  message(sprintf("\rChecking types...success\n"))
 }
 
 #------------------------------------------------
@@ -25,10 +25,10 @@ check_likelihood_compilation <- function(cpp_loglike){
 #'
 #' @export
 check_prior_compilation <- function(cpp_logprior){
-  cat(sprintf("Checking compilation..."))
+  message(sprintf("Checking compilation..."))
   temp <- RcppXPtrUtils::cppXPtr(cpp_logprior)
-  cat(sprintf("\rChecking compilation...success\n"))
-  cat(sprintf("Checking types..."))
+  message(sprintf("\rChecking compilation...success\n"))
+  message(sprintf("Checking types..."))
   RcppXPtrUtils::checkXPtr(temp, "SEXP", "std::vector<double>")
-  cat(sprintf("\rChecking types...success\n"))
+  message(sprintf("\rChecking types...success\n"))
 }

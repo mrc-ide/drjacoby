@@ -85,7 +85,7 @@
       <h1>Example MCMC Implementation</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2020-03-05</h4>
+            <h4 class="date">2020-03-06</h4>
       
       
       <div class="hidden name"><code>example.Rmd</code></div>
@@ -128,9 +128,6 @@ df_params &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.i
 <span class="co">#&gt; 2 sigma   0 Inf    1</span></code></pre></div>
 <p>In this example we have one parameter (<code>mu</code>) that occupies a finite range [-10, 10], and another parameter (<code>sigma</code>) that can take any positive value. <em>drjacoby</em> deals with different parameter ranges using reparameterisation, which all occurs internally meaning we don’t need to worry about these constraints affecting our inference.</p>
 <p>Next, we need a likelihood function. This <strong>must</strong> have two input arguments: 1) a vector of parameters, 2) a vector of data, and these <strong>must</strong> be input <strong>in that order</strong>. It also <strong>must</strong> return a single value for the likelihood <strong>in log space</strong>. These constraints on the format of the likelihood function might seem a bit restrictive, but they are needed in order for <em>drjacoby</em> to know how to use the function internally. The issue of taking logs is particularly important, as the MCMC will still run even if we forget to take logs, but the results produced will be nonsense!</p>
-<div class="figure">
-<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/loglady.jpg" alt="Do not underestimate the importance of taking logs."><p class="caption">Do not underestimate the importance of taking logs.</p>
-</div>
 <p>Inside the likelihood function we can extract individual parameter values from the input vector, and then use these values to calculate the probability of the data. In our example, the likelihood function is quite simple thanks to the <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm()</a></code> function which can return the density of the normal distribution already in log space:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define log-likelihood function</span>
 r_loglike &lt;-<span class="st"> </span><span class="cf">function</span>(params, x) {
@@ -185,7 +182,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.6%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.162615 seconds</span>
+<span class="co">#&gt; completed in 0.162832 seconds</span>
 <span class="co">#&gt; MCMC chain 2</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -198,7 +195,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.3%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.137714 seconds</span>
+<span class="co">#&gt; completed in 0.130511 seconds</span>
 <span class="co">#&gt; MCMC chain 3</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -211,7 +208,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.3%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.139628 seconds</span>
+<span class="co">#&gt; completed in 0.138928 seconds</span>
 <span class="co">#&gt; MCMC chain 4</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -224,7 +221,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.6%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.142020 seconds</span>
+<span class="co">#&gt; completed in 0.141657 seconds</span>
 <span class="co">#&gt; MCMC chain 5</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -237,7 +234,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 24.3%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.138965 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.136415 seconds</span></code></pre></div>
 <p>The raw output produced is essentially a large nested list, containing diagnostics, log-likelihoods and parameter values. We can dig down to individual elements of this list using the <code><a href="https://rdrr.io/r/base/Extract.html">$</a></code> symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first few <code>mu</code> values from from first rung of the the first chain:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get first few mu values</span>
 <span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(r_mcmc_out<span class="op">$</span>chain1<span class="op">$</span>theta_burnin<span class="op">$</span>rung1<span class="op">$</span>mu)
@@ -304,14 +301,14 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 23.2%</span>
+<span class="co">#&gt; acceptance rate: 0%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 17%</span>
+<span class="co">#&gt; acceptance rate: 0%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.004019 seconds</span>
+<span class="co">#&gt; completed in 0.003316 seconds</span>
 <span class="co">#&gt; MCMC chain 2</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -324,46 +321,46 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 22.7%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.003052 seconds</span>
+<span class="co">#&gt; completed in 0.003073 seconds</span>
 <span class="co">#&gt; MCMC chain 3</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 23.2%</span>
+<span class="co">#&gt; acceptance rate: 23.3%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 22.7%</span>
+<span class="co">#&gt; acceptance rate: 22.4%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.002943 seconds</span>
+<span class="co">#&gt; completed in 0.003007 seconds</span>
 <span class="co">#&gt; MCMC chain 4</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 22.9%</span>
+<span class="co">#&gt; acceptance rate: 24.7%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 23.4%</span>
+<span class="co">#&gt; acceptance rate: 23.6%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.002897 seconds</span>
+<span class="co">#&gt; completed in 0.003451 seconds</span>
 <span class="co">#&gt; MCMC chain 5</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 22%</span>
+<span class="co">#&gt; acceptance rate: 0%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 24%</span>
+<span class="co">#&gt; acceptance rate: 0%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.003026 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.002908 seconds</span></code></pre></div>
 <p>You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. We can quantify how much faster the C++ method is using the <code>microbenchmark</code> package. In the following we compare the MCMC evaluated over 100,000 iterations using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.</p>
 <p><img src="example_files/figure-html/unnamed-chunk-13-1.png" width="672"></p>
 <p>The pure C++ version was on average around 17.6 times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is your goal then C++ versions of <em>both</em> the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.</p>
