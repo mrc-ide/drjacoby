@@ -57,7 +57,7 @@ For our example MCMC we will assume that we know the correct distribution of the
 df_params <- data.frame(name = c("mu", "sigma"),
                         min = c(-10, 0),
                         max = c(10, Inf),
-                        init = c(5, 1))
+                        init = c(9, 10))
 
 print(df_params)
 ```
@@ -66,7 +66,7 @@ In this example we have one parameter (`mu`) that occupies a finite range [-10, 
 
 Next, we need a likelihood function. This **must** have two input arguments: 1) a vector of parameters, 2) a vector of data, and these **must** be input **in that order**. It also **must** return a single value for the likelihood **in log space**. These constraints on the format of the likelihood function might seem a bit restrictive, but they are needed in order for *drjacoby* to know how to use the function internally. The issue of taking logs is particularly important, as the MCMC will still run even if we forget to take logs, but the results produced will be nonsense!
 
-![Do not underestimate the importance of taking logs.](https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/loglady.jpg)
+![Do not underestimate the importance of taking logs.](https://raw.githubusercontent.com/mrc-ide/drjacoby/version1.0/R_ignore/images/loglady.jpg)
 
 Inside the likelihood function we can extract individual parameter values from the input vector, and then use these values to calculate the probability of the data. In our example, the likelihood function is quite simple thanks to the `dnorm()` function which can return the density of the normal distribution already in log space:
 
@@ -97,7 +97,8 @@ r_logprior <- function(params) {
   sigma <- params[2]
   
   # calculate log-prior
-  ret <- dunif(mu, min = -10, max = 10, log = TRUE) + dlnorm(sigma, meanlog = 0, sdlog = 1.0, log = TRUE)
+  ret <- dunif(mu, min = -10, max = 10, log = TRUE) +
+    dlnorm(sigma, meanlog = 0, sdlog = 1.0, log = TRUE)
   
   # return
   return(ret)
@@ -122,32 +123,39 @@ r_mcmc_out <- run_mcmc(data = x,
                        pb_markdown = TRUE)
 ```
 
-The raw output produced is essentially a large nested list, containing diagnostics, log-likelihoods and parameter values. We can dig down to individual elements of this list using the `$` symbol, which can be combined with auto-complete on most platforms to make life easier. For example, the following line prints the first few `mu` values from from first rung of the the first chain:
+The output returned by the MCMC function has three parts: 1) an "output" dataframe containing raw posterior draws and other key elements at each iteration of the MCMC, 2) a "diagnostics" object containing useful summaries such as the effective sample size of each parameter, 3) a "parameters" object containing a record of the exact parameters used to run the MCMC. We can take a peek at the first of these outputs:
 
 ```{r}
-# get first few mu values
-head(r_mcmc_out$chain1$theta_burnin$rung1$mu)
+head(r_mcmc_out$output)
 ```
-
-Note that the first value is 5.0, which is the initial value for `mu` that we specified in the `df_params` dataframe. The advantages of using [multiple rungs](TODO) and [multiple chains](TODO) are dealt with in later vignettes.
-
 
 ## Exploring outputs and checking MCMC performance
 
-We can produce simple trace plots of output, e.g. the parameter `mu`:
-
-(TODO - should show trace plot over burn-in before showing sampling iterations)
+Before we can draw any conclusions from our MCMC results there are some basic checks that we should carry out. First, we can examine trace plots of all parameters to see how they are moving. This can be done using the `plot_par()` function, shown here for the burn-in phase:
 
 ```{r, fig.width=8, fig.height=4}
-plot_par(r_mcmc_out, "mu")
+plot_par(r_mcmc_out, show = "mu", phase = "burnin")
+plot_par(r_mcmc_out, show = "sigma", phase = "burnin")
 ```
 
-(TODO - talk about each of these plots)
+Notice that for all five chains both `mu` and `sigma` move quickly from their initial values to stable levels at around 3 and 2. This is a visual indication that the MCMC has burned in for an appropriate number of iterations.
+
+Next we can look at trace plots from the sampling phase:
 
 ```{r, fig.width=8, fig.height=4}
-plot_par(r_mcmc_out, "sigma")
+plot_par(r_mcmc_out, show = "mu")
+plot_par(r_mcmc_out, show = "sigma")
 ```
 
+Here we can see that the MCMC continues to move freely, and that all chains appear to exploring the same part of the parameter space. The final plot shows the autocorrelation of the chains, which in this case falls off fairly rapidly with samples being approximately independent at around 5 lags. This is another indication that the MCMC is mixing well. The marginal histogram shows a single clear peak, although this is still a bit rough so we may want to re-run the MCMC with a larger number of sampling iterations to get a smoother result. We can also explore this by looking at the effective sample size (ESS), which is stored within the MCMC diagnostics:
+
+```{r}
+r_mcmc_out$diagnostics$ess
+```
+
+We can see that despite running the MCMC for 1000 sampling iterations, the actual number of effectively independent samples accounting for autocorrelation is much lower. When doing any calculation that relies on the number of samples, we should use the ESS rather than the raw number of sampling iterations. For example if we want to know the standard error of our estimate of `mu` we should do `sd(mu)/sqrt(ESS)`. But just as importantly, when producing any summary of the posterior that does not make direct use of this number - for example when producing posterior histograms - we should *use all posterior samples*, and we should certainly *not thin samples* to reduce autocorrelation. A histogram produced from all samples is more accurate than once produce from thinned samples, even if the samples are autocorrelated.
+
+The final question is how can we be confident that our MCMC has actually explored the space well? Although the trace plot above looks good, it is possible to get results that look like this from very pathological MCMC runs. This is a more complex problem that is dealt with to some extent in [another vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html).
 
 
 ## Using C++ functions
@@ -156,7 +164,7 @@ Although *drjacoby* is an R package, under the hood it is running C++ through [R
 
 To use C++ functions within *drjacoby* we simply write them directly within R as character strings. As before, there are some constraints on what this function must look like. First, it **must** take as input a `std::vector<double>` of parameters **followed by** a `std::vector<double>` of data. Data **must** be input as doubles, and so data consisting of integer or boolean values should be dealt with as though they are continuous values (for example `TRUE = 1.0`, `FALSE = 0.0`). Second, the function **must** return an object of class `SEXP`. The easiest way to achieve this is to calculate the raw return value as a double, and to use the `Rcpp::wrap()` function when returning to transform to `SEXP`. As before, the value returned should be the likelihood evaluated in **log space**.
 
-One disadvantage of using C++ functions over R functions is that we do not have access to all R's nice distribution functions, for example `dnorm()`, and so functions written in C++ will tend to be mathematically more involved. For example, the `r_loglike()` function defined above can be re-written in C++ as follows:
+Even though we are workin in C++, we still have access to most of R's nice distribution functions through the `R::` namespace. For example, the `dnorm()` function can be accessed within C++ using `R::dnorm()`. Details of the available functions can be found [here](https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution). The `r_loglike()` function defined above can be re-written in C++ as follows:
 
 ```{r}
 # define cpp log-likelihood function as character string
@@ -169,7 +177,7 @@ cpp_loglike <- "SEXP loglike(std::vector<double> params, std::vector<double> x) 
   // sum log-likelihood over all data
   double ret = 0.0;
   for (size_t i = 0; i < sizeof(x); ++i) {
-    ret += -0.5*log(2*M_PI*sigma*sigma) - (x[i] - mu)*(x[i] - mu)/(2*sigma*sigma);
+    ret += R::dnorm(x[i], mu, sigma, true);
   }
   
   // return as SEXP
@@ -187,7 +195,7 @@ cpp_logprior <- "SEXP logprior(std::vector<double> params){
   double sigma = params[1];
   
   // calculate logprior
-  double ret = -log(20.0) - log(sigma) - 0.5*log(2*M_PI*1.0*1.0) - (log(sigma) - 0)*(log(sigma) - 0)/(2*1.0*1.0);
+  double ret = -log(20.0) + R::dlnorm(sigma, 0.0, 1.0, true);
   
   // return as SEXP
   return Rcpp::wrap(ret);
@@ -207,25 +215,6 @@ r_mcmc_out <- run_mcmc(data = x,
                        pb_markdown = TRUE)
 ```
 
-You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. We can quantify how much faster the C++ method is using the `microbenchmark` package. In the following we compare the MCMC evaluated over 100,000 iterations using 1) the R likelihood and prior, 2) the C++ likelihood and prior, 3) a mixed method using the C++ likelihood but the R prior.
-
-```{r, echo=FALSE, fig.height = 3, fig.width = 7}
-#microbenchmark:::summary.microbenchmark(drjacoby:::bm)
-ggplot2::ggplot(drjacoby:::bm, ggplot2::aes(x = expr, y = time / 1e6, fill = expr)) + 
-  ggplot2::geom_violin() +
-  ggplot2::scale_fill_brewer(palette = 2, type = "qual", guide = FALSE) +
-  ggplot2::xlab("") +
-  ggplot2::ylab("Time (milliseconds)") +
-  ggplot2::coord_flip() +
-  ggplot2::theme_bw()
-```
-
-```{r, echo = FALSE}
-# hidden block, calculate speed-up of C++
-median_time <- microbenchmark:::summary.microbenchmark(drjacoby:::bm)$median
-speedup <- round(median_time[1]/median_time[3], digits = 1)
-```
-
-The pure C++ version was on average around `r speedup` times faster than the pure R version in this example. It is interesting to note that the mixed C++ and R version lies almost exactly between the two pure methods, suggesting that the computational cost of the pure R version is dominated in almost equal measure by calculating the likelihood and the prior. In conclusion, if efficiency is your goal then C++ versions of *both* the likelihood and prior should be used. If ease of programming is more important then R versions of these functions should suffice.
+You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. On the other hand, writing C++ functions in this way is more error prone and difficult to debug mistakes. In summary, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R versions of these functions should suffice.
 
 This was a very easy problem, and so required no fancy MCMC tricks. The [next vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) demonstrates how *drjacoby* can be applied to more challenging problems.
