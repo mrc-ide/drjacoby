@@ -43,9 +43,11 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   assert_single_pos_int(y_axis_type)
   assert_in(y_axis_type, 1:3)
   
-  chain_get <- paste0("chain", chain)
+  # declare variables to avoid "no visible binding" issues
+  stage <- rung <- value <- loglikelihood <- NULL
   
   # get useful quantities
+  chain_get <- paste0("chain", chain)
   beta_raised <- dplyr::filter(x$diagnostics$beta_raised, chain == chain_get) %>%
     dplyr::pull(value)
   rungs <- length(beta_raised)
@@ -135,6 +137,9 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
   assert_single_pos_int(x_axis_type)
   assert_in(x_axis_type, 1:2)
   
+  # declare variables to avoid "no visible binding" issues
+  stage <- value <- NULL
+  
   # get useful quantities
   chain_get <- paste0("chain", chain)
   beta_raised <- dplyr::filter(x$diagnostics$beta_raised, chain == chain_get) %>%
@@ -199,6 +204,9 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   assert_in(phase, c("burnin", "sampling"))
   assert_single_bounded(lag, 1, 500)
   
+  # declare variables to avoid "no visible binding" issues
+  stage <- iteration <- loglikelihood <- NULL
+  
   # get values
   chain_get <- paste0("chain", chain)
   rung_get <- paste0("rung", rung)
@@ -255,12 +263,16 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   assert_single_bounded(lag, 1, 500)
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling"))
-
+  
+  # declare variables to avoid "no visible binding" issues
+  stage <- chain <- NULL
+  
+  # get basic properties
   rung_get <- paste0("rung", rung)
   data <- dplyr::filter(x$output, rung == rung_get, stage == phase) 
   
   # choose which parameters to plot
-  parameter <- names(data)[6:ncol(data)]
+  parameter <- setdiff(names(data), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
   if(!is.null(show)){
     stopifnot(is.character(show))
     parameter <- parameter[grepl(paste(show, collapse = "|"), parameter)]
@@ -377,10 +389,15 @@ plot_cor <- function(x, parameter1, parameter2,
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling"))
   
+  # declare variables to avoid "no visible binding" issues
+  stage <- NULL
+  
+  # get basic quantities
   rung_get <- paste0("rung", rung)
   data <- dplyr::filter(x$output, rung == rung_get, stage == phase) 
   data <- data[,c("chain", parameter1, parameter2)]  
   colnames(data) <- c("chain", "x", "y")
+  
   # Downsample
   if(downsample & nrow(data) > 2000){
     data <- data[seq.int(1, nrow(data), length.out = 2000),]
@@ -420,15 +437,15 @@ plot_contour <- function(x, parameter1, parameter2, n_levels = 10, phase = "samp
   assert_in(parameter1, names(x$output))
   assert_in(parameter2, names(x$output))
   
+  # required to remove no visible binding warning
+  stage <- level <- NULL
+  
   # extract plotting data
   chain_get <- paste0("chain", chain)
   rung_get <- paste0("rung", rung)
   data <- dplyr::filter(x$output, rung == rung_get, stage == phase, chain == chain_get) 
   data <- data[,c(parameter1, parameter2)]  
   colnames(data) <- c("x", "y")
-  
-  # required to remove no visible binding warning
-  level <- NULL
   
   # produce plot
   ggplot2::ggplot(data = data,
