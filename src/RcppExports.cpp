@@ -5,15 +5,6 @@
 
 using namespace Rcpp;
 
-// foo_test
-void foo_test();
-RcppExport SEXP _drjacoby_foo_test() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    foo_test();
-    return R_NilValue;
-END_RCPP
-}
 // main_cpp
 Rcpp::List main_cpp(Rcpp::List args);
 RcppExport SEXP _drjacoby_main_cpp(SEXP argsSEXP) {
@@ -27,7 +18,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_drjacoby_foo_test", (DL_FUNC) &_drjacoby_foo_test, 0},
     {"_drjacoby_main_cpp", (DL_FUNC) &_drjacoby_main_cpp, 1},
     {NULL, NULL, 0}
 };
