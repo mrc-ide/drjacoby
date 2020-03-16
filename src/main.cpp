@@ -12,6 +12,7 @@ using namespace std;
 typedef SEXP (*pattern_cpp_loglike)(std::vector<double>, std::vector<double>);
 typedef SEXP (*pattern_cpp_logprior)(std::vector<double>);
 
+
 //------------------------------------------------
 // main MCMC function
 Rcpp::List main_cpp(Rcpp::List args) {
@@ -150,6 +151,9 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   // loop through burn-in iterations
   for (int rep = 1; rep < s.burnin; ++rep) {
     
+    // allow user to exit on escape
+    Rcpp::checkUserInterrupt();
+    
     // loop through rungs
     for (int r = 0; r < rungs; ++r) {
       
@@ -201,6 +205,9 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   
   // loop through sampling iterations
   for (int rep = 0; rep < s.samples; ++rep) {
+    
+    // allow user to exit on escape
+    Rcpp::checkUserInterrupt();
     
     // loop through rungs
     for (int r = 0; r < rungs; ++r) {

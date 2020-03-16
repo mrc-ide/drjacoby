@@ -229,7 +229,7 @@ run_mcmc <- function(data,
   if (chains > 1) {
     rhat_est <- c()
     for(p in seq_along(param_names)){
-      pm <- output_processed$output[output_processed$output$stage == "sampling",c("chain", as.character(param_names[p]))]
+      pm <- output_processed$output[output_processed$output$stage == "sampling", c("chain", as.character(param_names[p]))]
       rhat_est[p] <- gelman_rubin(pm, chains, samples)
     }
     rhat_est[skip_param] <- NA
@@ -243,12 +243,13 @@ run_mcmc <- function(data,
   ess_est[skip_param] <- NA
   output_processed$diagnostics$ess <- ess_est
   
-  # MC
+  # Thermodynamic power
+  output_processed$diagnostics$rung_details <- data.frame(rung = 1:rungs,
+                                                          thermodynamic_power = output_raw[[1]]$beta_raised)
+  
+  # Metropolis-coupling
+  mc_accept <- NA
   if (rungs > 1) {
-    
-    # Beta raised
-    output_processed$diagnostics$beta_raised <- tidyr::expand_grid(chain = chain_names, rung = rung_names)
-    output_processed$diagnostics$beta_raised$value <- unlist(lapply(output_raw, function(x){x$beta_raised}))
     
     # MC accept
     mc_accept <- tidyr::expand_grid(chain = chain_names, link = 1:(length(rung_names) - 1))
@@ -256,8 +257,8 @@ run_mcmc <- function(data,
     mc_accept$sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
     mc_accept <- tidyr::gather(mc_accept, stage, value, -chain, -link)
     
-    output_processed$diagnostics$mc_accept <- mc_accept
   }
+  output_processed$diagnostics$mc_accept <- mc_accept
   
   ## Parameters
   output_processed$parameters <- list(data = data,
@@ -314,22 +315,3 @@ deploy_chain <- function(args) {
   
   return(ret)
 }
-
-#------------------------------------------------
-#' Extract theta into list of matrices over rungs
-#'
-#' @param theta_list List of thetas
-#' @param param_names Vector of parameter names
-#' @param rung_names Vector of rung names
-#'
-#' @return List of matrices
-get_theta_rungs <- function(theta_list, param_names, rung_names) {
-  ret <- mapply(function(x) {
-    ret <- as.data.frame(rcpp_to_matrix(x))
-    names(ret) <- param_names
-    ret
-  }, theta_list, SIMPLIFY = FALSE)
-  names(ret) <- rung_names
-  ret
-}
-
