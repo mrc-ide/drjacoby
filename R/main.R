@@ -262,10 +262,12 @@ run_mcmc <- function(data,
   # ESS
   output_sub <- subset(output_processed$output, stage == "sampling" & rung == "rung1",
                        select = as.character(param_names))
-  tc <- tryCatch(apply(output_sub, 2, coda::effectiveSize))
-  print(tc)
+  
+  #tc <- tryCatch(apply(output_sub, 2, coda::effectiveSize))
+  #print(tc)
   
   ess_est <- apply(output_sub, 2, coda::effectiveSize)
+  
   #ess_est[skip_param] <- NA
   #output_processed$diagnostics$ess <- ess_est
   
