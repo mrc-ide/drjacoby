@@ -18,20 +18,13 @@ void Particle::init(System &s, double beta_raised) {
   this->beta_raised = beta_raised;
   
   // theta is the parameter vector in natural space
-  if (s_ptr->theta_init_defined) {
-    theta = s_ptr->theta_init;
-  } else {
-    theta = vector<double>(d);
-    for (int i = 0; i < d; ++i) {
-      theta[i] = runif1(s_ptr->theta_min[i], s_ptr->theta_max[i]);
-    }
-  }
-  theta_prop = vector<double>(d);
+  theta = Rcpp::clone(s_ptr->theta_vector);
+  theta_prop = Rcpp::clone(theta);
   
   // phi is a vector of transformed parameters
-  phi = vector<double>(d);
+  phi = Rcpp::NumericVector(d);
   theta_to_phi();
-  phi_prop = vector<double>(d);
+  phi_prop = Rcpp::NumericVector(d);
   
   // proposal parameters
   bw = vector<double>(d, 1.0);

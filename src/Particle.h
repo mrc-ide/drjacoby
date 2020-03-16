@@ -25,12 +25,12 @@ public:
   double beta_raised;
   
   // theta is the parameter vector in natural space
-  std::vector<double> theta;
-  std::vector<double> theta_prop;
+  Rcpp::NumericVector theta;
+  Rcpp::NumericVector theta_prop;
   
   // phi is a vector of transformed parameters
-  std::vector<double> phi;
-  std::vector<double> phi_prop;
+  Rcpp::NumericVector phi;
+  Rcpp::NumericVector phi_prop;
   
   // proposal parameters
   std::vector<double> bw;
@@ -52,7 +52,7 @@ public:
   // constructors
   Particle() {};
   
-  // initialise everything EXCEPT FOR likelihood and prior values
+  // initialise everything except for likelihood and prior values
   void init(System &s, double beta_raised);
   
   // initialise likelihood and prior values
@@ -67,8 +67,8 @@ public:
   void update(TYPE1 get_loglike, TYPE2 get_logprior) {
     
     // set theta_prop and phi_prop to current values of theta and phi
-    theta_prop = theta;
-    phi_prop = phi;
+    theta_prop = Rcpp::clone(theta);
+    phi_prop = Rcpp::clone(phi);
     
     // loop through parameters
     for (int i = 0; i < d; ++i) {

@@ -72,8 +72,11 @@ run_mcmc <- function(data,
   
   # ---------- check inputs ----------
   # check data
-  assert_vector(data)
-  assert_numeric(data)
+  assert_list(data)
+  if (is.null(names(data)) | any(names(data) == "")) {
+    stop("data must be a *named* list")
+  }
+  assert_numeric(unlist(data))
   
   # check df_params
   assert_dataframe(df_params)
@@ -130,6 +133,10 @@ run_mcmc <- function(data,
   # flag to skip over fixed parameters
   skip_param <- (df_params$min == df_params$max)
   
+  # create named vector object for passing internally within C++ functions
+  theta_vector <- df_params$init
+  names(theta_vector) <- df_params$name
+  
   # flag whether likelihood/prior are C++ functions
   loglike_use_cpp <- inherits(loglike, "character")
   logprior_use_cpp <- inherits(logprior, "character")
@@ -141,10 +148,9 @@ run_mcmc <- function(data,
   args_params <- list(x = data,
                       loglike_use_cpp = loglike_use_cpp,
                       logprior_use_cpp = logprior_use_cpp,
+                      theta_vector = theta_vector,
                       theta_min = df_params$min,
                       theta_max = df_params$max,
-                      theta_init = df_params$init,
-                      theta_init_defined = theta_init_defined,
                       trans_type = df_params$trans_type,
                       skip_param = skip_param,
                       burnin = burnin,
@@ -199,7 +205,7 @@ run_mcmc <- function(data,
   df_output <- do.call(rbind, mapply(function(j) {
     do.call(rbind, mapply(function(i) {
       
-      # concatenate burn-in and sampling loglike and logprior
+      # concatenate burn-in and sampling logprior and loglikelihood
       logprior <- c(output_raw[[j]]$logprior_burnin[[i]], output_raw[[j]]$logprior_sampling[[i]])
       loglike <- c(output_raw[[j]]$loglike_burnin[[i]], output_raw[[j]]$loglike_sampling[[i]])
       
@@ -288,12 +294,12 @@ deploy_chain <- function(args) {
   # convert C++ functions to pointers
   if (args$args_params$loglike_use_cpp) {
     args$args_functions$loglike <- RcppXPtrUtils::cppXPtr(args$args_functions$loglike)
-    RcppXPtrUtils::checkXPtr(args$args_functions$loglike, "SEXP", c("std::vector<double>",
-                                                                    "std::vector<double>"))
+    RcppXPtrUtils::checkXPtr(args$args_functions$loglike, "SEXP", c("Rcpp::NumericVector",
+                                                                    "Rcpp::List"))
   }
   if (args$args_params$logprior_use_cpp) {
     args$args_functions$logprior <- RcppXPtrUtils::cppXPtr(args$args_functions$logprior)
-    RcppXPtrUtils::checkXPtr(args$args_functions$logprior, "SEXP", "std::vector<double>")
+    RcppXPtrUtils::checkXPtr(args$args_functions$logprior, "SEXP", "Rcpp::NumericVector")
   }
   
   # get parameters

@@ -13,13 +13,12 @@ public:
   // PUBLIC OBJECTS
   
   // data
-  std::vector<double> x;
+  Rcpp::List x;
   
   // model parameters
+  Rcpp::NumericVector theta_vector;
   std::vector<double> theta_min;
   std::vector<double> theta_max;
-  std::vector<double> theta_init;
-  bool theta_init_defined;
   std::vector<int> trans_type;
   std::vector<bool> skip_param;
   int d;
