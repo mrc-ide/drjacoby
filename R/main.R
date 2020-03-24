@@ -30,6 +30,7 @@ check_drjacoby_loaded <- function() {
 #'     allowed.
 #'     \item \code{init} - the initial value of the parameter.
 #'   }
+#' @param misc optional list object passed to likelihood and prior.
 #' @param loglike TODO.
 #' @param logprior TODO.
 #' @param burnin the number of burn-in iterations.

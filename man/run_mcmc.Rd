@@ -7,6 +7,7 @@
 run_mcmc(
   data,
   df_params,
+  misc = list(),
   loglike,
   logprior,
   burnin = 1000,
@@ -36,6 +37,8 @@ elements:
   allowed.
   \item \code{init} - the initial value of the parameter.
 }}
+
+\item{misc}{optional list object passed to likelihood and prior.}
 
 \item{loglike}{TODO.}
 
