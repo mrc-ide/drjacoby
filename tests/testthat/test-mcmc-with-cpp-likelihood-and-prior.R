@@ -105,7 +105,7 @@ test_that("Cpp likelihood and prior", {
                             burnin = 1e3,
                             samples = 1e4,
                             silent = TRUE)
-  #return()
+  
   # subset output
   pe <- dplyr::filter(cpp_mcmc_data$output, stage == "sampling") %>%
     dplyr::select(mu, sigma)
@@ -125,21 +125,21 @@ test_that("Cpp likelihood and prior", {
                               samples = 1e4,
                               silent = TRUE)
   expect_length(cpp_mcmc_chains, 3)
-  #return()
+  
   # subset output to chain1 and check posterior estimates
   pe <- dplyr::filter(cpp_mcmc_chains$output, stage == "sampling", chain == "chain1") %>%
     dplyr::select(mu, sigma)
   posterior_estimate3a <- apply(pe, 2, median)
   expect_lt(posterior_estimate3a["mu"] - 3, 0.1)
   expect_lt(posterior_estimate3a["sigma"] - 2, 0.1)
-  #return()
+  
   # subset output to chain2 and check posterior estimates
   pe <- dplyr::filter(cpp_mcmc_chains$output, stage == "sampling", chain == "chain2") %>%
     dplyr::select(mu, sigma)
   posterior_estimate3b <- apply(pe, 2, median)
   expect_lt(posterior_estimate3b["mu"] - 3, 0.1)
   expect_lt(posterior_estimate3b["sigma"] - 2, 0.1)
-  #return()
+  
   ## Metropolis coupling
   mcmc_out_MC <- run_mcmc(data = data_list,
                           df_params = df_params,

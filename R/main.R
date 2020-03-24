@@ -55,6 +55,7 @@ check_drjacoby_loaded <- function() {
 
 run_mcmc <- function(data,
                      df_params,
+                     misc = list(),
                      loglike,
                      logprior,
                      burnin = 1e3,
@@ -96,11 +97,12 @@ run_mcmc <- function(data,
     assert_eq(all(is.finite(df_params$max)), TRUE, message = this_message)
   }
   
+  # check misc
+  assert_list(misc)
+  
   # check loglikelihood and logprior functions
   assert_custom_class(loglike, c("function", "character"))
   assert_custom_class(logprior, c("function", "character"))
-  
-  # TODO - further checks that these functions are defined correctly?
   
   # check MCMC parameters
   assert_single_pos_int(burnin, zero_allowed = FALSE)
@@ -146,6 +148,7 @@ run_mcmc <- function(data,
   
   # parameters to pass to C++
   args_params <- list(x = data,
+                      misc = misc,
                       loglike_use_cpp = loglike_use_cpp,
                       logprior_use_cpp = logprior_use_cpp,
                       theta_vector = theta_vector,
@@ -297,11 +300,13 @@ deploy_chain <- function(args) {
   if (args$args_params$loglike_use_cpp) {
     args$args_functions$loglike <- RcppXPtrUtils::cppXPtr(args$args_functions$loglike)
     RcppXPtrUtils::checkXPtr(args$args_functions$loglike, "SEXP", c("Rcpp::NumericVector",
+                                                                    "Rcpp::List",
                                                                     "Rcpp::List"))
   }
   if (args$args_params$logprior_use_cpp) {
     args$args_functions$logprior <- RcppXPtrUtils::cppXPtr(args$args_functions$logprior)
-    RcppXPtrUtils::checkXPtr(args$args_functions$logprior, "SEXP", "Rcpp::NumericVector")
+    RcppXPtrUtils::checkXPtr(args$args_functions$logprior, "SEXP", c("Rcpp::NumericVector",
+                                                                     "Rcpp::List"))
   }
   
   # get parameters

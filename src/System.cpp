@@ -15,6 +15,9 @@ void System::load(Rcpp::List args) {
   // data
   x = args_params["x"];
   
+  // misc
+  misc = args_params["misc"];
+  
   // model parameters
   theta_vector = args_params["theta_vector"];
   theta_min = rcpp_to_vector_double(args_params["theta_min"]);

@@ -15,6 +15,9 @@ public:
   // data
   Rcpp::List x;
   
+  // misc object
+  Rcpp::List misc;
+  
   // model parameters
   Rcpp::NumericVector theta_vector;
   std::vector<double> theta_min;
