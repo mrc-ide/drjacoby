@@ -149,7 +149,7 @@ test_that("Cpp likelihood and prior", {
                           samples = 1e4,
                           rungs = 4,
                           silent = TRUE)
-  return()
+  
   # subset output
   pe <- dplyr::filter(mcmc_out_MC$output, stage == "sampling", chain == "chain1", rung == "rung1") %>%
     dplyr::select(mu, sigma)
