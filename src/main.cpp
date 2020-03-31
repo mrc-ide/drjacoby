@@ -9,8 +9,8 @@
 using namespace std;
 
 // specify exact pattern that loglike and logprior function must take in C++
-typedef SEXP (*pattern_cpp_loglike)(Rcpp::NumericVector, Rcpp::List, Rcpp::List);
-typedef SEXP (*pattern_cpp_logprior)(Rcpp::NumericVector, Rcpp::List);
+typedef SEXP (*pattern_cpp_loglike)(Rcpp::NumericVector, int param_i, Rcpp::List, Rcpp::List);
+typedef SEXP (*pattern_cpp_logprior)(Rcpp::NumericVector, int param_i, Rcpp::List);
 
 
 //------------------------------------------------

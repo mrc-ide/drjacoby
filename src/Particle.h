@@ -58,8 +58,8 @@ public:
   // initialise likelihood and prior values
   template<class TYPE1, class TYPE2>
   void init_like(TYPE1 get_loglike, TYPE2 get_logprior) {
-    loglike = Rcpp::as<double>(get_loglike(theta, s_ptr->x, s_ptr->misc));
-    logprior = Rcpp::as<double>(get_logprior(theta, s_ptr->misc));
+    loglike = Rcpp::as<double>(get_loglike(theta, -1, s_ptr->x, s_ptr->misc));
+    logprior = Rcpp::as<double>(get_logprior(theta, -1, s_ptr->misc));
   }
   
   // update theta[i] via univariate Metropolis-Hastings
@@ -87,8 +87,8 @@ public:
       double adj = get_adjustment(i);
       
       // calculate likelihood and prior of proposed theta
-      loglike_prop = Rcpp::as<double>(get_loglike(theta_prop, s_ptr->x, s_ptr->misc));
-      logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, s_ptr->misc));
+      loglike_prop = Rcpp::as<double>(get_loglike(theta_prop, i, s_ptr->x, s_ptr->misc));
+      logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, i, s_ptr->misc));
       
       // calculate Metropolis-Hastings ratio
       double MH = beta_raised*(loglike_prop - loglike) + (logprior_prop - logprior) + adj;
