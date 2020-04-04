@@ -382,7 +382,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 
 plot_cor <- function(x, parameter1, parameter2,
                      downsample = TRUE, phase = "sampling",
-                     rung = 1){
+                     rung = 1) {
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
@@ -392,6 +392,7 @@ plot_cor <- function(x, parameter1, parameter2,
   assert_in(parameter2, names(x$output))
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling"))
+  assert_single_pos_int(rung)
   
   # declare variables to avoid "no visible binding" issues
   stage <- NULL
@@ -419,51 +420,55 @@ plot_cor <- function(x, parameter1, parameter2,
 }
 
 #------------------------------------------------
-#' @title Contour plot of two parameters
+#' @title Plot 95\% credible intervals
 #'
-#' @description Produces contour plot from the posterior draws of two
-#'   parameters.
-#'
+#' @description Plots posterior 95\% credible intervals over specified set of
+#'   parameters (defauls to all parameters).
+#' 
 #' @inheritParams plot_rung_loglike
-#' @param parameter1,parameter2 Name of parameters to plot.
-#' @param n_levels Number of contour levels.
-#' @param rung Rung
+#' @param show Vector of parameter names to plot.
+#' @param rung Which rung to plot.
 #'
-#' @importFrom stats density
 #' @export
 
-plot_contour <- function(x, parameter1, parameter2, n_levels = 10, phase = "sampling", rung = 1, chain = 1) {
+plot_credible <- function(x, show = NULL, phase = "sampling", rung = 1) {
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
-  assert_string(parameter1)
-  assert_string(parameter2)
-  assert_in(parameter1, names(x$output))
-  assert_in(parameter2, names(x$output))
+  if (!is.null(show)) {
+    assert_string(show)
+    assert_in(show, names(x$output))
+  }
+  assert_in(phase, c("burnin", "sampling", "both"))
+  assert_single_pos_int(rung)
   
-  # required to remove no visible binding warning
-  stage <- level <- NULL
+  # declare variables to avoid "no visible binding" issues
+  stage <- NULL
   
-  # extract plotting data
-  chain_get <- paste0("chain", chain)
+  # default values
+  if (is.null(show)) {
+    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
+  }
+  
+  # deal with phase = "both" situation
+  if (phase == "both") {
+    phase <- c("burnin", "sampling")
+  }
+  
+  # subset based on phase and rung
   rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, rung == rung_get, stage == phase, chain == chain_get) 
-  data <- data[,c(parameter1, parameter2)]  
-  colnames(data) <- c("x", "y")
+  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase) 
+  data <- data[, show, drop = FALSE]
+  
+  # get quantiles
+  df_plot <- as.data.frame(t(apply(data, 2, quantile_95)))
+  df_plot$param <- row.names(df_plot)
   
   # produce plot
-  ggplot2::ggplot(data = data,
-                  ggplot2::aes(x = .data$x, y = .data$y)) + 
-    ggisoband::geom_density_bands(aes(fill = stat(density)), size = 0.2) +
-    ggplot2::scale_x_continuous(expand = c(0, 0)) +
-    ggplot2::scale_y_continuous(expand = c(0, 0)) +
-    ggplot2::xlab(parameter1) +
-    ggplot2::ylab(parameter2) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(panel.background = element_rect(fill = NA),
-                   panel.ontop = TRUE,
-                   panel.grid = element_line(colour = '#00000020')) +
-    ggplot2::scale_fill_gradientn(colours = c("white", "#FEE090", "#FC8D59", "#D73027"),
-                                  name = "posterior\ndensity", limits = c(0,NA))
+  ggplot2::ggplot(data = df_plot) + ggplot2::theme_bw() +
+    ggplot2::geom_point(ggplot2::aes(x = .data$param, y = .data$Q50)) +
+    ggplot2::geom_segment(ggplot2::aes(x = .data$param, y = .data$Q2.5, xend = .data$param, yend = .data$Q97.5)) +
+    ggplot2::xlab("") +
+    ggplot2::ylab("95% CrI")
   
 }
