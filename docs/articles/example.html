@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -85,7 +85,7 @@
       <h1>Example MCMC Implementation</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2020-03-13</h4>
+            <h4 class="date">2020-04-04</h4>
       
       
       <div class="hidden name"><code>example.Rmd</code></div>
@@ -114,7 +114,7 @@ mu_true &lt;-<span class="st"> </span><span class="dv">3</span>
 sigma_true &lt;-<span class="st"> </span><span class="dv">2</span>
 
 <span class="co"># draw example data</span>
-x &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(<span class="dv">10</span>, <span class="dt">mean =</span> mu_true, <span class="dt">sd =</span> sigma_true)</code></pre></div>
+data_list &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="dt">x =</span> <span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(<span class="dv">10</span>, <span class="dt">mean =</span> mu_true, <span class="dt">sd =</span> sigma_true))</code></pre></div>
 <p>For our example MCMC we will assume that we know the correct distribution of the data (i.e. we know the data is normally distributed), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the parameters of the distribution are unknown. Parameters within <em>drjacoby</em> are defined in dataframe format, where we specify minimum, maximum, and initial values of all parameters:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define parameters dataframe</span>
 df_params &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">name =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"mu"</span>, <span class="st">"sigma"</span>),
@@ -133,25 +133,25 @@ df_params &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.i
 </div>
 <p>Inside the likelihood function we can extract individual parameter values from the input vector, and then use these values to calculate the probability of the data. In our example, the likelihood function is quite simple thanks to the <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm()</a></code> function which can return the density of the normal distribution already in log space:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define log-likelihood function</span>
-r_loglike &lt;-<span class="st"> </span><span class="cf">function</span>(params, x) {
+r_loglike &lt;-<span class="st"> </span><span class="cf">function</span>(params, param_i, data, misc) {
   
   <span class="co"># extract parameter values</span>
-  mu &lt;-<span class="st"> </span>params[<span class="dv">1</span>]
-  sigma &lt;-<span class="st"> </span>params[<span class="dv">2</span>]
+  mu &lt;-<span class="st"> </span>params[<span class="st">"mu"</span>]
+  sigma &lt;-<span class="st"> </span>params[<span class="st">"sigma"</span>]
   
   <span class="co"># calculate log-probability of data</span>
-  ret &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">dnorm</a></span>(x, <span class="dt">mean =</span> mu, <span class="dt">sd =</span> sigma, <span class="dt">log =</span> <span class="ot">TRUE</span>))
+  ret &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">dnorm</a></span>(data<span class="op">$</span>x, <span class="dt">mean =</span> mu, <span class="dt">sd =</span> sigma, <span class="dt">log =</span> <span class="ot">TRUE</span>))
   
   <span class="co"># return</span>
   <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span>(ret)
 }</code></pre></div>
 <p>Finally, we need a prior function. This <strong>must</strong> take a single vector of parameters as input, and it <strong>must</strong> return a single value for the prior probability of those parameters <strong>in log space</strong>. Again, this strict format is required for <em>drjacoby</em> to know how to use the prior internally. In our case we will assume a uniform prior on <code>mu</code>, and a log-normal prior on <code>sigma</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define log-prior function</span>
-r_logprior &lt;-<span class="st"> </span><span class="cf">function</span>(params) {
+r_logprior &lt;-<span class="st"> </span><span class="cf">function</span>(params, param_i, misc) {
   
   <span class="co"># extract parameter values</span>
-  mu &lt;-<span class="st"> </span>params[<span class="dv">1</span>]
-  sigma &lt;-<span class="st"> </span>params[<span class="dv">2</span>]
+  mu &lt;-<span class="st"> </span>params[<span class="st">"mu"</span>]
+  sigma &lt;-<span class="st"> </span>params[<span class="st">"sigma"</span>]
   
   <span class="co"># calculate log-prior</span>
   ret &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Uniform.html">dunif</a></span>(mu, <span class="dt">min =</span> <span class="op">-</span><span class="dv">10</span>, <span class="dt">max =</span> <span class="dv">10</span>, <span class="dt">log =</span> <span class="ot">TRUE</span>) <span class="op">+</span>
@@ -167,13 +167,13 @@ r_logprior &lt;-<span class="st"> </span><span class="cf">function</span>(params
 <a href="#running-the-mcmc" class="anchor"></a>Running the MCMC</h2>
 <p>Once we have all the elements above it is straightforward to run a basic MCMC. We simply input the four elements listed above, along with the number of burn-in and sampling iterations By default <em>drjacoby</em> prints progress bars to the console to keep you updated on the progress of the MCMC. When running in R markdown we can use the option <code>pb_markdown = TRUE</code> to print progress bars in a markdown-friendly way, although you will probably want to leave this option turned off when running interactively (simply delete this argument).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC</span>
-r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
-                       <span class="dt">df_params =</span> df_params,
-                       <span class="dt">loglike =</span> r_loglike,
-                       <span class="dt">logprior =</span> r_logprior,
-                       <span class="dt">burnin =</span> <span class="fl">1e3</span>,
-                       <span class="dt">samples =</span> <span class="fl">1e3</span>,
-                       <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
+mcmc &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> data_list,
+                 <span class="dt">df_params =</span> df_params,
+                 <span class="dt">loglike =</span> r_loglike,
+                 <span class="dt">logprior =</span> r_logprior,
+                 <span class="dt">burnin =</span> <span class="fl">1e3</span>,
+                 <span class="dt">samples =</span> <span class="fl">1e3</span>,
+                 <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
 <span class="co">#&gt; MCMC chain 1</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -186,7 +186,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.7%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.161213 seconds</span>
+<span class="co">#&gt; completed in 0.183537 seconds</span>
 <span class="co">#&gt; MCMC chain 2</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -199,7 +199,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 24%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.121806 seconds</span>
+<span class="co">#&gt; completed in 0.155227 seconds</span>
 <span class="co">#&gt; MCMC chain 3</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -212,7 +212,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.3%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.131105 seconds</span>
+<span class="co">#&gt; completed in 0.165771 seconds</span>
 <span class="co">#&gt; MCMC chain 4</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -225,7 +225,7 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.6%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.136317 seconds</span>
+<span class="co">#&gt; completed in 0.150709 seconds</span>
 <span class="co">#&gt; MCMC chain 5</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -238,9 +238,9 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.9%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.129409 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.152910 seconds</span></code></pre></div>
 <p>The output returned by the MCMC function has three parts: 1) an “output” dataframe containing raw posterior draws and other key elements at each iteration of the MCMC, 2) a “diagnostics” object containing useful summaries such as the effective sample size of each parameter, 3) a “parameters” object containing a record of the exact parameters used to run the MCMC. We can take a peek at the first of these outputs:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(r_mcmc_out<span class="op">$</span>output)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(mcmc<span class="op">$</span>output)
 <span class="co">#&gt;    chain  rung iteration  stage  logprior loglikelihood       mu     sigma</span>
 <span class="co">#&gt; 1 chain1 rung1         1 burnin -8.868205     -33.96977 9.000000 10.000000</span>
 <span class="co">#&gt; 2 chain1 rung1         2 burnin -8.868205     -33.96977 9.000000 10.000000</span>
@@ -253,20 +253,20 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <h2 class="hasAnchor">
 <a href="#exploring-outputs-and-checking-mcmc-performance" class="anchor"></a>Exploring outputs and checking MCMC performance</h2>
 <p>Before we can draw any conclusions from our MCMC results there are some basic checks that we should carry out. First, we can examine trace plots of all parameters to see how they are moving. This can be done using the <code><a href="../reference/plot_par.html">plot_par()</a></code> function, shown here for the burn-in phase:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(r_mcmc_out, <span class="dt">show =</span> <span class="st">"mu"</span>, <span class="dt">phase =</span> <span class="st">"burnin"</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(mcmc, <span class="dt">show =</span> <span class="st">"mu"</span>, <span class="dt">phase =</span> <span class="st">"burnin"</span>)</code></pre></div>
 <p><img src="example_files/figure-html/unnamed-chunk-8-1.png" width="768"></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(r_mcmc_out, <span class="dt">show =</span> <span class="st">"sigma"</span>, <span class="dt">phase =</span> <span class="st">"burnin"</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(mcmc, <span class="dt">show =</span> <span class="st">"sigma"</span>, <span class="dt">phase =</span> <span class="st">"burnin"</span>)</code></pre></div>
 <p><img src="example_files/figure-html/unnamed-chunk-8-2.png" width="768"></p>
 <p>Notice that for all five chains both <code>mu</code> and <code>sigma</code> move quickly from their initial values to stable levels at around 3 and 2. This is a visual indication that the MCMC has burned in for an appropriate number of iterations.</p>
 <p>Next we can look at trace plots from the sampling phase:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(r_mcmc_out, <span class="dt">show =</span> <span class="st">"mu"</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(mcmc, <span class="dt">show =</span> <span class="st">"mu"</span>)</code></pre></div>
 <p><img src="example_files/figure-html/unnamed-chunk-9-1.png" width="768"></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(r_mcmc_out, <span class="dt">show =</span> <span class="st">"sigma"</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(mcmc, <span class="dt">show =</span> <span class="st">"sigma"</span>)</code></pre></div>
 <p><img src="example_files/figure-html/unnamed-chunk-9-2.png" width="768"></p>
 <p>Here we can see that the MCMC continues to move freely, and that all chains appear to exploring the same part of the parameter space. The final plot shows the autocorrelation of the chains, which in this case falls off fairly rapidly with samples being approximately independent at around 5 lags. This is another indication that the MCMC is mixing well. The marginal histogram shows a single clear peak, although this is still a bit rough so we may want to re-run the MCMC with a larger number of sampling iterations to get a smoother result. We can also explore this by looking at the effective sample size (ESS), which is stored within the MCMC diagnostics:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r_mcmc_out<span class="op">$</span>diagnostics<span class="op">$</span>ess
-<span class="co">#&gt;       mu    sigma </span>
-<span class="co">#&gt; 851.5148 550.7152</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># </span><span class="al">TODO</span><span class="co"> - ESS is currently broken, so this line does nothing</span>
+mcmc<span class="op">$</span>diagnostics<span class="op">$</span>ess
+<span class="co">#&gt; NULL</span></code></pre></div>
 <p>We can see that despite running the MCMC for 1000 sampling iterations, the actual number of effectively independent samples accounting for autocorrelation is much lower. When doing any calculation that relies on the number of samples, we should use the ESS rather than the raw number of sampling iterations. For example if we want to know the standard error of our estimate of <code>mu</code> we should do <code>sd(mu)/sqrt(ESS)</code>. But just as importantly, when producing any summary of the posterior that does not make direct use of this number - for example when producing posterior histograms - we should <em>use all posterior samples</em>, and we should certainly <em>not thin samples</em> to reduce autocorrelation. A histogram produced from all samples is more accurate than once produce from thinned samples, even if the samples are autocorrelated.</p>
 <p>The final question is how can we be confident that our MCMC has actually explored the space well? Although the trace plot above looks good, it is possible to get results that look like this from very pathological MCMC runs. This is a more complex problem that is dealt with to some extent in <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">another vignette</a>.</p>
 </div>
@@ -277,15 +277,18 @@ r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <p>To use C++ functions within <em>drjacoby</em> we simply write them directly within R as character strings. As before, there are some constraints on what this function must look like. First, it <strong>must</strong> take as input a <code>std::vector&lt;double&gt;</code> of parameters <strong>followed by</strong> a <code>std::vector&lt;double&gt;</code> of data. Data <strong>must</strong> be input as doubles, and so data consisting of integer or boolean values should be dealt with as though they are continuous values (for example <code>TRUE = 1.0</code>, <code>FALSE = 0.0</code>). Second, the function <strong>must</strong> return an object of class <code>SEXP</code>. The easiest way to achieve this is to calculate the raw return value as a double, and to use the <code>Rcpp::wrap()</code> function when returning to transform to <code>SEXP</code>. As before, the value returned should be the likelihood evaluated in <strong>log space</strong>.</p>
 <p>Even though we are workin in C++, we still have access to most of R’s nice distribution functions through the <code>R::</code> namespace. For example, the <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm()</a></code> function can be accessed within C++ using <code>R::dnorm()</code>. Details of the available functions can be found <a href="https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution">here</a>. The <code>r_loglike()</code> function defined above can be re-written in C++ as follows:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define cpp log-likelihood function as character string</span>
-cpp_loglike &lt;-<span class="st"> "SEXP loglike(std::vector&lt;double&gt; params, std::vector&lt;double&gt; x) {</span>
+cpp_loglike &lt;-<span class="st"> "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {</span>
 <span class="st">  </span>
-<span class="st">  // extract parameters</span>
-<span class="st">  double mu = params[0];</span>
-<span class="st">  double sigma = params[1];</span>
+<span class="st">  // unpack data</span>
+<span class="st">  std::vector&lt;double&gt; x = Rcpp::as&lt; std::vector&lt;double&gt; &gt;(data[</span><span class="ch">\"</span><span class="st">x</span><span class="ch">\"</span><span class="st">]);</span>
+<span class="st">  </span>
+<span class="st">  // unpack parameters</span>
+<span class="st">  double mu = params[</span><span class="ch">\"</span><span class="st">mu</span><span class="ch">\"</span><span class="st">];</span>
+<span class="st">  double sigma = params[</span><span class="ch">\"</span><span class="st">sigma</span><span class="ch">\"</span><span class="st">];</span>
 <span class="st">  </span>
 <span class="st">  // sum log-likelihood over all data</span>
 <span class="st">  double ret = 0.0;</span>
-<span class="st">  for (size_t i = 0; i &lt; sizeof(x); ++i) {</span>
+<span class="st">  for (unsigned int i = 0; i &lt; x.size(); ++i) {</span>
 <span class="st">    ret += R::dnorm(x[i], mu, sigma, true);</span>
 <span class="st">  }</span>
 <span class="st">  </span>
@@ -294,10 +297,10 @@ cpp_loglike &lt;-<span class="st"> "SEXP loglike(std::vector&lt;double&gt; param
 <span class="st">}"</span></code></pre></div>
 <p>Similarly, we can define the prior as a C++ function. This function <strong>must</strong> take as input a <code>std::vector&lt;double&gt;</code> of parameters, and <strong>must</strong> output a single <code>SEXP</code> value representing the prior probability of the parameters in <strong>log space</strong>. The <code>r_logprior()</code> function defined above can be re-written in C++ as follows:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define cpp logprior function</span>
-cpp_logprior &lt;-<span class="st"> "SEXP logprior(std::vector&lt;double&gt; params){</span>
+cpp_logprior &lt;-<span class="st"> "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {</span>
 <span class="st">  </span>
 <span class="st">  // extract parameters</span>
-<span class="st">  double sigma = params[1];</span>
+<span class="st">  double sigma = params[</span><span class="ch">\"</span><span class="st">sigma</span><span class="ch">\"</span><span class="st">];</span>
 <span class="st">  </span>
 <span class="st">  // calculate logprior</span>
 <span class="st">  double ret = -log(20.0) + R::dlnorm(sigma, 0.0, 1.0, true);</span>
@@ -307,78 +310,78 @@ cpp_logprior &lt;-<span class="st"> "SEXP logprior(std::vector&lt;double&gt; par
 <span class="st">}"</span></code></pre></div>
 <p>With these two functions defined we can run the MCMC exactly the same as before, passing in the new functions:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC</span>
-r_mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
-                       <span class="dt">df_params =</span> df_params,
-                       <span class="dt">loglike =</span> cpp_loglike,
-                       <span class="dt">logprior =</span> cpp_logprior,
-                       <span class="dt">burnin =</span> <span class="fl">1e3</span>,
-                       <span class="dt">samples =</span> <span class="fl">1e3</span>,
-                       <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
+mcmc &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> data_list,
+                 <span class="dt">df_params =</span> df_params,
+                 <span class="dt">loglike =</span> cpp_loglike,
+                 <span class="dt">logprior =</span> cpp_logprior,
+                 <span class="dt">burnin =</span> <span class="fl">1e3</span>,
+                 <span class="dt">samples =</span> <span class="fl">1e3</span>,
+                 <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
 <span class="co">#&gt; MCMC chain 1</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 26.3%</span>
+<span class="co">#&gt; acceptance rate: 22.7%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 39.6%</span>
+<span class="co">#&gt; acceptance rate: 23.3%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.004309 seconds</span>
+<span class="co">#&gt; completed in 0.005469 seconds</span>
 <span class="co">#&gt; MCMC chain 2</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 22.5%</span>
+<span class="co">#&gt; acceptance rate: 22.8%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 22.5%</span>
+<span class="co">#&gt; acceptance rate: 23%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.004318 seconds</span>
+<span class="co">#&gt; completed in 0.009237 seconds</span>
 <span class="co">#&gt; MCMC chain 3</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 0%</span>
+<span class="co">#&gt; acceptance rate: 22.3%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 72.1%</span>
+<span class="co">#&gt; acceptance rate: 23.1%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.004037 seconds</span>
+<span class="co">#&gt; completed in 0.005757 seconds</span>
 <span class="co">#&gt; MCMC chain 4</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 35.1%</span>
+<span class="co">#&gt; acceptance rate: 22.8%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 24.3%</span>
+<span class="co">#&gt; acceptance rate: 23.5%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.095583 seconds</span>
+<span class="co">#&gt; completed in 0.004880 seconds</span>
 <span class="co">#&gt; MCMC chain 5</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 22.2%</span>
+<span class="co">#&gt; acceptance rate: 22.1%</span>
 <span class="co">#&gt; sampling phase</span>
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 17.8%</span>
+<span class="co">#&gt; acceptance rate: 24.6%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.004097 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.005695 seconds</span></code></pre></div>
 <p>You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. On the other hand, writing C++ functions in this way is more error prone and difficult to debug mistakes. In summary, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R versions of these functions should suffice.</p>
 <p>This was a very easy problem, and so required no fancy MCMC tricks. The <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">next vignette</a> demonstrates how <em>drjacoby</em> can be applied to more challenging problems.</p>
 </div>

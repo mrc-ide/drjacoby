@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -85,7 +85,7 @@
       <h1>Running Multiple Chains</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2020-03-13</h4>
+            <h4 class="date">2020-04-04</h4>
       
       
       <div class="hidden name"><code>parallel.Rmd</code></div>
@@ -101,22 +101,32 @@
 <a href="#setup" class="anchor"></a>Setup</h2>
 <p>As always, we require some data, some parameters, and some functions to work with (see <a href="https://mrc-ide.github.io/drjacoby/articles/example.html">earlier examples</a>). The underlying model is not our focus here, so we will use a very basic setup</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># define data</span>
-x &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(<span class="dv">10</span>)
+data_list &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="dt">x =</span> <span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(<span class="dv">10</span>))
 
 <span class="co"># define parameters dataframe</span>
 df_params &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">name =</span> <span class="st">"mu"</span>, <span class="dt">min =</span> <span class="op">-</span><span class="dv">10</span>, <span class="dt">max =</span> <span class="dv">10</span>, <span class="dt">init =</span> <span class="dv">0</span>)
 
 <span class="co"># define cpp loglike function</span>
-loglike &lt;-<span class="st"> "SEXP loglike(std::vector&lt;double&gt; params, std::vector&lt;double&gt; x) {</span>
+cpp_loglike &lt;-<span class="st"> "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {</span>
+<span class="st">  </span>
+<span class="st">  // unpack data</span>
+<span class="st">  std::vector&lt;double&gt; x = Rcpp::as&lt; std::vector&lt;double&gt; &gt;(data[</span><span class="ch">\"</span><span class="st">x</span><span class="ch">\"</span><span class="st">]);</span>
+<span class="st">  </span>
+<span class="st">  // unpack parameters</span>
+<span class="st">  double mu = params[</span><span class="ch">\"</span><span class="st">mu</span><span class="ch">\"</span><span class="st">];</span>
+<span class="st">  </span>
+<span class="st">  // sum log-likelihood over all data</span>
 <span class="st">  double ret = 0.0;</span>
-<span class="st">  for (int i = 0; i &lt; int(x.size()); ++i) {</span>
-<span class="st">    ret += -0.5*log(2*M_PI) - (x[i] - params[0])*(x[i] - params[0])/2.0;</span>
+<span class="st">  for (unsigned int i = 0; i &lt; x.size(); ++i) {</span>
+<span class="st">    ret += R::dnorm(x[i], mu, 1.0, true);</span>
 <span class="st">  }</span>
+
+<span class="st">  // return as SEXP</span>
 <span class="st">  return Rcpp::wrap(ret);</span>
 <span class="st">}"</span>
 
 <span class="co"># define cpp logprior function</span>
-logprior &lt;-<span class="st"> "SEXP logprior(std::vector&lt;double&gt; params){</span>
+cpp_logprior &lt;-<span class="st"> "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {</span>
 <span class="st">  double ret = -log(20.0);</span>
 <span class="st">  return Rcpp::wrap(ret);</span>
 <span class="st">}"</span></code></pre></div>
@@ -126,14 +136,14 @@ logprior &lt;-<span class="st"> "SEXP logprior(std::vector&lt;double&gt; params)
 <a href="#running-multiple-chains" class="anchor"></a>Running multiple chains</h2>
 <p>Whenever the input argument <code>cluster</code> is <code>NULL</code>, chains will run in serial. This is true by default, so running multiple chains in serial is simply a case of specifying the <code>chains</code> argument:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC in serial</span>
-mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
-                     <span class="dt">df_params =</span> df_params,
-                     <span class="dt">loglike =</span> loglike,
-                     <span class="dt">logprior =</span> logprior,
-                     <span class="dt">burnin =</span> <span class="fl">1e3</span>,
-                     <span class="dt">samples =</span> <span class="fl">1e3</span>,
-                     <span class="dt">chains =</span> <span class="dv">2</span>,
-                     <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
+mcmc &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> data_list,
+                 <span class="dt">df_params =</span> df_params,
+                 <span class="dt">loglike =</span> cpp_loglike,
+                 <span class="dt">logprior =</span> cpp_logprior,
+                 <span class="dt">burnin =</span> <span class="fl">1e3</span>,
+                 <span class="dt">samples =</span> <span class="fl">1e3</span>,
+                 <span class="dt">chains =</span> <span class="dv">1</span>,
+                 <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
 <span class="co">#&gt; MCMC chain 1</span>
 <span class="co">#&gt; burn-in</span>
 <span class="co">#&gt; </span>
@@ -146,32 +156,19 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
 <span class="co">#&gt; acceptance rate: 23.4%</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.001910 seconds</span>
-<span class="co">#&gt; MCMC chain 2</span>
-<span class="co">#&gt; burn-in</span>
-<span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                            </span>
-<span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 23.1%</span>
-<span class="co">#&gt; sampling phase</span>
-<span class="co">#&gt; </span>
-  <span class="op">|</span><span class="st">                                                                            </span>
-<span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%
-<span class="co">#&gt; acceptance rate: 23.5%</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; completed in 0.001633 seconds</span></code></pre></div>
+<span class="co">#&gt; completed in 0.003343 seconds</span></code></pre></div>
 <p>When we look at our MCMC output (using the <code><a href="../reference/plot_par.html">plot_par()</a></code> function) we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">temperature rungs</a> then these would also be duplicated over chains.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># summarise output</span>
-mcmc_out
+mcmc
 <span class="co">#&gt; drjacoby output:</span>
-<span class="co">#&gt; 2 chains</span>
+<span class="co">#&gt; 1 chains</span>
 <span class="co">#&gt; 1 rungs</span>
 <span class="co">#&gt; 1000 burn-in iterations</span>
 <span class="co">#&gt; 1000 sampling iterations</span>
 <span class="co">#&gt; 1 parameters</span>
 
 <span class="co"># compare mu over both chains</span>
-<span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(mcmc_out, <span class="st">"mu"</span>)</code></pre></div>
+<span class="kw"><a href="../reference/plot_par.html">plot_par</a></span>(mcmc, <span class="st">"mu"</span>, <span class="dt">phase =</span> <span class="st">"both"</span>)</code></pre></div>
 <p><img src="parallel_files/figure-html/unnamed-chunk-4-1.png" width="960"></p>
 <p>Running in parallel is only slightly more complex. Before running anything we need to know how many cores our machine has. You may know this number already, but if you don’t then the <code>parallel</code> package has a handy function for detecting the number of cores for you:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cores &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="https://rdrr.io/r/parallel/detectCores.html">detectCores</a></span>()</code></pre></div>
@@ -180,15 +177,15 @@ mcmc_out
 <p>We then run the usual <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> function, this time passing in the cluster as an argument. This causes <em>drjacoby</em> to use a <code>clusterApplyLB()</code> call rather than an ordinary <code><a href="https://rdrr.io/r/base/lapply.html">lapply()</a></code> call over different chains. Each chain is added to a queue over the specified number of cores - when the first job completes, the next job is placed on the node that has become free and this continues until all jobs are complete.</p>
 <p>Note that output is supressed when running in parallel to avoid sending print commands to multiple cores, so you will not see the usual progress bars.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run MCMC in parallel</span>
-mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> x,
-                     <span class="dt">df_params =</span> df_params,
-                     <span class="dt">loglike =</span> loglike,
-                     <span class="dt">logprior =</span> logprior,
-                     <span class="dt">burnin =</span> <span class="fl">1e3</span>,
-                     <span class="dt">samples =</span> <span class="fl">1e3</span>,
-                     <span class="dt">chains =</span> <span class="dv">2</span>,
-                     <span class="dt">cluster =</span> cl,
-                     <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)</code></pre></div>
+mcmc &lt;-<span class="st"> </span><span class="kw"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="dt">data =</span> data_list,
+                 <span class="dt">df_params =</span> df_params,
+                 <span class="dt">loglike =</span> cpp_loglike,
+                 <span class="dt">logprior =</span> cpp_logprior,
+                 <span class="dt">burnin =</span> <span class="fl">1e3</span>,
+                 <span class="dt">samples =</span> <span class="fl">1e3</span>,
+                 <span class="dt">chains =</span> <span class="dv">2</span>,
+                 <span class="dt">cluster =</span> cl,
+                 <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)</code></pre></div>
 <p>Finally, it is good practice to shut down the workers once we are finished:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">parallel<span class="op">::</span><span class="kw"><a href="https://rdrr.io/r/parallel/makeCluster.html">stopCluster</a></span>(cl)</code></pre></div>
 <p>Running chains in parallel tends to be faster than running in serial, although remember that you will see a delay the first time you run a new set of functions as the likelihood and prior must compile on every chain.</p>
@@ -197,15 +194,17 @@ mcmc_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ru
 <h2 class="hasAnchor">
 <a href="#comparing-chains" class="anchor"></a>Comparing chains</h2>
 <p>One method of evaluating convergence is the rhat statistic, initially proposed by Gelman &amp; Rubin (1992). This method involves comparing the within-chain with the between-chain variance. Similar estimates for these two values (rhat -&gt; 1) can be used as an indicator of convergence. An approximate rhat estimate is automatically generated in drjacoby:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Rhat statistic</span>
-mcmc_out<span class="op">$</span>chain1<span class="op">$</span>diagnostics<span class="op">$</span>rhat
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># </span><span class="al">TODO</span><span class="co"> - currently not present in output</span>
+<span class="co"># Rhat statistic</span>
+mcmc<span class="op">$</span>diagnostics<span class="op">$</span>rhat
 <span class="co">#&gt; NULL</span></code></pre></div>
 <p>Chains from the MCMC will be autocorrelated. To assess the extent of autocorrelation we can view the correlation betwen values at a range of lags usin the <code><a href="../reference/plot_autocorrelation.html">plot_autocorrelation()</a></code> function, specifying the chain and parameter:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_autocorrelation.html">plot_autocorrelation</a></span>(mcmc_out, <span class="dt">par =</span> <span class="st">"mu"</span>, <span class="dt">chain =</span> <span class="dv">1</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/plot_autocorrelation.html">plot_autocorrelation</a></span>(mcmc, <span class="dt">par =</span> <span class="st">"mu"</span>, <span class="dt">chain =</span> <span class="dv">1</span>)</code></pre></div>
 <p><img src="parallel_files/figure-html/unnamed-chunk-10-1.png" width="576"></p>
 <p>Chain autocorrealtion can be incorporated into estimate of effective sample size, which are automatically calculated by drjacoby:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Effective sample size (from 1000 sampling iterations)</span>
-mcmc_out<span class="op">$</span>chain1<span class="op">$</span>diagnostics<span class="op">$</span>ess
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># </span><span class="al">TODO</span><span class="co"> - ESS currently deactivated</span>
+<span class="co"># Effective sample size (from 1000 sampling iterations)</span>
+mcmc<span class="op">$</span>diagnostics<span class="op">$</span>ess
 <span class="co">#&gt; NULL</span></code></pre></div>
 </div>
   </div>

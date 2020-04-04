@@ -18,12 +18,12 @@ test_that("Cpp likelihood and prior", {
                           init = c(5, 1))
   
   # Null log likelihood
-  cpp_loglike_null <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data) {
+  cpp_loglike_null <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
     return Rcpp::wrap(0.0);
   }"
   
   # Log likelihood
-  cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data) {
+  cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
     
     // unpack data
     std::vector<double> x = Rcpp::as< std::vector<double> >(data[\"x\"]);
@@ -34,7 +34,7 @@ test_that("Cpp likelihood and prior", {
     
     // calculate log-likelihood
     double ret = 0.0;
-    for (int i = 0; i < x.size(); ++i) {
+    for (unsigned int i = 0; i < x.size(); ++i) {
       ret += R::dnorm(x[i], mu, sigma, 1);
     }
     
@@ -48,7 +48,7 @@ test_that("Cpp likelihood and prior", {
   }"
   
   # Log prior
-  cpp_logprior_strong <- "SEXP logprior(Rcpp::NumericVector params){
+  cpp_logprior_strong <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
     
     // unpack params
     double mu = params[\"mu\"];
@@ -68,7 +68,7 @@ test_that("Cpp likelihood and prior", {
   }"
 
   # Null log prior
-  cpp_logprior_null <- "SEXP loglike(Rcpp::NumericVector params) {
+  cpp_logprior_null <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
     return Rcpp::wrap(0.0);
   }"
   
