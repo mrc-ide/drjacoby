@@ -48,16 +48,15 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   
   # get useful quantities
   chain_get <- paste0("chain", chain)
-  beta_raised <- dplyr::filter(x$diagnostics$beta_raised, chain == chain_get) %>%
-    dplyr::pull(value)
-  rungs <- length(beta_raised)
+  thermo_power <- x$diagnostics$rung_details$thermodynamic_power
+  rungs <- length(thermo_power)
   
   # define x-axis type
   if (x_axis_type == 1) {
     x_vec <- rungs:1
     x_lab <- "rung"
   } else {
-    x_vec <- beta_raised
+    x_vec <- thermo_power
     x_lab <- "thermodynamic power"
   }
   
@@ -93,7 +92,7 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   
   # get data into ggplot format and define temperature colours
   df <- y_intervals
-  df$col <- beta_raised
+  df$col <- thermo_power
   
   # produce plot
   plot1 <- ggplot(df) + theme_bw() + theme(panel.grid.minor.x = element_blank(),
@@ -142,10 +141,9 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
   
   # get useful quantities
   chain_get <- paste0("chain", chain)
-  beta_raised <- dplyr::filter(x$diagnostics$beta_raised, chain == chain_get) %>%
-    dplyr::pull(value)
-  beta_raised_mid <- beta_raised[-1] - diff(beta_raised)/2
-  rungs <- length(beta_raised)
+  thermo_power <- x$diagnostics$rung_details$thermodynamic_power
+  thermo_power_mid <- thermo_power[-1] - diff(thermo_power)/2
+  rungs <- length(thermo_power)
   
   # exit if rungs = 1
   if (rungs == 1) {
@@ -158,8 +156,8 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
     x_vec <- (rungs:2) - 0.5
     x_lab <- "rung"
   } else {
-    breaks_vec <- beta_raised
-    x_vec <- beta_raised_mid
+    breaks_vec <- thermo_power
+    x_vec <- thermo_power_mid
     x_lab <- "thermodynamic power"
   }
   
@@ -169,7 +167,7 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
   
   # get data into ggplot format and define temperature colours
   df <- as.data.frame(mc_accept)
-  df$col <- beta_raised_mid
+  df$col <- thermo_power_mid
   
   # produce plot
   plot1 <- ggplot(df) + theme_bw() + theme(panel.grid.minor.x = element_blank(),
@@ -262,14 +260,21 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   assert_custom_class(x, "drjacoby_output")
   assert_single_bounded(lag, 1, 500)
   assert_single_logical(downsample)
-  assert_in(phase, c("burnin", "sampling"))
+  assert_in(phase, c("burnin", "sampling", "both"))
+  assert_single_pos_int(rung)
+  assert_single_logical(display)
   
   # declare variables to avoid "no visible binding" issues
   stage <- chain <- NULL
   
+  # deal with phase = "both" situation
+  if (phase == "both") {
+    phase <- c("burnin", "sampling")
+  }
+  
   # get basic properties
   rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, rung == rung_get, stage == phase) 
+  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase) 
   
   # choose which parameters to plot
   parameter <- setdiff(names(data), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
@@ -291,7 +296,6 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
     data <- data[seq.int(1, nrow(data), length.out = 2000),]
   }
   
-  #chain <- NULL # to remove warning no visible binding
   data <- dplyr::group_by(data, chain)
   data <- dplyr::mutate(data, plot_par_x = 1:dplyr::n())
   data <- dplyr::ungroup(data)
