@@ -428,10 +428,11 @@ plot_cor <- function(x, parameter1, parameter2,
 #' @inheritParams plot_rung_loglike
 #' @param show Vector of parameter names to plot.
 #' @param rung Which rung to plot.
+#' @param param_names Optional vector of names to replace the default parameter names.
 #'
 #' @export
 
-plot_credible <- function(x, show = NULL, phase = "sampling", rung = 1) {
+plot_credible <- function(x, show = NULL, phase = "sampling", rung = 1, param_names = NULL) {
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
@@ -445,9 +446,12 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = 1) {
   # declare variables to avoid "no visible binding" issues
   stage <- NULL
   
-  # default values
+  # define defaults
   if (is.null(show)) {
     show <- setdiff(names(x$output), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
+  }
+  if (is.null(param_names)) {
+    param_names <- show
   }
   
   # deal with phase = "both" situation
@@ -462,7 +466,7 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = 1) {
   
   # get quantiles
   df_plot <- as.data.frame(t(apply(data, 2, quantile_95)))
-  df_plot$param <- row.names(df_plot)
+  df_plot$param <- factor(param_names, levels = param_names)
   
   # produce plot
   ggplot2::ggplot(data = df_plot) + ggplot2::theme_bw() +
