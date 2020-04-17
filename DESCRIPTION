@@ -24,8 +24,7 @@ Imports:
     rlang,
     cowplot,
     dplyr,
-    magrittr,
-    ggisoband
+    magrittr
 SystemRequirements: C++11
 Suggests: 
     testthat,
