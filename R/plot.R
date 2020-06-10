@@ -95,14 +95,17 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   df$col <- thermo_power
   
   # produce plot
-  plot1 <- ggplot(df) + theme_bw() + theme(panel.grid.minor.x = element_blank(),
-                                           panel.grid.major.x = element_blank())
-  plot1 <- plot1 + geom_vline(aes(xintercept = x_vec), col = grey(0.9))
-  plot1 <- plot1 + geom_segment(aes_(x = ~x_vec, y = ~Q2.5, xend = ~x_vec, yend = ~Q97.5))
-  plot1 <- plot1 + geom_point(aes_(x = ~x_vec, y = ~Q50, color = ~col))
-  plot1 <- plot1 + xlab(x_lab) + ylab(y_lab)
-  plot1 <- plot1 + scale_colour_gradientn(colours = c("red", "blue"), name = "thermodynamic\npower", limits = c(0,1))
-  
+  plot1 <- df %>% 
+    dplyr::mutate(rung = as.numeric(sub("rung", "", rung))) %>% # coerce character to numeric 
+    ggplot() + 
+    geom_vline(aes(xintercept = x_vec), col = grey(0.9)) +
+    geom_pointrange(aes_(x = ~rung, ymin = ~Q2.5, y = ~Q50, ymax = ~Q97.5, col = ~col)) + 
+    xlab(x_lab) + 
+    ylab(y_lab) + 
+    scale_colour_gradientn(colours = c("red", "blue"), name = "thermodynamic\npower", limits = c(0,1)) +
+    theme_bw() + 
+    theme(panel.grid.minor.x = element_blank(),
+          panel.grid.major.x = element_blank())
   # define y-axis
   if (y_axis_type == 2) {
     y_min <- quantile(df$Q2.5, probs = 0.5)
@@ -152,8 +155,8 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
   
   # define x-axis type
   if (x_axis_type == 1) {
-    breaks_vec <- rungs:2
-    x_vec <- (rungs:2) - 0.5
+    breaks_vec <- 2:rungs
+    x_vec <- (2:rungs) - 0.5
     x_lab <- "rung"
   } else {
     breaks_vec <- thermo_power
@@ -166,17 +169,19 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
     dplyr::pull(value)
   
   # get data into ggplot format and define temperature colours
-  df <- as.data.frame(mc_accept)
-  df$col <- thermo_power_mid
+  df <- data.frame(x_vec = x_vec, mc_accept = mc_accept, col = thermo_power_mid)
   
   # produce plot
-  plot1 <- ggplot(df) + theme_bw() + theme(panel.grid.minor.x = element_blank(),
-                                           panel.grid.major.x = element_blank())
-  plot1 <- plot1 + geom_vline(aes(xintercept = breaks_vec), col = grey(0.9))
-  plot1 <- plot1 + scale_y_continuous(limits = c(0,1), expand = c(0,0))
-  plot1 <- plot1 + geom_point(aes(x = x_vec, y = mc_accept, color = col))
-  plot1 <- plot1 + xlab(x_lab) + ylab("coupling acceptance rate")
-  plot1 <- plot1 + scale_colour_gradientn(colours = c("red", "blue"), name = "thermodynamic\npower", limits = c(0,1))
+  plot1 <- ggplot(df) + 
+    geom_vline(aes(xintercept = breaks_vec), col = grey(0.9)) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0)) + 
+    geom_point(aes(x = x_vec, y = mc_accept, color = col)) + 
+    xlab(x_lab) + ylab("coupling acceptance rate") + 
+    scale_x_reverse() +
+    scale_colour_gradientn(colours = c("red", "blue"), name = "thermodynamic\npower", limits = c(0,1)) +
+    theme_bw() + 
+    theme(panel.grid.minor.x = element_blank(),
+          panel.grid.major.x = element_blank())
   
   return(plot1)
 }
@@ -407,7 +412,7 @@ plot_cor <- function(x, parameter1, parameter2,
   if(downsample & nrow(data) > 2000){
     data <- data[seq.int(1, nrow(data), length.out = 2000),]
   }
-
+  
   # produce plot
   ggplot2::ggplot(data = data,
                   ggplot2::aes(x = .data$x, y = .data$y, col = as.factor(.data$chain))) + 
