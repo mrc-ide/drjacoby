@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -132,6 +132,7 @@
     <pre class="usage"><span class='fu'>run_mcmc</span>(
   <span class='no'>data</span>,
   <span class='no'>df_params</span>,
+  <span class='kw'>misc</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
   <span class='no'>loglike</span>,
   <span class='no'>logprior</span>,
   <span class='kw'>burnin</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
@@ -166,6 +167,10 @@ elements:</p><ul>
   allowed.</p></li>
 <li><p><code>init</code> - the initial value of the parameter.</p></li>
 </ul></td>
+    </tr>
+    <tr>
+      <th>misc</th>
+      <td><p>optional list object passed to likelihood and prior.</p></td>
     </tr>
     <tr>
       <th>loglike</th>

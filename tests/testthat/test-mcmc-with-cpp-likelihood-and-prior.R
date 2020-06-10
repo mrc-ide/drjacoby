@@ -9,43 +9,67 @@ test_that("Cpp likelihood and prior", {
   
   # draw example data
   x <- rnorm(1000, mean = mu_true, sd = sigma_true)
+  data_list <- list(x = x)
   
   # define parameters dataframe
   df_params <- data.frame(name = c("mu", "sigma"),
                           min = c(-10, 0),
-                          max = c(10, Inf),
+                          max = c(10, 10),
                           init = c(5, 1))
   
   # Null log likelihood
-  cpp_loglike_null <- "SEXP loglike(std::vector<double> params, std::vector<double> x) {
-    double out = 0.0;
-    return Rcpp::wrap(out);
+  cpp_loglike_null <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
+    return Rcpp::wrap(0.0);
   }"
   
   # Log likelihood
-  cpp_loglike <- "SEXP loglike(std::vector<double> params, std::vector<double> x) {
+  cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
+    
+    // unpack data
+    std::vector<double> x = Rcpp::as< std::vector<double> >(data[\"x\"]);
+    
+    // unpack params
+    double mu = params[\"mu\"];
+    double sigma = params[\"sigma\"];
+    
+    // calculate log-likelihood
     double ret = 0.0;
-    for (int i = 0; i < x.size(); ++i) {
-      ret += R::dnorm(x[i], params[0], params[1], 1);
+    for (unsigned int i = 0; i < x.size(); ++i) {
+      ret += R::dnorm(x[i], mu, sigma, 1);
     }
+    
+    // catch underflow
+    if (!std::isfinite(ret)) {
+      const double OVERFLO_DOUBLE = DBL_MAX/100.0;
+      ret = -OVERFLO_DOUBLE;
+    }
+    
     return Rcpp::wrap(ret);
   }"
   
   # Log prior
-  cpp_logprior_strong <- "SEXP logprior(std::vector<double> params){
+  cpp_logprior_strong <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
+    
+    // unpack params
+    double mu = params[\"mu\"];
+    double sigma = params[\"sigma\"];
     
     // calculate logprior
-    double ret = R::dnorm(params[0], 6, 0.1, 1) +
-    R::dnorm(params[1], 1, 0.1, 1);
+    double ret = R::dnorm(mu, 6, 0.1, 1) + R::dnorm(sigma, 1, 0.1, 1);
+    
+    // catch underflow
+    if (!std::isfinite(ret)) {
+      const double OVERFLO_DOUBLE = DBL_MAX/100.0;
+      ret = -OVERFLO_DOUBLE;
+    }
     
     // return as SEXP
     return Rcpp::wrap(ret);
   }"
 
   # Null log prior
-  cpp_logprior_null <- "SEXP loglike(std::vector<double> params) {
-    double out = 0.0;
-    return Rcpp::wrap(out);
+  cpp_logprior_null <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
+    return Rcpp::wrap(0.0);
   }"
   
   # Compilation checks
@@ -55,7 +79,7 @@ test_that("Cpp likelihood and prior", {
   expect_error(check_prior_compilation(1:2))
   
   # run MCMC
-  cpp_mcmc_null <- run_mcmc(data = x,
+  cpp_mcmc_null <- run_mcmc(data = data_list,
                             df_params = df_params,
                             loglike = cpp_loglike_null,
                             logprior = cpp_logprior_strong,
@@ -70,11 +94,11 @@ test_that("Cpp likelihood and prior", {
   
   # check posterior estimates
   posterior_estimate <- apply(pe, 2, median)
-  expect_lt(posterior_estimate[1] - 6, 0.1)
-  expect_lt(posterior_estimate[2] - 1, 0.1)
+  expect_lt(posterior_estimate["mu"] - 6, 0.1)
+  expect_lt(posterior_estimate["sigma"] - 1, 0.1)
   
   # run MCMC with null prior
-  cpp_mcmc_data <- run_mcmc(data = x,
+  cpp_mcmc_data <- run_mcmc(data = data_list,
                             df_params = df_params,
                             loglike = cpp_loglike,
                             logprior = cpp_logprior_null,
@@ -88,43 +112,43 @@ test_that("Cpp likelihood and prior", {
   
   # check posterior estimates
   posterior_estimate2 <- apply(pe, 2, median)
-  expect_lt(posterior_estimate2[1] - 3, 0.1)
-  expect_lt(posterior_estimate2[2] - 2, 0.1)
+  expect_lt(posterior_estimate2["mu"] - 3, 0.1)
+  expect_lt(posterior_estimate2["sigma"] - 2, 0.1)
   
   ## Multiple chains
-  cpp_mcmc_chains <- run_mcmc(data = x,
-                            df_params = df_params,
-                            loglike = cpp_loglike,
-                            logprior = cpp_logprior_null,
-                            chains = 2,
-                            burnin = 1e3,
-                            samples = 1e4,
-                            silent = TRUE)
+  cpp_mcmc_chains <- run_mcmc(data = data_list,
+                              df_params = df_params,
+                              loglike = cpp_loglike,
+                              logprior = cpp_logprior_null,
+                              chains = 2,
+                              burnin = 1e3,
+                              samples = 1e4,
+                              silent = TRUE)
   expect_length(cpp_mcmc_chains, 3)
   
   # subset output to chain1 and check posterior estimates
   pe <- dplyr::filter(cpp_mcmc_chains$output, stage == "sampling", chain == "chain1") %>%
     dplyr::select(mu, sigma)
   posterior_estimate3a <- apply(pe, 2, median)
-  expect_lt(posterior_estimate3a[1] - 3, 0.1)
-  expect_lt(posterior_estimate3a[2] - 2, 0.1)
+  expect_lt(posterior_estimate3a["mu"] - 3, 0.1)
+  expect_lt(posterior_estimate3a["sigma"] - 2, 0.1)
   
   # subset output to chain2 and check posterior estimates
   pe <- dplyr::filter(cpp_mcmc_chains$output, stage == "sampling", chain == "chain2") %>%
     dplyr::select(mu, sigma)
   posterior_estimate3b <- apply(pe, 2, median)
-  expect_lt(posterior_estimate3b[1] - 3, 0.1)
-  expect_lt(posterior_estimate3b[2] - 2, 0.1)
+  expect_lt(posterior_estimate3b["mu"] - 3, 0.1)
+  expect_lt(posterior_estimate3b["sigma"] - 2, 0.1)
   
   ## Metropolis coupling
-  mcmc_out_MC <- run_mcmc(data = x,
-                       df_params = df_params,
-                       loglike = cpp_loglike,
-                       logprior = cpp_logprior_null,
-                       burnin = 1e3,
-                       samples = 1e4,
-                       rungs = 4,
-                       silent = TRUE)
+  mcmc_out_MC <- run_mcmc(data = data_list,
+                          df_params = df_params,
+                          loglike = cpp_loglike,
+                          logprior = cpp_logprior_null,
+                          burnin = 1e3,
+                          samples = 1e4,
+                          rungs = 4,
+                          silent = TRUE)
   
   # subset output
   pe <- dplyr::filter(mcmc_out_MC$output, stage == "sampling", chain == "chain1", rung == "rung1") %>%
@@ -132,6 +156,6 @@ test_that("Cpp likelihood and prior", {
   
   # check posterior estimates
   posterior_estimate4 <- apply(pe, 2, median)
-  expect_lt(posterior_estimate4[1] - 3, 0.1)
-  expect_lt(posterior_estimate4[2] - 2, 0.1)
+  expect_lt(posterior_estimate4["mu"] - 3, 0.1)
+  expect_lt(posterior_estimate4["sigma"] - 2, 0.1)
 })
