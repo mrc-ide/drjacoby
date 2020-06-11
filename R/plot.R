@@ -254,11 +254,12 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #' @param downsample Downsample chain for efficiency
 #' @param display Show plots
 #' @param rung Rung
+#' @param chain Optional numeric (or vector of numerics) to filter chain by; default "all" shows all chains
 #'
 #' @export
 
 plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
-                     downsample = TRUE, phase = "sampling", rung = 1,
+                     downsample = TRUE, phase = "sampling", rung = 1, chain = "all",
                      display = TRUE) {
   
   # check inputs
@@ -268,6 +269,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   assert_in(phase, c("burnin", "sampling", "both"))
   assert_single_pos_int(rung)
   assert_single_logical(display)
+  assert_in(chain, c("all", gsub("chain", "", unique(x$output$chain))))
   
   # declare variables to avoid "no visible binding" issues
   stage <- chain <- NULL
@@ -279,7 +281,12 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   
   # get basic properties
   rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase) 
+  if (chain = "all") {
+    chain_get <- unique(x$output$chain)
+  } else {
+    chain_get <- paste0("chain", chain)
+  }
+  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase, chain %in% chain_get) 
   
   # choose which parameters to plot
   parameter <- setdiff(names(data), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
