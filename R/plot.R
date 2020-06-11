@@ -281,7 +281,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   
   # get basic properties
   rung_get <- paste0("rung", rung)
-  if (chain = "all") {
+  if (chain == "all") {
     chain_get <- unique(x$output$chain)
   } else {
     chain_get <- paste0("chain", chain)
