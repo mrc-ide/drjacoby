@@ -272,7 +272,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   assert_in(chain, c("all", gsub("chain", "", unique(x$output$chain))))
   
   # declare variables to avoid "no visible binding" issues
-  stage <- chain <- NULL
+  stage <- NULL
   
   # deal with phase = "both" situation
   if (phase == "both") {
