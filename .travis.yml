@@ -23,6 +23,8 @@ compiler:
 jobs:
   include:
     - os: osx
-      osx_image: xcode12 # updated Catalina
+      osx_image: xcode12 # updated Catalina 2
      - os: osx
-      osx_image: xcode11.6 # original Catalina
+      osx_image: xcode11.6 # updated Catalina 1 
+    - os: osx
+      osx_image: xcode11.5 # original Catalina
