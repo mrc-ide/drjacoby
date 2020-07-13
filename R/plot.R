@@ -130,11 +130,11 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
 #' @importFrom grDevices grey
 #' @export
 
-plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1) {
+plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type = 1) {
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
-  assert_single_pos_int(chain)
+  assert_in(chain, c("all", gsub("chain", "", unique(x$output$chain))))
   assert_in(phase, c("burnin", "sampling"))
   assert_single_pos_int(x_axis_type)
   assert_in(x_axis_type, 1:2)
@@ -163,7 +163,12 @@ plot_mc_acceptance <- function(x, chain = 1, phase = "sampling", x_axis_type = 1
     x_vec <- thermo_power_mid
     x_lab <- "thermodynamic power"
   }
-  
+  # get chain properties
+  if (chain == "all") {
+    chain_get <- unique(x$output$chain)
+  } else {
+    chain_get <- paste0("chain", chain)
+  }
   # get acceptance rates
   mc_accept <- dplyr::filter(x$diagnostics$mc_accept, stage == phase, chain == chain_get) %>%
     dplyr::pull(value)
@@ -394,6 +399,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 
 plot_cor <- function(x, parameter1, parameter2,
                      downsample = TRUE, phase = "sampling",
+                     chain = "all",
                      rung = 1) {
   
   # check inputs
@@ -411,7 +417,13 @@ plot_cor <- function(x, parameter1, parameter2,
   
   # get basic quantities
   rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, rung == rung_get, stage == phase) 
+  if (chain == "all") {
+    chain_get <- unique(x$output$chain)
+  } else {
+    chain_get <- paste0("chain", chain)
+  }
+  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase, chain %in% chain_get) 
+  # subset to corr params
   data <- data[,c("chain", parameter1, parameter2)]  
   colnames(data) <- c("chain", "x", "y")
   
