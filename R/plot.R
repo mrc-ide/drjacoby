@@ -143,7 +143,6 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
   stage <- value <- NULL
   
   # get useful quantities
-  chain_get <- paste0("chain", chain)
   thermo_power <- x$diagnostics$rung_details$thermodynamic_power
   thermo_power_mid <- thermo_power[-1] - diff(thermo_power)/2
   rungs <- length(thermo_power)
@@ -166,12 +165,16 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
   # get chain properties
   if (chain == "all") {
     chain_get <- unique(x$output$chain)
+    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, stage == phase, chain %in% chain_get) %>%
+      dplyr::group_by(link) %>% 
+      dplyr::summarise(value = mean(value)) %>% 
+      dplyr::pull(value)
   } else {
     chain_get <- paste0("chain", chain)
-  }
   # get acceptance rates
   mc_accept <- dplyr::filter(x$diagnostics$mc_accept, stage == phase, chain == chain_get) %>%
     dplyr::pull(value)
+  }
   
   # get data into ggplot format and define temperature colours
   df <- data.frame(x_vec = x_vec, mc_accept = mc_accept, col = thermo_power_mid)
