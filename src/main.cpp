@@ -110,7 +110,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   for (int r = 0; r < rungs; ++r) {
     
     // calculate thermodynamic power of this rung
-    beta_raised_vec[r] = (rungs == 1) ? 1 : pow(1.0 - r/double(rungs-1), s.GTI_pow);
+    beta_raised_vec[r] = (rungs == 1) ? 1 : pow(1.0 - r/double(rungs-1), s.GTI_pow[r]);
     
     // initialise particle
     particle_vec[r].init(s, beta_raised_vec[r]);
