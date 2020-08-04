@@ -4,7 +4,7 @@
 \alias{plot_mc_acceptance}
 \title{Plot Metropolis coupling acceptance rates}
 \usage{
-plot_mc_acceptance(x, chain = 1, phase = "sampling", x_axis_type = 1)
+plot_mc_acceptance(x, chain = "all", phase = "sampling", x_axis_type = 1)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
