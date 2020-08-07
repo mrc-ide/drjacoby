@@ -313,7 +313,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   
   # Downsample
   if(downsample & nrow(data) > 2000){
-    data <- data[seq.int(1, nrow(data), length.out = 2000),]
+    data <- data[round(seq(1, nrow(data), length.out = 2000)),]
   }
   
   data <- dplyr::group_by(data, chain)
@@ -432,7 +432,7 @@ plot_cor <- function(x, parameter1, parameter2,
   
   # Downsample
   if(downsample & nrow(data) > 2000){
-    data <- data[seq.int(1, nrow(data), length.out = 2000),]
+    data <- data[round(seq(1, nrow(data), length.out = 2000)),]
   }
   
   # produce plot
