@@ -28,7 +28,7 @@ library(ggplot2)
 library(gridExtra)
 ```
 
-Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonian Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to "roll around" the target distribution allowing it to go round corners, but it still struggles with multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains. Note that this is separate from the concept of running multiple chains to diagnose performance, which is dealt with in a [separate vignette](https://mrc-ide.github.io/drjacoby/articles/parallel.html).
+Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonian Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to "roll around" the target distribution allowing it to go round corners, but it still struggles with multimodal distributions as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains.
 
 This vignette demonstrates how Metropolis coupling can be implemented within *drjacoby* to solve a deliberately awkward MCMC problem.
 
@@ -78,17 +78,17 @@ cpp_logprior <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::Li
 }"
 ```
 
-As always, we need to define a dataframe of parameters so that *drjacoby* knows what parameter ranges to expect:
+As always, we need to define a dataframe of parameters so that *drjacoby* knows what parameter ranges to expect. Here we use the `rbind.data.frame()` method, which can be more intuitive as we can define each row in turn:
 
 ```{r}
 # define parameters dataframe
-df_params <- data.frame(name = c("alpha", "beta", "epsilon"),
-                        min = c(-10, 0, -Inf),
-                        max = c(10, 10, Inf),
-                        init = c(5, 5, 0))
+df_params <- rbind.data.frame(list("alpha", -10, 10, 5),
+                              list("beta", 0, 10, 5),
+                              list("epsilon", -Inf, Inf, 0))
+names(df_params) <- c("name", "min", "max", "init")
 ```
 
-Finally, we need some data. For simplicity we will use a series of draws from a normal distribution with mean 10:
+Finally, we need some data. For simplicity we will use a series of draws from a normal distribution with mean 10. These are obviously not drawn from the true model, but will have the advantage of creating a horribly awkward posterior.
 
 ```{r}
 # draw example data
@@ -102,7 +102,7 @@ First, we will try running the basic MCMC without Metropolis coupling. The follo
 
 ```{r, fig.width=8, fig.height=7}
 plot_list <- list()
-for (i in 1:9) {
+for (i in seq_len(9)) {
   
   # run MCMC
   mcmc <- run_mcmc(data = data_list,
@@ -202,7 +202,7 @@ plot_cor(mcmc, "alpha", "beta") +
     ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position = "none")
 ```
 
-This mitigates the problem to some extent, as we now have acceptance rates going "deeper" towards the prior, however the hottest rung is still not passing information up the ladder. It comes at a high computational cost, as we are effectively running the MCMC 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter `GTI_pow`, in which higher values lead to more highly concentrated rungs. The previous two MCMCs had `GTI_pow` set to 1.0 leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with 20 rungs and `GTI_pow = 3.0`:
+This mitigates the problem to some extent, as we now have acceptance rates going "deeper" towards the prior, however the hottest rung is still not passing information up the ladder. This strategy also comes at a high computational cost, as we are effectively running the MCMC 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter `GTI_pow`, in which higher values lead to more highly concentrated rungs. The previous two MCMCs had `GTI_pow` set to 1.0 leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with 20 rungs and `GTI_pow = 3.0`:
 
 ```{r, fig.width=5, fig.height=4}
 # run MCMC
@@ -227,4 +227,4 @@ plot_cor(mcmc, parameter1 = "alpha", "beta") +
 
 We find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder. We can therefore be condifent that the prior is "talking to" the posterior. When this is the case it is *extremely unlikely* (but not impossible) that your MCMC is still missing large parts of the posterior distribution.
 
-In summary, the correct number of rungs is enough that we have decent acceptance rates all the way through our temperature ladder. We can explore the impact this is having on our posterior distribution by running [multiple chains](https://mrc-ide.github.io/drjacoby/articles/parallel.html).
+In summary, the correct number of rungs to use in Metropolis-coupled MCMC is any number that provides decent acceptance rates all the way through our temperature ladder. We can explore the impact this is having on our posterior distribution by running [multiple chains](https://mrc-ide.github.io/drjacoby/articles/parallel.html).

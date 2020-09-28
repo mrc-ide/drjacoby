@@ -26,7 +26,7 @@ library(drjacoby)
 
 Running multiple chains is a good way of checking that our MCMC is working, in the sense that it is converging on the same stationary distribution. Each chain is completely independent of all others, and so this qualifies as an [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) problem.
 
-This vignette will demonstrate how to run *drjacoby* with multiple chains, first in serial and then in parallel over cores.
+This vignette will demonstrate how to run *drjacoby* with multiple chains, first in serial and then in parallel over multiple cores.
 
 ## Setup
 
@@ -127,31 +127,7 @@ Finally, it is good practice to shut down the workers once we are finished:
 parallel::stopCluster(cl)
 ```
 
-Running chains in parallel tends to be faster than running in serial, although remember that you will see a delay the first time you run a new set of functions as the likelihood and prior must compile on every chain.
+Running chains in parallel tends to be faster than running in serial, although remember that you will see a delay the first time you run a new set of functions as the likelihood and prior must compile on every node.
 
-## Comparing chains
-
-One method of evaluating convergence is the rhat statistic, initially proposed by Gelman & Rubin (1992). This method involves comparing the within-chain with the between-chain variance. Similar estimates for these two values (rhat -> 1) can be used as an indicator of convergence. An approximate rhat estimate is automatically generated in drjacoby:
-
-```{r}
-# TODO - currently not present in output
-# Rhat statistic
-mcmc$diagnostics$rhat
-```
-
-Chains from the MCMC will be autocorrelated. To assess the extent of autocorrelation we can
-view the correlation betwen values at a range of lags usin the `plot_autocorrelation()` function, specifying the chain and parameter:
-
-```{r, fig.width=6, fig.height=4}
-plot_autocorrelation(mcmc, par = "mu", chain = 1)
-```
-
-Chain autocorrealtion can be incorporated into estimate of effective sample size, which are automatically calculated by drjacoby:
-
-```{r}
-# TODO - ESS currently deactivated
-# Effective sample size (from 1000 sampling iterations)
-mcmc$diagnostics$ess
-```
 
 

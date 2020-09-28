@@ -126,11 +126,14 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
 #'
 #' @inheritParams plot_rung_loglike
 #'
-#' @import ggplot2
+#' @import ggplot2 dplyr
 #' @importFrom grDevices grey
 #' @export
 
 plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type = 1) {
+  
+  # declare variables to avoid "no visible binding" issues
+  stage <- value <- link <- NULL
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
@@ -138,9 +141,6 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
   assert_in(phase, c("burnin", "sampling"))
   assert_single_pos_int(x_axis_type)
   assert_in(x_axis_type, 1:2)
-  
-  # declare variables to avoid "no visible binding" issues
-  stage <- value <- NULL
   
   # get useful quantities
   thermo_power <- x$diagnostics$rung_details$thermodynamic_power
