@@ -5,7 +5,7 @@ using namespace std;
 
 //------------------------------------------------
 // initialise/reset particle
-void Particle::init(System &s, double beta_raised) {
+void Particle::init(System &s, double beta) {
   
   // pointer to system object
   this->s_ptr = &s;
@@ -13,9 +13,8 @@ void Particle::init(System &s, double beta_raised) {
   // local copies of some parameters for convenience
   d = s_ptr->d;
   
-  // beta_raised stores values of beta (the thermodynamic power), raised to the
-  // power GTI_pow
-  this->beta_raised = beta_raised;
+  // thermodynamic power
+  this->beta = beta;
   
   // theta is the parameter vector in natural space
   theta = Rcpp::clone(s_ptr->theta_vector);
