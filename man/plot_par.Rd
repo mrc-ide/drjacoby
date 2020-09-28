@@ -12,6 +12,7 @@ plot_par(
   downsample = TRUE,
   phase = "sampling",
   rung = 1,
+  chain = "all",
   display = TRUE
 )
 }
@@ -31,6 +32,8 @@ Parameters matching show will be hidden.}
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
 \item{rung}{Rung}
+
+\item{chain}{Optional numeric (or vector of numerics) to filter chain by; default "all" shows all chains}
 
 \item{display}{Show plots}
 }

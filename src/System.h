@@ -31,7 +31,7 @@ public:
   int samples;
   int rungs;
   bool coupling_on;
-  double GTI_pow;
+  std::vector<double> GTI_pow;
   int chain;
   
   // misc parameters

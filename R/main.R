@@ -43,7 +43,7 @@ check_drjacoby_loaded <- function() {
 #' @param coupling_on whether to implement Metropolis-coupling over temperature 
 #'   rungs.
 #' @param GTI_pow the power used in the generalised thermodynamic integration 
-#'   method.
+#'   method. Must either be a single positive integer or a vector of integers with length equal to the number of rungs.
 #' @param cluster option to pass in a cluster environment, allowing chains to be
 #'   run in parallel (see package "parallel").
 #' @param pb_markdown whether to run progress bars in markdown mode, meaning
@@ -69,7 +69,7 @@ run_mcmc <- function(data,
                      pb_markdown = FALSE,
                      silent = FALSE) {
   
-  # cleanup pointers on exit
+  # Cleanup pointers on exit
   on.exit(gc())
   
   # ---------- check inputs ----------
@@ -111,7 +111,14 @@ run_mcmc <- function(data,
   assert_single_pos_int(rungs, zero_allowed = FALSE)
   assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_logical(coupling_on)
-  assert_single_pos(GTI_pow, zero_allowed = FALSE)
+  assert_pos(GTI_pow, zero_allowed = FALSE)
+  if (length(GTI_pow) != 1 & length(GTI_pow) != rungs) {
+    stop("GTI_pow must be a single positive integer (length 1) or a vector that is the length of the number of rungs")
+  }
+  # liftover to vector for Cpp consistency 
+  if (length(GTI_pow) == 1) {
+    GTI_pow <- rep(GTI_pow, times = rungs)
+  }
   
   # check misc parameters
   if (!is.null(cluster)) {
@@ -120,7 +127,7 @@ run_mcmc <- function(data,
   assert_single_logical(pb_markdown)
   assert_single_logical(silent)
   
-  # declare dummy variables to avoid "no visible binding" warning when building pacakge
+  # declare variables to avoid "no visible binding" issues
   stage <- rung <- value <- chain <- link <- NULL
   
   
@@ -184,7 +191,7 @@ run_mcmc <- function(data,
   
   # ---------- run MCMC ----------
   
-  # split into parallel vs. serial implementations
+  # split into parallel and serial implementations
   if (!is.null(cluster)) {
     
     # run in parallel
@@ -197,7 +204,6 @@ run_mcmc <- function(data,
     output_raw <- lapply(parallel_args, deploy_chain)
   }
   
-  #return(output_raw)
   
   # ---------- process output ----------
   
@@ -206,9 +212,7 @@ run_mcmc <- function(data,
   rung_names <- sprintf("rung%s", 1:rungs)
   param_names <- df_params$name
   
-  # get raw output into dataframe. NB, this could be done more elegantly with
-  # e.g. dplyr, but this caused some builds to fail in CI so switched to simpler
-  # method
+  # get raw output into dataframe
   df_output <- do.call(rbind, mapply(function(j) {
     do.call(rbind, mapply(function(i) {
       
@@ -260,7 +264,7 @@ run_mcmc <- function(data,
   
   # Thermodynamic power
   output_processed$diagnostics$rung_details <- data.frame(rung = 1:rungs,
-                                                          thermodynamic_power = output_raw[[1]]$beta_vec)
+                                                          thermodynamic_power = output_raw[[1]]$beta_raised)
   
   # Metropolis-coupling
   mc_accept <- NA
@@ -334,3 +338,4 @@ deploy_chain <- function(args) {
   
   return(ret)
 }
+

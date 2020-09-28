@@ -59,7 +59,7 @@ parallel, otherwise they are run in serial.}
 rungs.}
 
 \item{GTI_pow}{the power used in the generalised thermodynamic integration 
-method.}
+method. Must either be a single positive integer or a vector of integers with length equal to the number of rungs.}
 
 \item{cluster}{option to pass in a cluster environment, allowing chains to be
 run in parallel (see package "parallel").}
