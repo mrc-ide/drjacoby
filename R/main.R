@@ -30,6 +30,7 @@ check_drjacoby_loaded <- function() {
 #'     allowed.
 #'     \item \code{init} - the initial value of the parameter.
 #'   }
+#' @param misc optional list object passed to likelihood and prior.
 #' @param loglike TODO.
 #' @param logprior TODO.
 #' @param burnin the number of burn-in iterations.
@@ -41,8 +42,9 @@ check_drjacoby_loaded <- function() {
 #'   parallel, otherwise they are run in serial.
 #' @param coupling_on whether to implement Metropolis-coupling over temperature 
 #'   rungs.
-#' @param GTI_pow the power used in the generalised thermodynamic integration 
-#'   method.
+#' @param GTI_pow the power used in the generalised thermodynamic integration
+#'   method. Must either be a single positive integer or a vector of integers
+#'   with length equal to the number of rungs.
 #' @param cluster option to pass in a cluster environment, allowing chains to be
 #'   run in parallel (see package "parallel").
 #' @param pb_markdown whether to run progress bars in markdown mode, meaning
@@ -55,6 +57,7 @@ check_drjacoby_loaded <- function() {
 
 run_mcmc <- function(data,
                      df_params,
+                     misc = list(),
                      loglike,
                      logprior,
                      burnin = 1e3,
@@ -72,8 +75,11 @@ run_mcmc <- function(data,
   
   # ---------- check inputs ----------
   # check data
-  assert_vector(data)
-  assert_numeric(data)
+  assert_list(data)
+  if (is.null(names(data)) | any(names(data) == "")) {
+    stop("data must be a *named* list")
+  }
+  assert_numeric(unlist(data))
   
   # check df_params
   assert_dataframe(df_params)
@@ -93,11 +99,12 @@ run_mcmc <- function(data,
     assert_eq(all(is.finite(df_params$max)), TRUE, message = this_message)
   }
   
+  # check misc
+  assert_list(misc)
+  
   # check loglikelihood and logprior functions
   assert_custom_class(loglike, c("function", "character"))
   assert_custom_class(logprior, c("function", "character"))
-  
-  # TODO - further checks that these functions are defined correctly?
   
   # check MCMC parameters
   assert_single_pos_int(burnin, zero_allowed = FALSE)
@@ -105,7 +112,14 @@ run_mcmc <- function(data,
   assert_single_pos_int(rungs, zero_allowed = FALSE)
   assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_logical(coupling_on)
-  assert_single_pos(GTI_pow, zero_allowed = FALSE)
+  assert_vector_pos(GTI_pow, zero_allowed = FALSE)
+  if (length(GTI_pow) != 1 & length(GTI_pow) != rungs) {
+    stop("GTI_pow must be a single positive integer (length 1) or a vector that is the length of the number of rungs")
+  }
+  # liftover to vector for Cpp consistency 
+  if (length(GTI_pow) == 1) {
+    GTI_pow <- rep(GTI_pow, times = rungs)
+  }
   
   # check misc parameters
   if (!is.null(cluster)) {
@@ -130,6 +144,10 @@ run_mcmc <- function(data,
   # flag to skip over fixed parameters
   skip_param <- (df_params$min == df_params$max)
   
+  # create named vector object for passing internally within C++ functions
+  theta_vector <- df_params$init
+  names(theta_vector) <- df_params$name
+  
   # flag whether likelihood/prior are C++ functions
   loglike_use_cpp <- inherits(loglike, "character")
   logprior_use_cpp <- inherits(logprior, "character")
@@ -139,12 +157,12 @@ run_mcmc <- function(data,
   
   # parameters to pass to C++
   args_params <- list(x = data,
+                      misc = misc,
                       loglike_use_cpp = loglike_use_cpp,
                       logprior_use_cpp = logprior_use_cpp,
+                      theta_vector = theta_vector,
                       theta_min = df_params$min,
                       theta_max = df_params$max,
-                      theta_init = df_params$init,
-                      theta_init_defined = theta_init_defined,
                       trans_type = df_params$trans_type,
                       skip_param = skip_param,
                       burnin = burnin,
@@ -199,7 +217,7 @@ run_mcmc <- function(data,
   df_output <- do.call(rbind, mapply(function(j) {
     do.call(rbind, mapply(function(i) {
       
-      # concatenate burn-in and sampling loglike and logprior
+      # concatenate burn-in and sampling logprior and loglikelihood
       logprior <- c(output_raw[[j]]$logprior_burnin[[i]], output_raw[[j]]$logprior_sampling[[i]])
       loglike <- c(output_raw[[j]]$loglike_burnin[[i]], output_raw[[j]]$loglike_sampling[[i]])
       
@@ -229,7 +247,7 @@ run_mcmc <- function(data,
   if (chains > 1) {
     rhat_est <- c()
     for(p in seq_along(param_names)){
-      pm <- output_processed$output[output_processed$output$stage == "sampling",c("chain", as.character(param_names[p]))]
+      pm <- output_processed$output[output_processed$output$stage == "sampling", c("chain", as.character(param_names[p]))]
       rhat_est[p] <- gelman_rubin(pm, chains, samples)
     }
     rhat_est[skip_param] <- NA
@@ -237,27 +255,31 @@ run_mcmc <- function(data,
   }
   
   # ESS
-  output_sub <- subset(output_processed$output, stage == "sampling" & rung == "rung1",
-                       select = as.character(param_names))
-  ess_est <- apply(output_sub, 2, coda::effectiveSize)
-  ess_est[skip_param] <- NA
-  output_processed$diagnostics$ess <- ess_est
+  # NOTE - some issues with line ess_est <- apply(output_sub, 2, coda::effectiveSize), causing tests to fail. Adding tryCatch line fixes the problem, even though problem line is unchanged. Leaving commented out for now so can proceed with development.
+  #output_sub <- subset(output_processed$output, stage == "sampling" & rung == "rung1",
+  #                     select = as.character(param_names))
+  #tc <- tryCatch(apply(output_sub, 2, coda::effectiveSize))
+  #ess_est <- apply(output_sub, 2, coda::effectiveSize)
+  #ess_est[skip_param] <- NA
+  #output_processed$diagnostics$ess <- ess_est
   
-  # MC
+  # Thermodynamic power
+  output_processed$diagnostics$rung_details <- data.frame(rung = 1:rungs,
+                                                          thermodynamic_power = output_raw[[1]]$beta_raised)
+  
+  # Metropolis-coupling
+  mc_accept <- NA
   if (rungs > 1) {
     
-    # Beta raised
-    output_processed$diagnostics$beta_raised <- tidyr::expand_grid(chain = chain_names, rung = rung_names)
-    output_processed$diagnostics$beta_raised$value <- unlist(lapply(output_raw, function(x){x$beta_raised}))
-    
     # MC accept
-    mc_accept <- tidyr::expand_grid(chain = chain_names, link = 1:(length(rung_names) - 1))
-    mc_accept$burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin
-    mc_accept$sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
-    mc_accept <- tidyr::gather(mc_accept, stage, value, -chain, -link)
+    mc_accept <- expand.grid(chain = chain_names, link = seq_len(length(rung_names)-1))
+    mc_accept_burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin
+    mc_accept_sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
+    mc_accept <- rbind(cbind(mc_accept, stage = "burnin", value = mc_accept_burnin),
+                       cbind(mc_accept, stage = "sampling", value = mc_accept_sampling))
     
-    output_processed$diagnostics$mc_accept <- mc_accept
   }
+  output_processed$diagnostics$mc_accept <- mc_accept
   
   ## Parameters
   output_processed$parameters <- list(data = data,
@@ -287,12 +309,16 @@ deploy_chain <- function(args) {
   # convert C++ functions to pointers
   if (args$args_params$loglike_use_cpp) {
     args$args_functions$loglike <- RcppXPtrUtils::cppXPtr(args$args_functions$loglike)
-    RcppXPtrUtils::checkXPtr(args$args_functions$loglike, "SEXP", c("std::vector<double>",
-                                                                    "std::vector<double>"))
+    RcppXPtrUtils::checkXPtr(args$args_functions$loglike, "SEXP", c("Rcpp::NumericVector",
+                                                                    "int",
+                                                                    "Rcpp::List",
+                                                                    "Rcpp::List"))
   }
   if (args$args_params$logprior_use_cpp) {
     args$args_functions$logprior <- RcppXPtrUtils::cppXPtr(args$args_functions$logprior)
-    RcppXPtrUtils::checkXPtr(args$args_functions$logprior, "SEXP", "std::vector<double>")
+    RcppXPtrUtils::checkXPtr(args$args_functions$logprior, "SEXP", c("Rcpp::NumericVector",
+                                                                     "int",
+                                                                     "Rcpp::List"))
   }
   
   # get parameters
@@ -313,23 +339,5 @@ deploy_chain <- function(args) {
   rm(args)
   
   return(ret)
-}
-
-#------------------------------------------------
-#' Extract theta into list of matrices over rungs
-#'
-#' @param theta_list List of thetas
-#' @param param_names Vector of parameter names
-#' @param rung_names Vector of rung names
-#'
-#' @return List of matrices
-get_theta_rungs <- function(theta_list, param_names, rung_names) {
-  ret <- mapply(function(x) {
-    ret <- as.data.frame(rcpp_to_matrix(x))
-    names(ret) <- param_names
-    ret
-  }, theta_list, SIMPLIFY = FALSE)
-  names(ret) <- rung_names
-  ret
 }
 

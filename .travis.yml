@@ -14,3 +14,16 @@ after_success:
 os:
   - linux
   - osx
+
+compiler:
+  - gcc
+  - clang
+
+jobs:
+  include:
+    - os: osx
+      osx_image: xcode12 # Big Sur
+    - os: osx
+      osx_image: xcode11.6 # updated Catalina 1 
+    - os: osx
+      osx_image: xcode11.5 # original Catalina

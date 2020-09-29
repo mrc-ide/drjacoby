@@ -1,6 +1,6 @@
 
 #include "main.h"
-#include "misc_v7.h"
+#include "misc_v10.h"
 #include "probability_v3.h"
 #include "System.h"
 
@@ -9,8 +9,9 @@
 using namespace std;
 
 // specify exact pattern that loglike and logprior function must take in C++
-typedef SEXP (*pattern_cpp_loglike)(std::vector<double>, std::vector<double>);
-typedef SEXP (*pattern_cpp_logprior)(std::vector<double>);
+typedef SEXP (*pattern_cpp_loglike)(Rcpp::NumericVector, int param_i, Rcpp::List, Rcpp::List);
+typedef SEXP (*pattern_cpp_logprior)(Rcpp::NumericVector, int param_i, Rcpp::List);
+
 
 //------------------------------------------------
 // main MCMC function
@@ -109,7 +110,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   for (int r = 0; r < rungs; ++r) {
     
     // calculate thermodynamic power of this rung
-    beta_raised_vec[r] = (rungs == 1) ? 1 : pow(1.0 - r/double(rungs-1), s.GTI_pow);
+    beta_raised_vec[r] = (rungs == 1) ? 1 : pow(1.0 - r/double(rungs-1), s.GTI_pow[r]);
     
     // initialise particle
     particle_vec[r].init(s, beta_raised_vec[r]);
@@ -131,7 +132,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   for (int r = 0; r < rungs; ++r) {
     loglike_burnin[r][0] = particle_vec[r].loglike;
     logprior_burnin[r][0] = particle_vec[r].logprior;
-    theta_burnin[r][0] = particle_vec[r].theta;
+    theta_burnin[r][0] = Rcpp::as< vector<double> >(particle_vec[r].theta);
   }
   
   // store Metropolis coupling acceptance rates
@@ -150,6 +151,9 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   // loop through burn-in iterations
   for (int rep = 1; rep < s.burnin; ++rep) {
     
+    // allow user to exit on escape
+    Rcpp::checkUserInterrupt();
+    
     // loop through rungs
     for (int r = 0; r < rungs; ++r) {
       
@@ -159,7 +163,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       // store results
       loglike_burnin[r][rep] = particle_vec[r].loglike;
       logprior_burnin[r][rep] = particle_vec[r].logprior;
-      theta_burnin[r][rep] = particle_vec[r].theta;
+      theta_burnin[r][rep] = Rcpp::as< vector<double> >(particle_vec[r].theta);
     }
     
     // perform Metropolis coupling
@@ -202,6 +206,9 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   // loop through sampling iterations
   for (int rep = 0; rep < s.samples; ++rep) {
     
+    // allow user to exit on escape
+    Rcpp::checkUserInterrupt();
+    
     // loop through rungs
     for (int r = 0; r < rungs; ++r) {
       
@@ -211,7 +218,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       // store results
       loglike_sampling[r][rep] = particle_vec[r].loglike;
       logprior_sampling[r][rep] = particle_vec[r].logprior;
-      theta_sampling[r][rep] = particle_vec[r].theta;
+      theta_sampling[r][rep] = Rcpp::as< vector<double> >(particle_vec[r].theta);
     }
     
     // perform Metropolis coupling
@@ -244,7 +251,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   // end timer
   if (!s.silent) {
     print("");
-    chrono_timer(t1);
+    chrono_timer(t1, "chain completed in ");
   }
   
   // return as Rcpp list
@@ -292,13 +299,13 @@ void coupling(vector<Particle> &particle_vec, vector<int> &mc_accept) {
     if (accept_move) {
       
       // swap parameter values
-      vector<double> theta_tmp = particle_vec[rung1].theta;
-      particle_vec[rung1].theta = particle_vec[rung2].theta;
-      particle_vec[rung2].theta = theta_tmp;
+      Rcpp::NumericVector theta_tmp = Rcpp::clone(particle_vec[rung1].theta);
+      particle_vec[rung1].theta = Rcpp::clone(particle_vec[rung2].theta);
+      particle_vec[rung2].theta = Rcpp::clone(theta_tmp);
       
-      vector<double> phi_tmp = particle_vec[rung1].phi;
-      particle_vec[rung1].phi = particle_vec[rung2].phi;
-      particle_vec[rung2].phi = phi_tmp;
+      Rcpp::NumericVector phi_tmp = Rcpp::clone(particle_vec[rung1].phi);
+      particle_vec[rung1].phi = Rcpp::clone(particle_vec[rung2].phi);
+      particle_vec[rung2].phi = Rcpp::clone(phi_tmp);
       
       // swap loglikelihoods
       double loglike_tmp = particle_vec[rung1].loglike;

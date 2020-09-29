@@ -22,9 +22,13 @@ set.seed(1)
 
 # load the drjacoby package
 library(drjacoby)
+
+# load other packages
+library(ggplot2)
+library(gridExtra)
 ```
 
-Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonian Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to "roll around" the target distribution allowing it to go round corners, but it still struggles with multimodal distributions, as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains. Note that this is separate from the concept of running multiple chains to diagnose performance, which is dealt with in a [separate vignette](https://mrc-ide.github.io/drjacoby/articles/parallel.html).
+Writing a good MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has twin peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonian Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to "roll around" the target distribution allowing it to go round corners, but it still struggles with multimodal distributions as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains.
 
 This vignette demonstrates how Metropolis coupling can be implemented within *drjacoby* to solve a deliberately awkward MCMC problem.
 
@@ -35,19 +39,21 @@ For this example we will start by writing the likelihood and prior functions in 
 
 ```{r}
 # define cpp loglike function
-loglike <- "SEXP loglike(std::vector<double> params, std::vector<double> x) {
+cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
   
-  // extract parameters
-  double alpha = params[0];
-  double beta = params[1];
-  double epsilon = params[2];
-  int n = int(x.size());
+  // unpack data
+  std::vector<double> x = Rcpp::as< std::vector<double> >(data[\"x\"]);
+  
+  // unpack parameters
+  double alpha = params[\"alpha\"];
+  double beta = params[\"beta\"];
+  double epsilon = params[\"epsilon\"];
   
   // sum log-likelihood over all data
   double mean = alpha*alpha*beta + epsilon;
   double ret = 0.0;
-  for (int i = 0; i < n; ++i) {
-    ret += -0.5*log(2*M_PI) - (x[i] - mean)*(x[i] - mean)/2.0;
+  for (unsigned int i = 0; i < x.size(); ++i) {
+    ret += R::dnorm(x[i], mean, 1.0, true);
   }
   
   // return as SEXP
@@ -59,37 +65,34 @@ For our prior we assume that `alpha` is uniform [-10,10], `beta` is uniform [0,1
 
 ```{r}
 # define cpp logprior function
-logprior <- "SEXP logprior(std::vector<double> params){
+cpp_logprior <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
   
-  // extract parameters
-  double epsilon = params[2];
+  // unpack parameters
+  double epsilon = params[\"epsilon\"];
   
   // calculate logprior
-  double ret = -log(20.0) - log(10) - 0.5*log(2*M_PI) - epsilon*epsilon/2.0;
+  double ret = -log(20.0) - log(10) + R::dnorm(epsilon, 0.0, 1.0, true);
   
   // return as SEXP
   return Rcpp::wrap(ret);
 }"
 ```
 
-As always, we need to define a dataframe of parameters so that *drjacoby* knows what parameter ranges to expect:
+As always, we need to define a dataframe of parameters so that *drjacoby* knows what parameter ranges to expect. Here we use the `rbind.data.frame()` method, which can be more intuitive as we can define each row in turn:
 
 ```{r}
 # define parameters dataframe
-df_params <- data.frame(name = c("alpha", "beta", "epsilon"),
-                        min = c(-10, 0, -Inf),
-                        max = c(10, 10, Inf),
-                        init = c(5, 5, 0))
+df_params <- rbind.data.frame(list("alpha", -10, 10, 5),
+                              list("beta", 0, 10, 5),
+                              list("epsilon", -Inf, Inf, 0))
+names(df_params) <- c("name", "min", "max", "init")
 ```
 
-Finally, we need some data. For simplicity we will use a series of draws from a normal distribution with mean 10:
+Finally, we need some data. For simplicity we will use a series of draws from a normal distribution with mean 10. These are obviously not drawn from the true model, but will have the advantage of creating a horribly awkward posterior.
 
 ```{r}
-# set random seed
-set.seed(1)
-
 # draw example data
-x <- rnorm(100, mean = 10)
+data_list <- list(x = rnorm(100, mean = 10))
 ```
 
 
@@ -99,21 +102,21 @@ First, we will try running the basic MCMC without Metropolis coupling. The follo
 
 ```{r, fig.width=8, fig.height=7}
 plot_list <- list()
-for (i in 1:9) {
+for (i in seq_len(9)) {
   
   # run MCMC
-  mcmc_out <- run_mcmc(data = x,
-                       df_params = df_params,
-                       loglike = loglike,
-                       logprior = logprior,
-                       burnin = 1e3,
-                       samples = 1e4,
-                       chain = 1,
-                       silent = TRUE)
+  mcmc <- run_mcmc(data = data_list,
+                   df_params = df_params,
+                   loglike = cpp_loglike,
+                   logprior = cpp_logprior,
+                   burnin = 1e3,
+                   samples = 1e4,
+                   chain = 1,
+                   silent = TRUE)
   
   # create plot of alpha against beta
-  plot_list[[i]] <- plot_cor(mcmc_out, parameter1 = "alpha", "beta") +
-    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position="none")
+  plot_list[[i]] <- plot_cor(mcmc, "alpha", "beta") +
+    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position = "none")
 }
 
 # plot grid
@@ -126,19 +129,19 @@ Metropolis coupling is perfectly designed to solve this kind of problem. To acti
 
 ```{r, fig.width=5, fig.height=4}
 # run MCMC
-mcmc_out <- run_mcmc(data = x,
-                     df_params = df_params,
-                     loglike = loglike,
-                     logprior = logprior,
-                     burnin = 1e3,
-                     samples = 1e4,
-                     rungs = 20,
-                     chains = 1,
-                     pb_markdown = TRUE)
+mcmc <- run_mcmc(data = data_list,
+                 df_params = df_params,
+                 loglike = cpp_loglike,
+                 logprior = cpp_logprior,
+                 burnin = 1e3,
+                 samples = 1e4,
+                 rungs = 20,
+                 chains = 1,
+                 pb_markdown = TRUE)
 
 # create plot of alpha against beta
-plot_cor(mcmc_out, parameter1 = "alpha", "beta") +
-    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position="none")
+plot_cor(mcmc, "alpha", "beta") +
+    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position = "none")
 ```
 
 You should see a much better characterisation of the posterior distribution. The run time scales approximately linearly with the number of rungs, so there is a computational cost to using this method, but on the other hand our results are far better than we would obtain by simply increasing the number of samples by a factor of 20.
@@ -152,26 +155,26 @@ To explore this, we start by re-running the above MCMC with a small number of ru
 
 ```{r, fig.width=5, fig.height=4}
 # run MCMC
-mcmc_out <- run_mcmc(data = x,
-                     df_params = df_params,
-                     loglike = loglike,
-                     logprior = logprior,
-                     burnin = 1e3,
-                     samples = 1e3,
-                     rungs = 10,
-                     chains = 1,
-                     GTI_pow = 1.0,
-                     silent = TRUE)
+mcmc <- run_mcmc(data = data_list,
+                 df_params = df_params,
+                 loglike = cpp_loglike,
+                 logprior = cpp_logprior,
+                 burnin = 1e3,
+                 samples = 1e3,
+                 rungs = 10,
+                 chains = 1,
+                 GTI_pow = 1.0,
+                 silent = TRUE)
 
 # plot coupling acceptance rates
-plot_mc_acceptance(mcmc_out)
+plot_mc_acceptance(mcmc)
 ```
 
 The 10 vertical grey bars in the above plot show the positions of our 10 rungs in the thermodynamic interval [0,1], and the red dots between them show the proportion of swaps that were accepted between rungs. Notice that the acceptance rate between the hottest and second-hottest rung is zero, meaning none of the information in the hottest rung made it up the ladder to the colder rungs. We can see the problems this causes when we plot the posterior parameter values:
 
 ```{r, fig.width=5, fig.height=4}
-plot_cor(mcmc_out, parameter1 = "alpha", "beta") +
-    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position="none")
+plot_cor(mcmc, "alpha", "beta") +
+    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position = "none")
 ```
 
 Although we have some mixing between the left and right sides of the distribution, overall sampling is still a bit patchy.
@@ -180,48 +183,48 @@ One way of improving mixing between rungs is simply to increase the number of ru
 
 ```{r, fig.width=5, fig.height=4}
 # run MCMC
-mcmc_out <- run_mcmc(data = x,
-                     df_params = df_params,
-                     loglike = loglike,
-                     logprior = logprior,
-                     burnin = 1e3,
-                     samples = 1e3,
-                     rungs = 50,
-                     chains = 1,
-                     GTI_pow = 1.0,
-                     silent = TRUE)
+mcmc <- run_mcmc(data = data_list,
+                 df_params = df_params,
+                 loglike = cpp_loglike,
+                 logprior = cpp_logprior,
+                 burnin = 1e3,
+                 samples = 1e3,
+                 rungs = 50,
+                 chains = 1,
+                 GTI_pow = 1.0,
+                 silent = TRUE)
 
 # plot coupling acceptance rates
-plot_mc_acceptance(mcmc_out)
+plot_mc_acceptance(mcmc)
 
 # create plot of alpha against beta
-plot_cor(mcmc_out, parameter1 = "alpha", "beta") +
-    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position="none")
+plot_cor(mcmc, "alpha", "beta") +
+    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position = "none")
 ```
 
-This mitigates the problem to some extent, as we now have acceptance rates going "deeper" towards the prior, however the hottest rung is still not passing information up the ladder. It comes at a high computational cost, as we are effectively running the MCMC 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter `GTI_pow`, in which higher values lead to more highly concentrated rungs. The previous two MCMCs had `GTI_pow` set to 1.0 leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with 20 rungs and `GTI_pow = 3.0`:
+This mitigates the problem to some extent, as we now have acceptance rates going "deeper" towards the prior, however the hottest rung is still not passing information up the ladder. This strategy also comes at a high computational cost, as we are effectively running the MCMC 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter `GTI_pow`, in which higher values lead to more highly concentrated rungs. The previous two MCMCs had `GTI_pow` set to 1.0 leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with 20 rungs and `GTI_pow = 3.0`:
 
 ```{r, fig.width=5, fig.height=4}
 # run MCMC
-mcmc_out <- run_mcmc(data = x,
-                     df_params = df_params,
-                     loglike = loglike,
-                     logprior = logprior,
-                     burnin = 1e3,
-                     samples = 1e3,
-                     rungs = 20,
-                     chains = 1,
-                     GTI_pow = 3.0,
-                     silent = TRUE)
+mcmc <- run_mcmc(data = data_list,
+                 df_params = df_params,
+                 loglike = cpp_loglike,
+                 logprior = cpp_logprior,
+                 burnin = 1e3,
+                 samples = 1e3,
+                 rungs = 20,
+                 chains = 1,
+                 GTI_pow = 3.0,
+                 silent = TRUE)
 
 # plot coupling acceptance rates
-plot_mc_acceptance(mcmc_out)
+plot_mc_acceptance(mcmc)
 
 # create plot of alpha against beta
-plot_cor(mcmc_out, parameter1 = "alpha", "beta") +
-    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position="none")
+plot_cor(mcmc, parameter1 = "alpha", "beta") +
+    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position = "none")
 ```
 
-We find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder. We can therefore be condifent that the prior is "talking to" the posterior. When this is the case it is *unlikely* (but not impossible) that your MCMC is still missing large parts of the posterior distribution.
+We find that with just 20 rungs we have decent acceptance rates all the way through the temperature ladder. We can therefore be condifent that the prior is "talking to" the posterior. When this is the case it is *extremely unlikely* (but not impossible) that your MCMC is still missing large parts of the posterior distribution.
 
-In summary, the correct number of rungs is enough that we have decent acceptance rates all the way through our temperature ladder. We can explore the impact this is having on our posterior distribution by running [multiple chains](https://mrc-ide.github.io/drjacoby/articles/parallel.html).
+In summary, the correct number of rungs to use in Metropolis-coupled MCMC is any number that provides decent acceptance rates all the way through our temperature ladder. We can explore the impact this is having on our posterior distribution by running [multiple chains](https://mrc-ide.github.io/drjacoby/articles/parallel.html).

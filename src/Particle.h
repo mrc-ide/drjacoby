@@ -2,7 +2,7 @@
 #pragma once
 
 #include "System.h"
-#include "misc_v7.h"
+#include "misc_v10.h"
 #include "probability_v3.h"
 
 #include <Rcpp.h>
@@ -20,17 +20,16 @@ public:
   // local copies of some parameters for convenience
   int d;
   
-  // beta_raised stores values of beta (the thermodynamic power), raised to the
-  // power GTI_pow
+  // thermodynamic power
   double beta_raised;
   
   // theta is the parameter vector in natural space
-  std::vector<double> theta;
-  std::vector<double> theta_prop;
+  Rcpp::NumericVector theta;
+  Rcpp::NumericVector theta_prop;
   
   // phi is a vector of transformed parameters
-  std::vector<double> phi;
-  std::vector<double> phi_prop;
+  Rcpp::NumericVector phi;
+  Rcpp::NumericVector phi_prop;
   
   // proposal parameters
   std::vector<double> bw;
@@ -52,14 +51,14 @@ public:
   // constructors
   Particle() {};
   
-  // initialise everything EXCEPT FOR likelihood and prior values
+  // initialise everything except for likelihood and prior values
   void init(System &s, double beta_raised);
   
   // initialise likelihood and prior values
   template<class TYPE1, class TYPE2>
   void init_like(TYPE1 get_loglike, TYPE2 get_logprior) {
-    loglike = Rcpp::as<double>(get_loglike(theta, s_ptr->x));
-    logprior = Rcpp::as<double>(get_logprior(theta));
+    loglike = Rcpp::as<double>(get_loglike(theta, -1, s_ptr->x, s_ptr->misc));
+    logprior = Rcpp::as<double>(get_logprior(theta, -1, s_ptr->misc));
   }
   
   // update theta[i] via univariate Metropolis-Hastings
@@ -67,8 +66,8 @@ public:
   void update(TYPE1 get_loglike, TYPE2 get_logprior) {
     
     // set theta_prop and phi_prop to current values of theta and phi
-    theta_prop = theta;
-    phi_prop = phi;
+    theta_prop = Rcpp::clone(theta);
+    phi_prop = Rcpp::clone(phi);
     
     // loop through parameters
     for (int i = 0; i < d; ++i) {
@@ -87,8 +86,8 @@ public:
       double adj = get_adjustment(i);
       
       // calculate likelihood and prior of proposed theta
-      loglike_prop = Rcpp::as<double>(get_loglike(theta_prop, s_ptr->x));
-      logprior_prop = Rcpp::as<double>(get_logprior(theta_prop));
+      loglike_prop = Rcpp::as<double>(get_loglike(theta_prop, i, s_ptr->x, s_ptr->misc));
+      logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, i, s_ptr->misc));
       
       // calculate Metropolis-Hastings ratio
       double MH = beta_raised*(loglike_prop - loglike) + (logprior_prop - logprior) + adj;

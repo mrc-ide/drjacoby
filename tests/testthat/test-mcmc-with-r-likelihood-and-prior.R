@@ -9,6 +9,7 @@ test_that("R likelihood and prior", {
   
   # draw example data
   x <- rnorm(1000, mean = mu_true, sd = sigma_true)
+  data_list <- list(x = x)
   
   # define parameters dataframe
   df_params <- data.frame(name = c("mu", "sigma"),
@@ -17,34 +18,34 @@ test_that("R likelihood and prior", {
                           init = c(5, 1))
   
   # Null log likelihood
-  r_loglike_null <- function(params, x) {
+  r_loglike_null <- function(params, param_i, data, misc) {
     return(0)
   }
   
   # Log likelihood
-  r_loglike <- function(params, x) {
-    sum(dnorm(x, mean = params[1], sd = params[2], log = TRUE))
+  r_loglike <- function(params, param_i, data, misc) {
+    sum(dnorm(data$x, mean = params["mu"], sd = params["sigma"], log = TRUE))
   }
   
   # Log prior
-  r_logprior_strong <- function(params) {
-    dnorm(params[1], 6, 0.1, log = TRUE) +
-      dnorm(params[2], 1, 0.1, log = TRUE)
+  r_logprior_strong <- function(params, param_i, misc) {
+    dnorm(params["mu"], 6, 0.1, log = TRUE) +
+      dnorm(params["sigma"], 1, 0.1, log = TRUE)
   }
   
   # Null log prior
-  r_logprior_null <- function(params) {
+  r_logprior_null <- function(params, param_i, misc) {
     return(0)
   }
   
   # run MCMC
-  r_mcmc_null <- run_mcmc(data = x,
-                         df_params = df_params,
-                         loglike = r_loglike_null,
-                         logprior = r_logprior_strong,
-                         burnin = 1e3,
-                         samples = 1e3,
-                         silent = TRUE)
+  r_mcmc_null <- run_mcmc(data = data_list,
+                          df_params = df_params,
+                          loglike = r_loglike_null,
+                          logprior = r_logprior_strong,
+                          burnin = 1e3,
+                          samples = 1e3,
+                          silent = TRUE)
   
   # subset output
   pe <- dplyr::filter(r_mcmc_null$output, stage == "sampling", chain == "chain1") %>%
@@ -52,8 +53,8 @@ test_that("R likelihood and prior", {
   
   # check posterior estimates
   posterior_estimate <- apply(pe, 2, median)
-  expect_lt(posterior_estimate[1] - 6, 0.1)
-  expect_lt(posterior_estimate[2] - 1, 0.1)
+  expect_lt(posterior_estimate["mu"] - 6, 0.1)
+  expect_lt(posterior_estimate["sigma"] - 1, 0.1)
   
   # Test parameter names are ordered correctly
   namei <- match(df_params$name, names(r_mcmc_null$output))
@@ -61,7 +62,7 @@ test_that("R likelihood and prior", {
   expect_equal(namei, 1:length(namei))
   
   # run MCMC with null prior
-  r_mcmc_data <- run_mcmc(data = x,
+  r_mcmc_data <- run_mcmc(data = data_list,
                           df_params = df_params,
                           loglike = r_loglike,
                           logprior = r_logprior_null,
@@ -86,7 +87,7 @@ test_that("R likelihood and prior", {
   ## Sample chains
   sampled <- sample_chains(r_mcmc_data, 100)
   expect_type(sampled, "list")
-  expect_equal(nrow(sampled), 100)  
+  expect_equal(nrow(sampled), 100)
   expect_equal(ncol(sampled), 3)
   expect_error(sample_chains(r_mcmc_data, 1000000))
   expect_error(sample_chains(r_mcmc_data, -1))
