@@ -208,15 +208,15 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
 
 plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling", rung = 1) {
   
+  # declare variables to avoid "no visible binding" issues
+  stage <- iteration <- loglikelihood <- NULL
+  
   # check inputs
   assert_custom_class(x, "drjacoby_output")
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
   assert_in(phase, c("burnin", "sampling"))
   assert_single_bounded(lag, 1, 500)
-  
-  # declare variables to avoid "no visible binding" issues
-  stage <- iteration <- loglikelihood <- NULL
   
   # get values
   chain_get <- paste0("chain", chain)
@@ -225,26 +225,31 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
     dplyr::select(-chain, -rung, -iteration, -stage, -loglikelihood) %>%
     as.data.frame()
   
-  # Select parameters
-  if(!is.null(par)){
+  # select parameters
+  if (!is.null(par)) {
     data <- data[, colnames(data) %in% par, drop = FALSE]
   }
   
-  # Estimate autocorrelation
+  # estimate autocorrelation
   out <- as.data.frame(apply(data, 2, acf_data, lag = lag))
   
-  # Format data for plotting
+  # format data for plotting
   out$lag <- 0:lag
-  out <- tidyr::gather(out, "parameter", "Autocorrelation", -lag)
+  out <- do.call(rbind, mapply(function(i) {
+    data.frame(lag = out$lag,
+               parameter = names(out)[i],
+               autocorrelation = out[,i])
+  }, seq_len(ncol(data)), SIMPLIFY = FALSE))
   
+  # produce plot
   ggplot2::ggplot(data = out,
-                  ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$Autocorrelation)) + 
+                  ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$autocorrelation)) + 
     ggplot2::geom_hline(yintercept = 0, lty = 2, col = "red") + 
     ggplot2::geom_segment(size = 1.5) +
     ggplot2::theme_bw() +
     ggplot2::ylab("Autocorrelation") +
     ggplot2::xlab("Lag") +
-    ggplot2::ylim(min(0, min(out$Autocorrelation)), 1) +
+    ggplot2::ylim(min(0, min(out$autocorrelation)), 1) +
     ggplot2::facet_wrap(~ parameter)
 }
 

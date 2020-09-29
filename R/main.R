@@ -272,10 +272,11 @@ run_mcmc <- function(data,
   if (rungs > 1) {
     
     # MC accept
-    mc_accept <- tidyr::expand_grid(chain = chain_names, link = 1:(length(rung_names) - 1))
-    mc_accept$burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin
-    mc_accept$sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
-    mc_accept <- tidyr::gather(mc_accept, stage, value, -chain, -link)
+    mc_accept <- expand.grid(chain = chain_names, link = seq_len(length(rung_names)-1))
+    mc_accept_burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin
+    mc_accept_sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
+    mc_accept <- rbind(cbind(mc_accept, phase = "burnin", value = mc_accept_burnin),
+                       cbind(mc_accept, phase = "sampling", value = mc_accept_sampling))
     
   }
   output_processed$diagnostics$mc_accept <- mc_accept
