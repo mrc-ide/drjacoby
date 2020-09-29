@@ -275,8 +275,8 @@ run_mcmc <- function(data,
     mc_accept <- expand.grid(chain = chain_names, link = seq_len(length(rung_names)-1))
     mc_accept_burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin
     mc_accept_sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
-    mc_accept <- rbind(cbind(mc_accept, phase = "burnin", value = mc_accept_burnin),
-                       cbind(mc_accept, phase = "sampling", value = mc_accept_sampling))
+    mc_accept <- rbind(cbind(mc_accept, stage = "burnin", value = mc_accept_burnin),
+                       cbind(mc_accept, stage = "sampling", value = mc_accept_sampling))
     
   }
   output_processed$diagnostics$mc_accept <- mc_accept

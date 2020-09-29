@@ -256,18 +256,24 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #------------------------------------------------
 #' @title Plot parameter estimates
 #'
-#' @description Plot parameter estimates
+#' @description Produce a series of plots corresponding to each parameter,
+#'   including the raw trace, the posterior histogram and an autocorrelation
+#'   plot. Plotting objects can be cycled through interactively, or can be
+#'   returned as an object allowing them to be viewed/edited by the user.
 #'
 #' @inheritParams plot_rung_loglike
 #' @param show Optional character (or vector of characters) to filter parameters by.
 #'  Parameters matching show will be included.
 #' @param hide Optional character (or vector of characters) to filter parameters by.
 #'  Parameters matching show will be hidden.
-#' @param lag Maximum lag. Must be an integer between 20 and 500
-#' @param downsample Downsample chain for efficiency
-#' @param display Show plots
-#' @param rung Rung
-#' @param chain Optional numeric (or vector of numerics) to filter chain by; default "all" shows all chains
+#' @param lag Maximum lag. Must be an integer between 1 and 500.
+#' @param downsample Boolean. Whether to downsample chain to make plotting more
+#'   efficient.
+#' @param rung Which temperature rung to plot. Defaults to the cold chain.
+#' @param chain Which chain to plot, e.g. \code{"chain1"}. The default
+#'   \code{"all"} plots all chains.
+#' @param display Boolean. Whether to show plots, if \code{FALSE} then plotting
+#'   objects are returned without displaying.
 #'
 #' @export
 
