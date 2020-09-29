@@ -42,8 +42,9 @@ check_drjacoby_loaded <- function() {
 #'   parallel, otherwise they are run in serial.
 #' @param coupling_on whether to implement Metropolis-coupling over temperature 
 #'   rungs.
-#' @param GTI_pow the power used in the generalised thermodynamic integration 
-#'   method. Must either be a single positive integer or a vector of integers with length equal to the number of rungs.
+#' @param GTI_pow the power used in the generalised thermodynamic integration
+#'   method. Must either be a single positive integer or a vector of integers
+#'   with length equal to the number of rungs.
 #' @param cluster option to pass in a cluster environment, allowing chains to be
 #'   run in parallel (see package "parallel").
 #' @param pb_markdown whether to run progress bars in markdown mode, meaning
@@ -111,7 +112,7 @@ run_mcmc <- function(data,
   assert_single_pos_int(rungs, zero_allowed = FALSE)
   assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_logical(coupling_on)
-  assert_pos(GTI_pow, zero_allowed = FALSE)
+  assert_vector_pos(GTI_pow, zero_allowed = FALSE)
   if (length(GTI_pow) != 1 & length(GTI_pow) != rungs) {
     stop("GTI_pow must be a single positive integer (length 1) or a vector that is the length of the number of rungs")
   }
@@ -271,10 +272,11 @@ run_mcmc <- function(data,
   if (rungs > 1) {
     
     # MC accept
-    mc_accept <- tidyr::expand_grid(chain = chain_names, link = 1:(length(rung_names) - 1))
-    mc_accept$burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin
-    mc_accept$sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
-    mc_accept <- tidyr::gather(mc_accept, stage, value, -chain, -link)
+    mc_accept <- expand.grid(chain = chain_names, link = seq_len(length(rung_names)-1))
+    mc_accept_burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin
+    mc_accept_sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
+    mc_accept <- rbind(cbind(mc_accept, stage = "burnin", value = mc_accept_burnin),
+                       cbind(mc_accept, stage = "sampling", value = mc_accept_sampling))
     
   }
   output_processed$diagnostics$mc_accept <- mc_accept

@@ -1,6 +1,6 @@
 
 #include "main.h"
-#include "misc_v7.h"
+#include "misc_v10.h"
 #include "probability_v3.h"
 #include "System.h"
 
@@ -251,7 +251,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   // end timer
   if (!s.silent) {
     print("");
-    chrono_timer(t1);
+    chrono_timer(t1, "chain completed in ");
   }
   
   // return as Rcpp list

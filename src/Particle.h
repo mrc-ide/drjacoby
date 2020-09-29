@@ -2,7 +2,7 @@
 #pragma once
 
 #include "System.h"
-#include "misc_v7.h"
+#include "misc_v10.h"
 #include "probability_v3.h"
 
 #include <Rcpp.h>
@@ -21,7 +21,7 @@ public:
   int d;
   
   // thermodynamic power
-  double beta;
+  double beta_raised;
   
   // theta is the parameter vector in natural space
   Rcpp::NumericVector theta;
@@ -52,7 +52,7 @@ public:
   Particle() {};
   
   // initialise everything except for likelihood and prior values
-  void init(System &s, double beta);
+  void init(System &s, double beta_raised);
   
   // initialise likelihood and prior values
   template<class TYPE1, class TYPE2>
@@ -90,7 +90,7 @@ public:
       logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, i, s_ptr->misc));
       
       // calculate Metropolis-Hastings ratio
-      double MH = beta*(loglike_prop - loglike) + (logprior_prop - logprior) + adj;
+      double MH = beta_raised*(loglike_prop - loglike) + (logprior_prop - logprior) + adj;
       
       // accept or reject move
       bool MH_accept = (log(runif_0_1()) < MH);

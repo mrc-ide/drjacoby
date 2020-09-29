@@ -126,11 +126,14 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
 #'
 #' @inheritParams plot_rung_loglike
 #'
-#' @import ggplot2
+#' @import ggplot2 dplyr
 #' @importFrom grDevices grey
 #' @export
 
 plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type = 1) {
+  
+  # declare variables to avoid "no visible binding" issues
+  stage <- value <- link <- NULL
   
   # check inputs
   assert_custom_class(x, "drjacoby_output")
@@ -138,9 +141,6 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
   assert_in(phase, c("burnin", "sampling"))
   assert_single_pos_int(x_axis_type)
   assert_in(x_axis_type, 1:2)
-  
-  # declare variables to avoid "no visible binding" issues
-  stage <- value <- NULL
   
   # get useful quantities
   thermo_power <- x$diagnostics$rung_details$thermodynamic_power
@@ -208,15 +208,15 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
 
 plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling", rung = 1) {
   
+  # declare variables to avoid "no visible binding" issues
+  stage <- iteration <- loglikelihood <- NULL
+  
   # check inputs
   assert_custom_class(x, "drjacoby_output")
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
   assert_in(phase, c("burnin", "sampling"))
   assert_single_bounded(lag, 1, 500)
-  
-  # declare variables to avoid "no visible binding" issues
-  stage <- iteration <- loglikelihood <- NULL
   
   # get values
   chain_get <- paste0("chain", chain)
@@ -225,44 +225,55 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
     dplyr::select(-chain, -rung, -iteration, -stage, -loglikelihood) %>%
     as.data.frame()
   
-  # Select parameters
-  if(!is.null(par)){
+  # select parameters
+  if (!is.null(par)) {
     data <- data[, colnames(data) %in% par, drop = FALSE]
   }
   
-  # Estimate autocorrelation
+  # estimate autocorrelation
   out <- as.data.frame(apply(data, 2, acf_data, lag = lag))
   
-  # Format data for plotting
+  # format data for plotting
   out$lag <- 0:lag
-  out <- tidyr::gather(out, "parameter", "Autocorrelation", -lag)
+  out <- do.call(rbind, mapply(function(i) {
+    data.frame(lag = out$lag,
+               parameter = names(out)[i],
+               autocorrelation = out[,i])
+  }, seq_len(ncol(data)), SIMPLIFY = FALSE))
   
+  # produce plot
   ggplot2::ggplot(data = out,
-                  ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$Autocorrelation)) + 
+                  ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$autocorrelation)) + 
     ggplot2::geom_hline(yintercept = 0, lty = 2, col = "red") + 
     ggplot2::geom_segment(size = 1.5) +
     ggplot2::theme_bw() +
     ggplot2::ylab("Autocorrelation") +
     ggplot2::xlab("Lag") +
-    ggplot2::ylim(min(0, min(out$Autocorrelation)), 1) +
+    ggplot2::ylim(min(0, min(out$autocorrelation)), 1) +
     ggplot2::facet_wrap(~ parameter)
 }
 
 #------------------------------------------------
 #' @title Plot parameter estimates
 #'
-#' @description Plot parameter estimates
+#' @description Produce a series of plots corresponding to each parameter,
+#'   including the raw trace, the posterior histogram and an autocorrelation
+#'   plot. Plotting objects can be cycled through interactively, or can be
+#'   returned as an object allowing them to be viewed/edited by the user.
 #'
 #' @inheritParams plot_rung_loglike
 #' @param show Optional character (or vector of characters) to filter parameters by.
 #'  Parameters matching show will be included.
 #' @param hide Optional character (or vector of characters) to filter parameters by.
 #'  Parameters matching show will be hidden.
-#' @param lag Maximum lag. Must be an integer between 20 and 500
-#' @param downsample Downsample chain for efficiency
-#' @param display Show plots
-#' @param rung Rung
-#' @param chain Optional numeric (or vector of numerics) to filter chain by; default "all" shows all chains
+#' @param lag Maximum lag. Must be an integer between 1 and 500.
+#' @param downsample Boolean. Whether to downsample chain to make plotting more
+#'   efficient.
+#' @param rung Which temperature rung to plot. Defaults to the cold chain.
+#' @param chain Which chain to plot, e.g. \code{"chain1"}. The default
+#'   \code{"all"} plots all chains.
+#' @param display Boolean. Whether to show plots, if \code{FALSE} then plotting
+#'   objects are returned without displaying.
 #'
 #' @export
 

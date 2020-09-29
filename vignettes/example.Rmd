@@ -4,7 +4,7 @@ author: "Bob Verity and Pete Winskill"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{"Example MCMC Implementation"}
+  %\VignetteIndexEntry{Example MCMC Implementation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -64,7 +64,7 @@ print(df_params)
 
 In this example we have one parameter (`mu`) that occupies a finite range [-10, 10], and another parameter (`sigma`) that can take any positive value. *drjacoby* deals with different parameter ranges using reparameterisation, which all occurs internally meaning we don't need to worry about these constraints affecting our inference.
 
-Next, we need a likelihood function. This **must** have two input arguments: 1) a vector of parameters, 2) a vector of data, and these **must** be input **in that order**. It also **must** return a single value for the likelihood **in log space**. These constraints on the format of the likelihood function might seem a bit restrictive, but they are needed in order for *drjacoby* to know how to use the function internally. The issue of taking logs is particularly important, as the MCMC will still run even if we forget to take logs, but the results produced will be nonsense!
+Next, we need a likelihood function. This **must** have exactly two input arguments: 1) a vector of parameters, 2) a vector of data, and these **must** be input **in that order**. It also **must** return a single value for the likelihood **in log space**. These constraints on the format of the likelihood function might seem a bit restrictive, but they are needed in order for *drjacoby* to know how to use the function internally. The issue of taking logs is particularly important, as the MCMC will still run even if we forget to take logs, but the results produced will be nonsense!
 
 ![Do not underestimate the importance of taking logs.](https://raw.githubusercontent.com/mrc-ide/drjacoby/version1.0/R_ignore/images/loglady.jpg)
 
@@ -110,7 +110,7 @@ Be careful to ensure that your prior is defined over the same range as specified
 
 ## Running the MCMC
 
-Once we have all the elements above it is straightforward to run a basic MCMC. We simply input the four elements listed above, along with the number of burn-in and sampling iterations By default *drjacoby* prints progress bars to the console to keep you updated on the progress of the MCMC. When running in R markdown we can use the option `pb_markdown = TRUE` to print progress bars in a markdown-friendly way, although you will probably want to leave this option turned off when running interactively (simply delete this argument).
+Once we have all the elements above it is straightforward to run a basic MCMC in *drjacoby*. We simply input the four elements listed above, along with the number of burn-in and sampling iterations. By default *drjacoby* prints progress bars to the console to keep you updated on the progress of the MCMC. When running in R markdown we can use the option `pb_markdown = TRUE` to print progress bars in a markdown-friendly way, although you will probably want to leave this option turned off when running interactively (simply delete this argument).
 
 ```{r}
 # run MCMC
@@ -138,34 +138,34 @@ plot_par(mcmc, show = "mu", phase = "burnin")
 plot_par(mcmc, show = "sigma", phase = "burnin")
 ```
 
-Notice that for all five chains both `mu` and `sigma` move quickly from their initial values to stable levels at around 3 and 2. This is a visual indication that the MCMC has burned in for an appropriate number of iterations.
+Notice that for all five chains both `mu` and `sigma` move quickly from their initial values to stable levels at around 3 and 2, respectively. This is a visual indication that the MCMC has burned in for an appropriate number of iterations.
 
-Next we can look at trace plots from the sampling phase:
+By leaving out the `phase = "burnin"` argument we can look at trace plots from the sampling phase only:
 
 ```{r, fig.width=8, fig.height=4}
 plot_par(mcmc, show = "mu")
 plot_par(mcmc, show = "sigma")
 ```
 
-Here we can see that the MCMC continues to move freely, and that all chains appear to exploring the same part of the parameter space. The final plot shows the autocorrelation of the chains, which in this case falls off fairly rapidly with samples being approximately independent at around 5 lags. This is another indication that the MCMC is mixing well. The marginal histogram shows a single clear peak, although this is still a bit rough so we may want to re-run the MCMC with a larger number of sampling iterations to get a smoother result. We can also explore this by looking at the effective sample size (ESS), which is stored within the MCMC diagnostics:
+Here we can see that the MCMC continues to move freely, and that all chains appear to be exploring the same part of the parameter space. The final plot shows the autocorrelation of the chains, which in this case falls off fairly rapidly with samples being approximately independent at around 5 lags. This is another indication that the MCMC is mixing well. The marginal histogram shows a single clear peak, although this is still a bit rough so we may want to re-run the MCMC with a larger number of sampling iterations to get a smoother result. We can also explore this by looking at the effective sample size (ESS), which is stored within the MCMC diagnostics:
 
 ```{r}
 # TODO - ESS is currently broken, so this line does nothing
 mcmc$diagnostics$ess
 ```
 
-We can see that despite running the MCMC for 1000 sampling iterations, the actual number of effectively independent samples accounting for autocorrelation is much lower. When doing any calculation that relies on the number of samples, we should use the ESS rather than the raw number of sampling iterations. For example if we want to know the standard error of our estimate of `mu` we should do `sd(mu)/sqrt(ESS)`. But just as importantly, when producing any summary of the posterior that does not make direct use of this number - for example when producing posterior histograms - we should *use all posterior samples*, and we should certainly *not thin samples* to reduce autocorrelation. A histogram produced from all samples is more accurate than once produce from thinned samples, even if the samples are autocorrelated.
+We can see that despite running the MCMC for 1000 sampling iterations, the actual number of effectively independent samples accounting for autocorrelation is much lower. When doing any calculation that relies on the number of samples, we should use the ESS rather than the raw number of sampling iterations. For example if we want to know the standard error of our estimate of `mu` we should do `sd(mu)/sqrt(ESS)`. But just as importantly, when producing any summary of the posterior that does not make direct use of this number - for example when producing posterior histograms - we should *use all posterior samples*, and we should certainly [not thin samples](https://doi.org/10.1111/j.2041-210X.2011.00131.x) to reduce autocorrelation. A histogram produced from all samples is more accurate than one produce from thinned samples, even if the samples are autocorrelated.
 
 The final question is how can we be confident that our MCMC has actually explored the space well? Although the trace plot above looks good, it is possible to get results that look like this from very pathological MCMC runs. This is a more complex problem that is dealt with to some extent in [another vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html).
 
 
 ## Using C++ functions
 
-Although *drjacoby* is an R package, under the hood it is running C++ through [Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html). When we pass an R likelihood function to `run_mcmc()`, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This comes with a computational overhead, which can be avoided by specifying functions directly within C++.
+Although *drjacoby* is an R package, under the hood it is running C++ through the fantastic [Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html) package. When we pass an R likelihood function to `run_mcmc()`, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This comes with a computational overhead, which can be avoided by specifying functions directly within C++.
 
 To use C++ functions within *drjacoby* we simply write them directly within R as character strings. As before, there are some constraints on what this function must look like. First, it **must** take as input a `std::vector<double>` of parameters **followed by** a `std::vector<double>` of data. Data **must** be input as doubles, and so data consisting of integer or boolean values should be dealt with as though they are continuous values (for example `TRUE = 1.0`, `FALSE = 0.0`). Second, the function **must** return an object of class `SEXP`. The easiest way to achieve this is to calculate the raw return value as a double, and to use the `Rcpp::wrap()` function when returning to transform to `SEXP`. As before, the value returned should be the likelihood evaluated in **log space**.
 
-Even though we are workin in C++, we still have access to most of R's nice distribution functions through the `R::` namespace. For example, the `dnorm()` function can be accessed within C++ using `R::dnorm()`. Details of the available functions can be found [here](https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution). The `r_loglike()` function defined above can be re-written in C++ as follows:
+Even though we are workin in C++, we still have access to most of R's nice distribution functions through the `R::` namespace. For example, the `dnorm()` function can be accessed within C++ using `R::dnorm()`. A list of probability distributions available within Rcpp can be found [here](https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution). The `r_loglike()` function defined above can be re-written in C++ as follows:
 
 ```{r}
 # define cpp log-likelihood function as character string
@@ -206,7 +206,7 @@ cpp_logprior <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::Li
 }"
 ```
 
-With these two functions defined we can run the MCMC exactly the same as before, passing in the new functions:
+With these two functions defined we can run the MCMC exactly the same as before, passing in the new functions as strings:
 
 ```{r}
 # run MCMC

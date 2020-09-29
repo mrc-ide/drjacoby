@@ -20,7 +20,6 @@ Imports:
     parallel,
     ggplot2,
     RcppXPtrUtils,
-    tidyr,
     rlang,
     cowplot,
     dplyr,
