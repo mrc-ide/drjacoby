@@ -35,4 +35,3 @@ Suggests:
 BugReports: https://github.com/mrc-ide/drjacoby/issues
 VignetteBuilder: knitr
 Depends: R (>= 3.1.0)
-Remotes: clauswilke/ggisoband

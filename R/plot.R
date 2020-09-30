@@ -1,4 +1,3 @@
-
 #------------------------------------------------
 #' @title Series of standard colours used within the drjacoby package
 #'   

@@ -1,7 +1,6 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
 language: R
-sudo: false
 cache: packages
 r_packages:
   - Rcpp
@@ -24,7 +23,5 @@ jobs:
   include:
     - os: osx
       osx_image: xcode12 # Big Sur
-    - os: osx
-      osx_image: xcode11.6 # updated Catalina 1 
     - os: osx
       osx_image: xcode11.5 # original Catalina
