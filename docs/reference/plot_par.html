@@ -40,7 +40,10 @@
 
 
 <meta property="og:title" content="Plot parameter estimates — plot_par" />
-<meta property="og:description" content="Plot parameter estimates" />
+<meta property="og:description" content="Produce a series of plots corresponding to each parameter,
+  including the raw trace, the posterior histogram and an autocorrelation
+  plot. Plotting objects can be cycled through interactively, or can be
+  returned as an object allowing them to be viewed/edited by the user." />
 
 
 
@@ -129,7 +132,10 @@
     </div>
 
     <div class="ref-description">
-    <p>Plot parameter estimates</p>
+    <p>Produce a series of plots corresponding to each parameter,
+  including the raw trace, the posterior histogram and an autocorrelation
+  plot. Plotting objects can be cycled through interactively, or can be
+  returned as an object allowing them to be viewed/edited by the user.</p>
     </div>
 
     <pre class="usage"><span class='fu'>plot_par</span>(
@@ -139,7 +145,7 @@
   <span class='kw'>lag</span> <span class='kw'>=</span> <span class='fl'>20</span>,
   <span class='kw'>downsample</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>,
-  <span class='kw'>rung</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>rung</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>chain</span> <span class='kw'>=</span> <span class='st'>"all"</span>,
   <span class='kw'>display</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
 )</pre>
@@ -153,21 +159,22 @@
     </tr>
     <tr>
       <th>show</th>
-      <td><p>Optional character (or vector of characters) to filter parameters by.
+      <td><p>optional character (or vector of characters) to filter parameters by.
 Parameters matching show will be included.</p></td>
     </tr>
     <tr>
       <th>hide</th>
-      <td><p>Optional character (or vector of characters) to filter parameters by.
+      <td><p>optional character (or vector of characters) to filter parameters by.
 Parameters matching show will be hidden.</p></td>
     </tr>
     <tr>
       <th>lag</th>
-      <td><p>Maximum lag. Must be an integer between 20 and 500</p></td>
+      <td><p>maximum lag. Must be an integer between 1 and 500.</p></td>
     </tr>
     <tr>
       <th>downsample</th>
-      <td><p>Downsample chain for efficiency</p></td>
+      <td><p>boolean. Whether to downsample chain to make plotting more
+efficient.</p></td>
     </tr>
     <tr>
       <th>phase</th>
@@ -175,15 +182,18 @@ Parameters matching show will be hidden.</p></td>
     </tr>
     <tr>
       <th>rung</th>
-      <td><p>Rung</p></td>
+      <td><p>which temperature rung to plot. If <code>NULL</code> then defaults to
+the cold rung.</p></td>
     </tr>
     <tr>
       <th>chain</th>
-      <td><p>Optional numeric (or vector of numerics) to filter chain by; default "all" shows all chains</p></td>
+      <td><p>which chain to plot, e.g. <code>"chain1"</code>. The default
+<code>"all"</code> plots all chains.</p></td>
     </tr>
     <tr>
       <th>display</th>
-      <td><p>Show plots</p></td>
+      <td><p>boolean. Whether to show plots, if <code>FALSE</code> then plotting
+objects are returned without displaying.</p></td>
     </tr>
     </table>
 

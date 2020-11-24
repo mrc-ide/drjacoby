@@ -10,21 +10,23 @@ plot_autocorrelation(
   par = NULL,
   chain = 1,
   phase = "sampling",
-  rung = 1
+  rung = NULL
 )
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
-\item{lag}{Maximum lag. Must be an integer between 20 and 500.}
+\item{lag}{maximum lag. Must be an integer between 1 and 500.}
 
-\item{par}{Vector of parameter names. If NULL all parameters are plotted}
+\item{par}{vector of parameter names. If \code{NULL} all parameters are
+plotted.}
 
 \item{chain}{which chain to plot.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
-\item{rung}{Rung}
+\item{rung}{which temperature rung to plot. If \code{NULL} then defaults to
+the cold rung.}
 }
 \description{
 Plot autocorrelation for specified parameters

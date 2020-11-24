@@ -14,12 +14,13 @@ check_drjacoby_loaded <- function() {
 #------------------------------------------------
 #' @title Run drjacoby MCMC
 #'
-#' @description Run flexible MCMC through drjacoby. 
+#' @description Run MCMC using defined data object, likelihood function, prior
+#'   function and parameters.
 #'
-#' @param data a vector of data values. When using C++ versions of the
-#'   likelihood and/or prior these values are treated internally as doubles, so
-#'   while integer and boolean values can be used, keep in mind that these will
-#'   be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).
+#' @param data a named list of numeric data values. When using C++ versions of
+#'   the likelihood and/or prior these values are treated internally as doubles,
+#'   so while integer and boolean values can be used, keep in mind that these
+#'   will be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).
 #' @param df_params a dataframe of parameters. Must contain the following
 #'   elements:
 #'   \itemize{
@@ -31,8 +32,9 @@ check_drjacoby_loaded <- function() {
 #'     \item \code{init} - the initial value of the parameter.
 #'   }
 #' @param misc optional list object passed to likelihood and prior.
-#' @param loglike TODO.
-#' @param logprior TODO.
+#' @param loglike,logprior the log-likelihood and log-prior functions used in
+#'   the MCMC. Can either be passed in as R functions, or as character strings
+#'   which are compiled in C++ functions.
 #' @param burnin the number of burn-in iterations.
 #' @param samples the number of sampling iterations.
 #' @param rungs the number of temperature rungs used in Metropolis coupling (see
@@ -42,9 +44,11 @@ check_drjacoby_loaded <- function() {
 #'   parallel, otherwise they are run in serial.
 #' @param coupling_on whether to implement Metropolis-coupling over temperature 
 #'   rungs.
-#' @param GTI_pow the power used in the generalised thermodynamic integration
-#'   method. Must either be a single positive integer or a vector of integers
-#'   with length equal to the number of rungs.
+#' @param GTI_pow values in the temperature ladder are raised to this power.
+#' @param beta_manual option to manually define temperature ladder. These values
+#'   are raised to the power \code{GTI_pow}, hence you should use \code{GTI_code
+#'   = 1} to fix powers exactly. If \code{NULL} then an equal spacing of length
+#'   \code{rungs} is used between 0 and 1.
 #' @param cluster option to pass in a cluster environment, allowing chains to be
 #'   run in parallel (see package "parallel").
 #' @param pb_markdown whether to run progress bars in markdown mode, meaning
@@ -65,10 +69,14 @@ run_mcmc <- function(data,
                      rungs = 1,
                      chains = 5,
                      coupling_on = TRUE,
-                     GTI_pow = 3,
+                     GTI_pow = 1.0,
+                     beta_manual = NULL,
                      cluster = NULL,
                      pb_markdown = FALSE,
                      silent = FALSE) {
+  
+  # declare variables to avoid "no visible binding" issues
+  stage <- rung <- value <- chain <- link <- NULL
   
   # Cleanup pointers on exit
   on.exit(gc())
@@ -112,14 +120,16 @@ run_mcmc <- function(data,
   assert_single_pos_int(rungs, zero_allowed = FALSE)
   assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_logical(coupling_on)
-  assert_vector_pos(GTI_pow, zero_allowed = FALSE)
-  if (length(GTI_pow) != 1 & length(GTI_pow) != rungs) {
-    stop("GTI_pow must be a single positive integer (length 1) or a vector that is the length of the number of rungs")
+  assert_single_pos(GTI_pow)
+  
+  # calculate/check final temperature vector
+  if (is.null(beta_manual)) {
+    beta_manual <- rev(seq(1, 0, l = rungs))
   }
-  # liftover to vector for Cpp consistency 
-  if (length(GTI_pow) == 1) {
-    GTI_pow <- rep(GTI_pow, times = rungs)
-  }
+  rungs <- length(beta_manual)
+  assert_vector_bounded(beta_manual)
+  assert_increasing(beta_manual)
+  assert_eq(beta_manual[rungs], 1.0)
   
   # check misc parameters
   if (!is.null(cluster)) {
@@ -127,9 +137,6 @@ run_mcmc <- function(data,
   }
   assert_single_logical(pb_markdown)
   assert_single_logical(silent)
-  
-  # declare variables to avoid "no visible binding" issues
-  stage <- rung <- value <- chain <- link <- NULL
   
   
   # ---------- pre-processing ----------
@@ -152,6 +159,9 @@ run_mcmc <- function(data,
   loglike_use_cpp <- inherits(loglike, "character")
   logprior_use_cpp <- inherits(logprior, "character")
   
+  # raise temperature vector to power (prepping for later version which will
+  # implement generalised thermodynamic integration)
+  beta_raised <- beta_manual^GTI_pow
   
   # ---------- define argument lists ----------
   
@@ -169,7 +179,7 @@ run_mcmc <- function(data,
                       samples = samples,
                       rungs = rungs,
                       coupling_on = coupling_on,
-                      GTI_pow = GTI_pow,
+                      beta_raised = beta_raised,
                       pb_markdown = pb_markdown,
                       silent = silent)
   
@@ -235,19 +245,19 @@ run_mcmc <- function(data,
       ret <- cbind(ret, theta)
       
       return(ret)
-    }, seq_along(output_raw[[j]]$loglike_burnin), SIMPLIFY = FALSE))
-  }, seq_along(output_raw), SIMPLIFY = FALSE))
+    }, seq_len(rungs), SIMPLIFY = FALSE))
+  }, seq_len(chains), SIMPLIFY = FALSE))
   
   # append to output list
   output_processed <- list(output = df_output)
   output_processed$diagnostics <- list()
   
   ## Diagnostics
-  # Rhat
+  # Rhat (Gelman-Rubin diagnostic)
   if (chains > 1) {
     rhat_est <- c()
-    for(p in seq_along(param_names)){
-      pm <- output_processed$output[output_processed$output$stage == "sampling", c("chain", as.character(param_names[p]))]
+    for (p in seq_along(param_names)) {
+      pm <- subset(output_processed$output, stage == "sampling", select = c("chain", param_names[p]))
       rhat_est[p] <- gelman_rubin(pm, chains, samples)
     }
     rhat_est[skip_param] <- NA
@@ -265,14 +275,15 @@ run_mcmc <- function(data,
   
   # Thermodynamic power
   output_processed$diagnostics$rung_details <- data.frame(rung = 1:rungs,
-                                                          thermodynamic_power = output_raw[[1]]$beta_raised)
+                                                          thermodynamic_power = beta_raised)
   
   # Metropolis-coupling
+  # store acceptance rates between pairs of rungs (links)
   mc_accept <- NA
   if (rungs > 1) {
     
     # MC accept
-    mc_accept <- expand.grid(chain = chain_names, link = seq_len(length(rung_names)-1))
+    mc_accept <- expand.grid(link = seq_len(rungs - 1), chain = chain_names)
     mc_accept_burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin
     mc_accept_sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
     mc_accept <- rbind(cbind(mc_accept, stage = "burnin", value = mc_accept_burnin),
@@ -291,8 +302,8 @@ run_mcmc <- function(data,
                                       rungs = rungs,
                                       chains = chains,
                                       coupling_on = coupling_on,
-                                      GTI_pow = GTI_pow)
-
+                                      GTI_pow = GTI_pow,
+                                      beta_manual = beta_manual)
   
   # save output as custom class
   class(output_processed) <- "drjacoby_output"
