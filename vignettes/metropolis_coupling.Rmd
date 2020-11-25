@@ -163,7 +163,6 @@ mcmc <- run_mcmc(data = data_list,
                  samples = 1e3,
                  rungs = 10,
                  chains = 1,
-                 GTI_pow = 1.0,
                  silent = TRUE)
 
 # plot coupling acceptance rates
