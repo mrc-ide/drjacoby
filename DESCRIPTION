@@ -1,7 +1,7 @@
 Package: drjacoby
 Type: Package
 Title: Flexible Markov Chain Monte Carlo via Reparameterization
-Version: 1.1.0
+Version: 1.2.0
 Authors@R: c(
     person("Bob", "Verity", email = "r.verity@imperial.ac.uk", role = c("aut", "cre")),
     person("Pete", "Winskill", email = "p.winskill@imperial.ac.uk", role = c("aut"))
@@ -11,7 +11,7 @@ Description: Flexible Markov chain monte carlo via
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 LinkingTo: 
     Rcpp
 Imports: 

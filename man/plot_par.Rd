@@ -11,7 +11,7 @@ plot_par(
   lag = 20,
   downsample = TRUE,
   phase = "sampling",
-  rung = 1,
+  rung = NULL,
   chain = "all",
   display = TRUE
 )
@@ -19,25 +19,26 @@ plot_par(
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
-\item{show}{Optional character (or vector of characters) to filter parameters by.
+\item{show}{optional character (or vector of characters) to filter parameters by.
 Parameters matching show will be included.}
 
-\item{hide}{Optional character (or vector of characters) to filter parameters by.
+\item{hide}{optional character (or vector of characters) to filter parameters by.
 Parameters matching show will be hidden.}
 
-\item{lag}{Maximum lag. Must be an integer between 1 and 500.}
+\item{lag}{maximum lag. Must be an integer between 1 and 500.}
 
-\item{downsample}{Boolean. Whether to downsample chain to make plotting more
+\item{downsample}{boolean. Whether to downsample chain to make plotting more
 efficient.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
-\item{rung}{Which temperature rung to plot. Defaults to the cold chain.}
+\item{rung}{which temperature rung to plot. If \code{NULL} then defaults to
+the cold rung.}
 
-\item{chain}{Which chain to plot, e.g. \code{"chain1"}. The default
+\item{chain}{which chain to plot, e.g. \code{"chain1"}. The default
 \code{"all"} plots all chains.}
 
-\item{display}{Boolean. Whether to show plots, if \code{FALSE} then plotting
+\item{display}{boolean. Whether to show plots, if \code{FALSE} then plotting
 objects are returned without displaying.}
 }
 \description{

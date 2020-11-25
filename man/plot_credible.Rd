@@ -4,7 +4,13 @@
 \alias{plot_credible}
 \title{Plot 95\% credible intervals}
 \usage{
-plot_credible(x, show = NULL, phase = "sampling", rung = 1, param_names = NULL)
+plot_credible(
+  x,
+  show = NULL,
+  phase = "sampling",
+  rung = NULL,
+  param_names = NULL
+)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}

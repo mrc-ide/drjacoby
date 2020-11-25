@@ -23,5 +23,5 @@ jobs:
   include:
     - os: osx
       osx_image: xcode12 # Big Sur
-    - os: osx
-      osx_image: xcode11.5 # original Catalina
+#    - os: osx
+#      osx_image: xcode11.5 # original Catalina

@@ -9,7 +9,7 @@ acf_data(x, lag)
 \arguments{
 \item{x}{Single chain.}
 
-\item{lag}{Maximum lag. Must be an integer between 20 and 500.}
+\item{lag}{maximum lag. Must be an integer between 1 and 500.}
 }
 \description{
 Estimate autocorrelation

@@ -138,7 +138,7 @@
   <span class='kw'>par</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>chain</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>,
-  <span class='kw'>rung</span> <span class='kw'>=</span> <span class='fl'>1</span>
+  <span class='kw'>rung</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -150,11 +150,12 @@
     </tr>
     <tr>
       <th>lag</th>
-      <td><p>Maximum lag. Must be an integer between 20 and 500.</p></td>
+      <td><p>maximum lag. Must be an integer between 1 and 500.</p></td>
     </tr>
     <tr>
       <th>par</th>
-      <td><p>Vector of parameter names. If NULL all parameters are plotted</p></td>
+      <td><p>vector of parameter names. If <code>NULL</code> all parameters are
+plotted.</p></td>
     </tr>
     <tr>
       <th>chain</th>
@@ -166,7 +167,8 @@
     </tr>
     <tr>
       <th>rung</th>
-      <td><p>Rung</p></td>
+      <td><p>which temperature rung to plot. If <code>NULL</code> then defaults to
+the cold rung.</p></td>
     </tr>
     </table>
 
