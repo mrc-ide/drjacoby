@@ -73,7 +73,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.1</span>
       </span>
     </div>
 
@@ -171,7 +171,9 @@ elements:</p><ul>
   allowed.</p></li>
 <li><p><code>max</code> - the maximum value of the parameter. <code>Inf</code> is
   allowed.</p></li>
-<li><p><code>init</code> - the initial value of the parameter.</p></li>
+<li><p><code>init</code> - the initial value of the parameter. If running
+  multiple chains a list of initial values can be used to specify distinct
+  values for each chain.</p></li>
 </ul></td>
     </tr>
     <tr>
@@ -210,14 +212,16 @@ rungs.</p></td>
     </tr>
     <tr>
       <th>GTI_pow</th>
-      <td><p>values in the temperature ladder are raised to this power.</p></td>
+      <td><p>values in the temperature ladder are raised to this power.
+Provides a convenient way of concentrating rungs towards one end of the
+temperature scale.</p></td>
     </tr>
     <tr>
       <th>beta_manual</th>
       <td><p>option to manually define temperature ladder. These values
 are raised to the power <code>GTI_pow</code>, hence you should use <code>GTI_code
-= 1</code> to fix powers exactly. If <code>NULL</code> then an equal spacing of length
-<code>rungs</code> is used between 0 and 1.</p></td>
+= 1</code> if you want to fix powers exactly. If <code>NULL</code> then an equal
+spacing of length <code>rungs</code> is used between 0 and 1.</p></td>
     </tr>
     <tr>
       <th>cluster</th>
