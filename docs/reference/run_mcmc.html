@@ -40,7 +40,8 @@
 
 
 <meta property="og:title" content="Run drjacoby MCMC — run_mcmc" />
-<meta property="og:description" content="Run flexible MCMC through drjacoby." />
+<meta property="og:description" content="Run MCMC using defined data object, likelihood function, prior
+  function and parameters." />
 
 
 
@@ -129,7 +130,8 @@
     </div>
 
     <div class="ref-description">
-    <p>Run flexible MCMC through drjacoby.</p>
+    <p>Run MCMC using defined data object, likelihood function, prior
+  function and parameters.</p>
     </div>
 
     <pre class="usage"><span class='fu'>run_mcmc</span>(
@@ -143,7 +145,8 @@
   <span class='kw'>rungs</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>5</span>,
   <span class='kw'>coupling_on</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>GTI_pow</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>GTI_pow</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>beta_manual</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>cluster</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>pb_markdown</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
@@ -154,10 +157,10 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>data</th>
-      <td><p>a vector of data values. When using C++ versions of the
-likelihood and/or prior these values are treated internally as doubles, so
-while integer and boolean values can be used, keep in mind that these will
-be recast as doubles in the likelihood (i.e. <code>TRUE = 1.0</code>).</p></td>
+      <td><p>a named list of numeric data values. When using C++ versions of
+the likelihood and/or prior these values are treated internally as doubles,
+so while integer and boolean values can be used, keep in mind that these
+will be recast as doubles in the likelihood (i.e. <code>TRUE = 1.0</code>).</p></td>
     </tr>
     <tr>
       <th>df_params</th>
@@ -176,12 +179,10 @@ elements:</p><ul>
       <td><p>optional list object passed to likelihood and prior.</p></td>
     </tr>
     <tr>
-      <th>loglike</th>
-      <td><p>TODO.</p></td>
-    </tr>
-    <tr>
-      <th>logprior</th>
-      <td><p>TODO.</p></td>
+      <th>loglike, logprior</th>
+      <td><p>the log-likelihood and log-prior functions used in
+the MCMC. Can either be passed in as R functions, or as character strings
+which are compiled in C++ functions.</p></td>
     </tr>
     <tr>
       <th>burnin</th>
@@ -209,9 +210,14 @@ rungs.</p></td>
     </tr>
     <tr>
       <th>GTI_pow</th>
-      <td><p>the power used in the generalised thermodynamic integration
-method. Must either be a single positive integer or a vector of integers
-with length equal to the number of rungs.</p></td>
+      <td><p>values in the temperature ladder are raised to this power.</p></td>
+    </tr>
+    <tr>
+      <th>beta_manual</th>
+      <td><p>option to manually define temperature ladder. These values
+are raised to the power <code>GTI_pow</code>, hence you should use <code>GTI_code
+= 1</code> to fix powers exactly. If <code>NULL</code> then an equal spacing of length
+<code>rungs</code> is used between 0 and 1.</p></td>
     </tr>
     <tr>
       <th>cluster</th>

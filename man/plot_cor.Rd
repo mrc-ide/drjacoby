@@ -11,7 +11,7 @@ plot_cor(
   downsample = TRUE,
   phase = "sampling",
   chain = "all",
-  rung = 1
+  rung = NULL
 )
 }
 \arguments{
