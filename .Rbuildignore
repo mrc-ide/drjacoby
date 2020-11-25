@@ -11,3 +11,5 @@
 ignore/
 R_ignore/
 ^index.md
+^\.github$
+^README\.Rmd$
