@@ -85,7 +85,7 @@
       <h1 data-toc-skip>Example MCMC Implementation</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2020-11-25</h4>
+            <h4 class="date">2020-11-26</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/example.Rmd"><code>vignettes/example.Rmd</code></a></small>
       <div class="hidden name"><code>example.Rmd</code></div>
@@ -186,7 +186,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 23.7%
 #&gt; 
-#&gt; chain completed in 0.164463 seconds
+#&gt; chain completed in 0.169742 seconds
 #&gt; MCMC chain 2
 #&gt; burn-in
 #&gt; 
@@ -199,7 +199,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 24%
 #&gt; 
-#&gt; chain completed in 0.153885 seconds
+#&gt; chain completed in 0.143359 seconds
 #&gt; MCMC chain 3
 #&gt; burn-in
 #&gt; 
@@ -212,7 +212,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 23.3%
 #&gt; 
-#&gt; chain completed in 0.147043 seconds
+#&gt; chain completed in 0.136354 seconds
 #&gt; MCMC chain 4
 #&gt; burn-in
 #&gt; 
@@ -225,7 +225,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 23.6%
 #&gt; 
-#&gt; chain completed in 0.148960 seconds
+#&gt; chain completed in 0.139193 seconds
 #&gt; MCMC chain 5
 #&gt; burn-in
 #&gt; 
@@ -238,7 +238,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 23.9%
 #&gt; 
-#&gt; chain completed in 0.141132 seconds</pre></body></html></div>
+#&gt; chain completed in 0.143185 seconds</pre></body></html></div>
 <p>The output returned by the MCMC function has three parts: 1) an “output” dataframe containing raw posterior draws and other key elements at each iteration of the MCMC, 2) a “diagnostics” object containing useful summaries such as the effective sample size of each parameter, 3) a “parameters” object containing a record of the exact parameters used to run the MCMC. We can take a peek at the first of these outputs:</p>
 <div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">mcmc</span>$<span class="no">output</span>)
 <span class="co">#&gt;    chain  rung iteration  stage  logprior loglikelihood       mu     sigma</span>
@@ -329,7 +329,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 23.3%
 #&gt; 
-#&gt; chain completed in 0.005852 seconds
+#&gt; chain completed in 0.006134 seconds
 #&gt; MCMC chain 2
 #&gt; burn-in
 #&gt; 
@@ -342,7 +342,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 23%
 #&gt; 
-#&gt; chain completed in 0.005088 seconds
+#&gt; chain completed in 0.005537 seconds
 #&gt; MCMC chain 3
 #&gt; burn-in
 #&gt; 
@@ -355,7 +355,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 23.1%
 #&gt; 
-#&gt; chain completed in 0.011475 seconds
+#&gt; chain completed in 0.009553 seconds
 #&gt; MCMC chain 4
 #&gt; burn-in
 #&gt; 
@@ -368,7 +368,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 23.5%
 #&gt; 
-#&gt; chain completed in 0.004748 seconds
+#&gt; chain completed in 0.004725 seconds
 #&gt; MCMC chain 5
 #&gt; burn-in
 #&gt; 
@@ -381,7 +381,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 24.6%
 #&gt; 
-#&gt; chain completed in 0.004688 seconds</pre></body></html></div>
+#&gt; chain completed in 0.004864 seconds</pre></body></html></div>
 <p>You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. On the other hand, writing C++ functions in this way is more error prone and difficult to debug mistakes. In summary, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R versions of these functions should suffice.</p>
 <p>This was a very easy problem, and so required no fancy MCMC tricks. The <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">next vignette</a> demonstrates how <em>drjacoby</em> can be applied to more challenging problems.</p>
 </div>

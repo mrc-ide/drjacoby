@@ -85,7 +85,7 @@
       <h1 data-toc-skip>Running Multiple Chains</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2020-11-25</h4>
+            <h4 class="date">2020-11-26</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/parallel.Rmd"><code>vignettes/parallel.Rmd</code></a></small>
       <div class="hidden name"><code>parallel.Rmd</code></div>
@@ -156,7 +156,7 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 23.4%
 #&gt; 
-#&gt; chain completed in 0.003936 seconds</pre></body></html></div>
+#&gt; chain completed in 0.003164 seconds</pre></body></html></div>
 <p>When we look at our MCMC output (using the <code><a href="../reference/plot_par.html">plot_par()</a></code> function) we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">temperature rungs</a> then these would also be duplicated over chains.</p>
 <div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="co"># summarise output</span>
 <span class="no">mcmc</span>

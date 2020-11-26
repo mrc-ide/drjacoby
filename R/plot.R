@@ -36,7 +36,7 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   stage <- rung <- value <- loglikelihood <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
   assert_in(phase, c("burnin", "sampling"))
@@ -137,7 +137,7 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
   stage <- value <- link <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_in(chain, c("all", gsub("chain", "", unique(x$output$chain))))
   assert_in(phase, c("burnin", "sampling"))
   assert_single_pos_int(x_axis_type)
@@ -213,14 +213,13 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   stage <- iteration <- logprior <- loglikelihood <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_bounded(lag, 1, 500)
   if (is.null(par)) {
     par <- setdiff(names(x$output), c("chain", "rung", "iteration", "stage",
                                       "logprior", "loglikelihood"))
   }
-  assert_vector(par)
-  assert_string(par)
+  assert_vector_string(par)
   assert_in(par, names(x$output))
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
@@ -298,7 +297,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   stage <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_bounded(lag, 1, 500)
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling", "both"))
@@ -437,7 +436,7 @@ plot_cor <- function(x, parameter1, parameter2,
   stage <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_string(parameter1)
   assert_single_string(parameter2)
   assert_in(parameter1, names(x$output))
@@ -504,7 +503,7 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
   stage <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   if (!is.null(show)) {
     assert_string(show)
     assert_in(show, names(x$output))

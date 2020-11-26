@@ -12,6 +12,40 @@ check_drjacoby_loaded <- function() {
 }
 
 #------------------------------------------------
+#' @title Define parameters dataframe
+#'
+#' @description Provides a convenient way of defining parameters in the format
+#'   required by \code{run_mcmc()}.
+#'
+#' @param ... define parameters one at a time, for each one defining four
+#'   elements: name, min, max, init.
+#'
+#' @export
+
+define_params <- function(...) {
+  x <- list(...)
+  
+  # check input format
+  assert_gr(length(x), 0, message = "input cannot be empty")
+  if ((length(x) %% 4) != 0) {
+    stop("each parameter must have 4 inputs: {name, min, max, init}")
+  }
+  n <- length(x) / 4
+  v <- 4*(0:(n-1))
+  mapply(function(x) {assert_single_string(x, message = "parameter names must be character strings")}, x[1 + v])
+  mapply(function(x) {assert_single_numeric(x, message = "min values must be single values")}, x[2 + v])
+  mapply(function(x) {assert_single_numeric(x, message = "max values must be single values")}, x[3 + v])
+  mapply(function(x) {assert_vector_numeric(x, message = "init values must be numeric")}, x[4 + v])
+  
+  # return dataframe
+  ret <- data.frame(name = unlist(x[1 + v]),
+                    min = unlist(x[2 + v]),
+                    max = unlist(x[3 + v]))
+  ret$init <- x[4 + v]
+  ret
+}
+
+#------------------------------------------------
 #' @title Run drjacoby MCMC
 #'
 #' @description Run MCMC using defined data object, likelihood function, prior
@@ -87,11 +121,9 @@ run_mcmc <- function(data,
   on.exit(gc())
   
   # ---------- check inputs ----------
+  
   # check data
-  assert_list(data)
-  if (is.null(names(data)) | any(names(data) == "")) {
-    stop("data must be a *named* list")
-  }
+  assert_list_named(data)
   assert_numeric(unlist(data))
   
   # check df_params
@@ -119,8 +151,8 @@ run_mcmc <- function(data,
   assert_list(misc)
   
   # check loglikelihood and logprior functions
-  assert_custom_class(loglike, c("function", "character"))
-  assert_custom_class(logprior, c("function", "character"))
+  assert_class(loglike, c("function", "character"))
+  assert_class(logprior, c("function", "character"))
   
   # check MCMC parameters
   assert_single_pos_int(burnin, zero_allowed = FALSE)
@@ -141,7 +173,7 @@ run_mcmc <- function(data,
   
   # check misc parameters
   if (!is.null(cluster)) {
-    assert_custom_class(cluster, "cluster")
+    assert_class(cluster, "cluster")
   }
   assert_single_logical(pb_markdown)
   assert_single_logical(silent)
