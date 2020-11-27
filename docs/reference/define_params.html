@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot parameter correlation — plot_cor • drjacoby</title>
+<title>Define parameters dataframe — define_params • drjacoby</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,9 @@
 
 
 
-<meta property="og:title" content="Plot parameter correlation — plot_cor" />
-<meta property="og:description" content="Plots correlation between two parameters" />
+<meta property="og:title" content="Define parameters dataframe — define_params" />
+<meta property="og:description" content="Provides a convenient way of defining parameters in the format
+  required by run_mcmc()." />
 
 
 
@@ -123,55 +124,25 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot parameter correlation</h1>
-    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/drjacoby/blob/master/R/plot.R'><code>R/plot.R</code></a></small>
-    <div class="hidden name"><code>plot_cor.Rd</code></div>
+    <h1>Define parameters dataframe</h1>
+    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/drjacoby/blob/master/R/main.R'><code>R/main.R</code></a></small>
+    <div class="hidden name"><code>define_params.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Plots correlation between two parameters</p>
+    <p>Provides a convenient way of defining parameters in the format
+  required by <code><a href='run_mcmc.html'>run_mcmc()</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_cor</span>(
-  <span class='no'>x</span>,
-  <span class='no'>parameter1</span>,
-  <span class='no'>parameter2</span>,
-  <span class='kw'>downsample</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>,
-  <span class='kw'>chain</span> <span class='kw'>=</span> <span class='st'>"all"</span>,
-  <span class='kw'>rung</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
-)</pre>
+    <pre class="usage"><span class='fu'>define_params</span>(<span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>an object of class <code>drjacoby_output</code></p></td>
-    </tr>
-    <tr>
-      <th>parameter1</th>
-      <td><p>Name of parameter first parameter.</p></td>
-    </tr>
-    <tr>
-      <th>parameter2</th>
-      <td><p>Name of parameter second parameter.</p></td>
-    </tr>
-    <tr>
-      <th>downsample</th>
-      <td><p>Downsample chain for efficiency</p></td>
-    </tr>
-    <tr>
-      <th>phase</th>
-      <td><p>which phase to plot. Must be either "burnin" or "sampling".</p></td>
-    </tr>
-    <tr>
-      <th>chain</th>
-      <td><p>which chain to plot.</p></td>
-    </tr>
-    <tr>
-      <th>rung</th>
-      <td><p>Rung</p></td>
+      <th>...</th>
+      <td><p>define parameters one at a time, for each one defining four
+elements: name, min, max, init.</p></td>
     </tr>
     </table>
 

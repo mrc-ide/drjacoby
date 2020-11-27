@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Running Multiple Chains • drjacoby</title>
+<title>Running Parallel Chains • drjacoby</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Running Multiple Chains">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Running Parallel Chains">
 <meta property="og:description" content="drjacoby">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -48,7 +48,7 @@
       <a href="../articles/installation.html">Installation</a>
     </li>
     <li>
-      <a href="../articles/example.html">Example MCMC Implementation</a>
+      <a href="../articles/example.html">Basic Example</a>
     </li>
     <li>
       <a href="../articles/metropolis_coupling.html">Metropolis Coupling</a>
@@ -82,10 +82,10 @@
       </header><script src="parallel_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Running Multiple Chains</h1>
+      <h1 data-toc-skip>Running Parallel Chains</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2020-11-26</h4>
+            <h4 class="date">2020-11-27</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/parallel.Rmd"><code>vignettes/parallel.Rmd</code></a></small>
       <div class="hidden name"><code>parallel.Rmd</code></div>
@@ -94,7 +94,7 @@
 
     
     
-<p>Running multiple chains is a good way of checking that our MCMC is working, in the sense that it is converging on the same stationary distribution. Each chain is completely independent of all others, and so this qualifies as an <a href="https://en.wikipedia.org/wiki/Embarrassingly_parallel">embarrassingly parallel</a> problem.</p>
+<p>Running multiple chains is a good way of checking that our MCMC is working well. Each chain is completely independent of all others, and so this qualifies as an <a href="https://en.wikipedia.org/wiki/Embarrassingly_parallel">embarrassingly parallel</a> problem.</p>
 <p>This vignette will demonstrate how to run <em>drjacoby</em> with multiple chains, first in serial and then in parallel over multiple cores.</p>
 <div id="setup" class="section level2">
 <h2 class="hasAnchor">
@@ -106,30 +106,15 @@
 <span class="co"># define parameters dataframe</span>
 <span class="no">df_params</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="st">"mu"</span>, <span class="kw">min</span> <span class="kw">=</span> -<span class="fl">10</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">0</span>)
 
-<span class="co"># define cpp loglike function</span>
-<span class="no">cpp_loglike</span> <span class="kw">&lt;-</span> <span class="st">"SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
-  
-  // unpack data
-  std::vector&lt;double&gt; x = Rcpp::as&lt; std::vector&lt;double&gt; &gt;(data[\"x\"]);
-  
-  // unpack parameters
-  double mu = params[\"mu\"];
-  
-  // sum log-likelihood over all data
-  double ret = 0.0;
-  for (unsigned int i = 0; i &lt; x.size(); ++i) {
-    ret += R::dnorm(x[i], mu, 1.0, true);
-  }
+<span class="co"># define loglike function</span>
+<span class="no">r_loglike</span> <span class="kw">&lt;-</span> <span class="kw">function</span>(<span class="no">params</span>, <span class="no">param_i</span>, <span class="no">data</span>, <span class="no">misc</span>) {
+  <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(<span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">dnorm</a></span>(<span class="no">data</span>$<span class="no">x</span>, <span class="kw">mean</span> <span class="kw">=</span> <span class="no">params</span>[<span class="st">"mu"</span>], <span class="kw">sd</span> <span class="kw">=</span> <span class="fl">1.0</span>, <span class="kw">log</span> <span class="kw">=</span> <span class="fl">TRUE</span>))
+}
 
-  // return as SEXP
-  return Rcpp::wrap(ret);
-}"</span>
-
-<span class="co"># define cpp logprior function</span>
-<span class="no">cpp_logprior</span> <span class="kw">&lt;-</span> <span class="st">"SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
-  double ret = -log(20.0);
-  return Rcpp::wrap(ret);
-}"</span></pre></body></html></div>
+<span class="co"># define logprior function</span>
+<span class="no">r_logprior</span> <span class="kw">&lt;-</span> <span class="kw">function</span>(<span class="no">params</span>, <span class="no">param_i</span>, <span class="no">misc</span>) {
+  <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">dunif</a></span>(<span class="no">params</span>[<span class="st">"mu"</span>], <span class="kw">min</span> <span class="kw">=</span> -<span class="fl">10</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">log</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
+}</pre></body></html></div>
 </div>
 <div id="running-multiple-chains" class="section level2">
 <h2 class="hasAnchor">
@@ -138,11 +123,11 @@
 <div class="sourceCode" id="cb2"><html><body><pre class="r"># run MCMC in serial
 mcmc &lt;- run_mcmc(data = data_list,
                  df_params = df_params,
-                 loglike = cpp_loglike,
-                 logprior = cpp_logprior,
+                 loglike = r_loglike,
+                 logprior = r_logprior,
                  burnin = 1e3,
                  samples = 1e3,
-                 chains = 1,
+                 chains = 2,
                  pb_markdown = TRUE)
 #&gt; MCMC chain 1
 #&gt; burn-in
@@ -156,12 +141,25 @@ mcmc &lt;- run_mcmc(data = data_list,
   |======================================================================| 100%
 #&gt; acceptance rate: 23.4%
 #&gt; 
-#&gt; chain completed in 0.003164 seconds</pre></body></html></div>
+#&gt; chain completed in 0.091828 seconds
+#&gt; MCMC chain 2
+#&gt; burn-in
+#&gt; 
+  |                                                                            
+  |======================================================================| 100%
+#&gt; acceptance rate: 23.1%
+#&gt; sampling phase
+#&gt; 
+  |                                                                            
+  |======================================================================| 100%
+#&gt; acceptance rate: 23.5%
+#&gt; 
+#&gt; chain completed in 0.064803 seconds</pre></body></html></div>
 <p>When we look at our MCMC output (using the <code><a href="../reference/plot_par.html">plot_par()</a></code> function) we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">temperature rungs</a> then these would also be duplicated over chains.</p>
 <div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="co"># summarise output</span>
 <span class="no">mcmc</span>
 <span class="co">#&gt; drjacoby output:</span>
-<span class="co">#&gt; 1 chains</span>
+<span class="co">#&gt; 2 chains</span>
 <span class="co">#&gt; 1 rungs</span>
 <span class="co">#&gt; 1000 burn-in iterations</span>
 <span class="co">#&gt; 1000 sampling iterations</span>
@@ -174,13 +172,13 @@ mcmc &lt;- run_mcmc(data = data_list,
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">cores</span> <span class="kw">&lt;-</span> <span class="kw pkg">parallel</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html">detectCores</a></span>()</pre></body></html></div>
 <p>Next we make a cluster object, which creates multiple copies of R running in parallel over different cores. Here we are using all available cores, but if you want to hold some back for other intensive tasks then simply use a smaller number of cores when specifying this cluster.</p>
 <div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="no">cl</span> <span class="kw">&lt;-</span> <span class="kw pkg">parallel</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/makeCluster.html">makeCluster</a></span>(<span class="no">cores</span>)</pre></body></html></div>
-<p>We then run the usual <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> function, this time passing in the cluster as an argument. This causes <em>drjacoby</em> to use a <code>clusterApplyLB()</code> call rather than an ordinary <code><a href="https://rdrr.io/r/base/lapply.html">lapply()</a></code> call over different chains. Each chain is added to a queue over the specified number of cores - when the first job completes, the next job is placed on the node that has become free and this continues until all jobs are complete.</p>
+<p>We then run the usual <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> function, this time passing in the cluster object as an argument. This causes <em>drjacoby</em> to use a <code>clusterApplyLB()</code> call rather than an ordinary <code><a href="https://rdrr.io/r/base/lapply.html">lapply()</a></code> call over different chains. Each chain is added to a queue over the specified number of cores - when the first job completes, the next job is placed on the node that has become available and this continues until all jobs are complete.</p>
 <p>Note that output is supressed when running in parallel to avoid sending print commands to multiple cores, so you will not see the usual progress bars.</p>
 <div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="co"># run MCMC in parallel</span>
 <span class="no">mcmc</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>,
                  <span class="kw">df_params</span> <span class="kw">=</span> <span class="no">df_params</span>,
-                 <span class="kw">loglike</span> <span class="kw">=</span> <span class="no">cpp_loglike</span>,
-                 <span class="kw">logprior</span> <span class="kw">=</span> <span class="no">cpp_logprior</span>,
+                 <span class="kw">loglike</span> <span class="kw">=</span> <span class="no">r_loglike</span>,
+                 <span class="kw">logprior</span> <span class="kw">=</span> <span class="no">r_logprior</span>,
                  <span class="kw">burnin</span> <span class="kw">=</span> <span class="fl">1e3</span>,
                  <span class="kw">samples</span> <span class="kw">=</span> <span class="fl">1e3</span>,
                  <span class="kw">chains</span> <span class="kw">=</span> <span class="fl">2</span>,

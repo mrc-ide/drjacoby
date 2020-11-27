@@ -310,17 +310,17 @@ run_mcmc <- function(data,
       rhat_est[p] <- gelman_rubin(pm, chains, samples)
     }
     rhat_est[skip_param] <- NA
+    names(rhat_est) <- param_names
     output_processed$diagnostics$rhat <- rhat_est
   }
   
   # ESS
-  # NOTE - some issues with line ess_est <- apply(output_sub, 2, coda::effectiveSize), causing tests to fail. Adding tryCatch line fixes the problem, even though problem line is unchanged. Leaving commented out for now so can proceed with development.
-  #output_sub <- subset(output_processed$output, stage == "sampling" & rung == "rung1",
-  #                     select = as.character(param_names))
+  output_sub <- subset(output_processed$output, stage == "sampling" & rung == sprintf("rung%s", rungs),
+                       select = as.character(param_names))
   #tc <- tryCatch(apply(output_sub, 2, coda::effectiveSize))
-  #ess_est <- apply(output_sub, 2, coda::effectiveSize)
-  #ess_est[skip_param] <- NA
-  #output_processed$diagnostics$ess <- ess_est
+  ess_est <- apply(output_sub, 2, coda::effectiveSize)
+  ess_est[skip_param] <- NA
+  output_processed$diagnostics$ess <- ess_est
   
   # Thermodynamic power
   output_processed$diagnostics$rung_details <- data.frame(rung = 1:rungs,
