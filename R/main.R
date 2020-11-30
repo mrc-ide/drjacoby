@@ -21,6 +21,9 @@ check_drjacoby_loaded <- function() {
 #'   elements: name, min, max, init.
 #'
 #' @export
+#' @examples
+#' define_params(name = "mu", min = -10, max = 10, init = 0,
+#'               name = "sigma", min = 0, max = 5, init = 1)
 
 define_params <- function(...) {
   x <- list(...)
@@ -297,6 +300,11 @@ run_mcmc <- function(data,
     }, seq_len(rungs), SIMPLIFY = FALSE))
   }, seq_len(chains), SIMPLIFY = FALSE))
   
+  # check for bad values in output
+  if (!all(is.finite(unlist(df_output[, param_names])))) {
+    stop("output contains non-finite values. Check that all parameters are constrained to a finite range")
+  }
+  
   # append to output list
   output_processed <- list(output = df_output)
   output_processed$diagnostics <- list()
@@ -317,7 +325,6 @@ run_mcmc <- function(data,
   # ESS
   output_sub <- subset(output_processed$output, stage == "sampling" & rung == sprintf("rung%s", rungs),
                        select = as.character(param_names))
-  #tc <- tryCatch(apply(output_sub, 2, coda::effectiveSize))
   ess_est <- apply(output_sub, 2, coda::effectiveSize)
   ess_est[skip_param] <- NA
   output_processed$diagnostics$ess <- ess_est

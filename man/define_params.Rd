@@ -14,3 +14,7 @@ elements: name, min, max, init.}
 Provides a convenient way of defining parameters in the format
   required by \code{run_mcmc()}.
 }
+\examples{
+define_params(name = "mu", min = -10, max = 10, init = 0,
+              name = "sigma", min = 0, max = 5, init = 1)
+}

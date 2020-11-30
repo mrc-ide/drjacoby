@@ -12,10 +12,15 @@ test_that("R likelihood and prior", {
   data_list <- list(x = x)
   
   # define parameters dataframe
-  df_params <- data.frame(name = c("mu", "sigma"),
-                          min = c(-10, 0),
-                          max = c(10, Inf),
-                          init = c(5, 1))
+  df_params <- define_params(name = "mu", min = -10, max = 10, init = 5,
+                             name = "sigma", min = 0, max = Inf, init = 1)
+  
+  # define same parameters dataframe using base R method and check identical
+  df_params_base <- data.frame(name = c("mu", "sigma"),
+                               min = c(-10, 0),
+                               max = c(10, Inf))
+  df_params_base$init <- list(init = 5, init = 1)
+  expect_identical(df_params, df_params_base)
   
   # Null log likelihood
   r_loglike_null <- function(params, param_i, data, misc) {
