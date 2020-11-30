@@ -36,7 +36,7 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   stage <- rung <- value <- loglikelihood <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
   assert_in(phase, c("burnin", "sampling"))
@@ -137,7 +137,7 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
   stage <- value <- link <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_in(chain, c("all", gsub("chain", "", unique(x$output$chain))))
   assert_in(phase, c("burnin", "sampling"))
   assert_single_pos_int(x_axis_type)
@@ -213,14 +213,13 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   stage <- iteration <- logprior <- loglikelihood <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_bounded(lag, 1, 500)
   if (is.null(par)) {
     par <- setdiff(names(x$output), c("chain", "rung", "iteration", "stage",
                                       "logprior", "loglikelihood"))
   }
-  assert_vector(par)
-  assert_string(par)
+  assert_vector_string(par)
   assert_in(par, names(x$output))
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
@@ -298,7 +297,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   stage <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_bounded(lag, 1, 500)
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling", "both"))
@@ -316,7 +315,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
     phase <- c("burnin", "sampling")
   }
   
-  # get basic properties
+  # subset based on rung, chain and phase
   rung_get <- paste0("rung", rung)
   if (chain == "all") {
     chain_get <- unique(x$output$chain)
@@ -325,7 +324,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   }
   data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase, chain %in% chain_get) 
   
-  # choose which parameters to plot
+  # subset to chosen parameters
   parameter <- setdiff(names(data), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
   if(!is.null(show)){
     stopifnot(is.character(show))
@@ -341,16 +340,12 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   }
   
   # Downsample
-  if(downsample & nrow(data) > 2000){
+  if (downsample & nrow(data) > 2000) {
     data <- data[round(seq(1, nrow(data), length.out = 2000)),]
   }
   
-  data <- dplyr::group_by(data, chain)
-  data <- dplyr::mutate(data, plot_par_x = 1:dplyr::n())
-  data <- dplyr::ungroup(data)
-  
   # Autocorrealtion (on downsample)
-  ac_data <- as.data.frame(apply(data[,parameter], 2, acf_data, lag = lag))
+  ac_data <- as.data.frame(apply(data[,parameter,drop = FALSE], 2, acf_data, lag = lag))
   ac_data$lag <- 0:lag
   
   # Set minimum bin number
@@ -359,8 +354,11 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   # produce plots over all parameters
   plot_list <- c()
   for(j in 1:length(parameter)){
-    pd <- data[, c("chain", "plot_par_x", parameter[j])]
-    names(pd) <- c("chain", "plot_par_x", "y")
+    
+    # create plotting data
+    pd <- data[, c("chain", "iteration", parameter[j])]
+    names(pd) <- c("chain", "iteration", "y")
+    
     pd2 <- ac_data[, c("lag", parameter[j])]
     names(pd2) <- c("lag", "Autocorrelation")
     
@@ -371,8 +369,8 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
       ggplot2::xlab(parameter[j]) +
       ggplot2::theme_bw()
     
-    # Chains
-    p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$plot_par_x, y = .data$y, col = .data$chain)) + 
+    # Trace plots
+    p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$iteration, y = .data$y, col = .data$chain)) + 
       ggplot2::geom_line() +
       scale_color_discrete(name = "Chain") +
       ggplot2::xlab("Iteration") +
@@ -399,13 +397,11 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   }
   names(plot_list) <- paste0("Plot_", parameter)
   
-  if (!display) {
-    return(invisible(plot_list))
-  } else {
-    # Display plots, asking user for next page if multiple parameters
-    for(j in 1:length(parameter)){
+  # Display plots, asking user for next page if multiple parameters
+  if (display) {
+    for (j in 1:length(parameter)) {
       graphics::plot(plot_list[[j]]$combined)
-      if(j == 1){
+      if (j == 1) {
         default_ask <- grDevices::devAskNewPage()
         on.exit(grDevices::devAskNewPage(default_ask))
         grDevices::devAskNewPage(ask = TRUE)
@@ -437,7 +433,7 @@ plot_cor <- function(x, parameter1, parameter2,
   stage <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_string(parameter1)
   assert_single_string(parameter2)
   assert_in(parameter1, names(x$output))
@@ -504,7 +500,7 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
   stage <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   if (!is.null(show)) {
     assert_string(show)
     assert_in(show, names(x$output))

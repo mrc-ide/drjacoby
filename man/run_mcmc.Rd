@@ -36,7 +36,9 @@ elements:
   allowed.
   \item \code{max} - the maximum value of the parameter. \code{Inf} is
   allowed.
-  \item \code{init} - the initial value of the parameter.
+  \item \code{init} - the initial value of the parameter. If running
+  multiple chains a list of initial values can be used to specify distinct
+  values for each chain.
 }}
 
 \item{misc}{optional list object passed to likelihood and prior.}
@@ -59,12 +61,14 @@ parallel, otherwise they are run in serial.}
 \item{coupling_on}{whether to implement Metropolis-coupling over temperature 
 rungs.}
 
-\item{GTI_pow}{values in the temperature ladder are raised to this power.}
+\item{GTI_pow}{values in the temperature ladder are raised to this power.
+Provides a convenient way of concentrating rungs towards one end of the
+temperature scale.}
 
 \item{beta_manual}{option to manually define temperature ladder. These values
 are raised to the power \code{GTI_pow}, hence you should use \code{GTI_code
-= 1} to fix powers exactly. If \code{NULL} then an equal spacing of length
-\code{rungs} is used between 0 and 1.}
+= 1} if you want to fix powers exactly. If \code{NULL} then an equal
+spacing of length \code{rungs} is used between 0 and 1.}
 
 \item{cluster}{option to pass in a cluster environment, allowing chains to be
 run in parallel (see package "parallel").}
