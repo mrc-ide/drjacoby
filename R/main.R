@@ -160,7 +160,7 @@ check_params <- function(x) {
 #' @param silent whether to suppress all console output.
 #'
 #' @importFrom utils txtProgressBar
-#' @importFrom stats setNames
+#' @importFrom stats setNames var
 #' @export
 
 run_mcmc <- function(data,
@@ -410,6 +410,12 @@ run_mcmc <- function(data,
     
   }
   output_processed$diagnostics$mc_accept <- mc_accept
+  
+  # DIC
+  output_sub <- subset(output_processed$output, stage == "sampling" & rung == sprintf("rung%s", rungs))
+  deviance <- -2*output_sub$loglikelihood
+  DIC <- mean(deviance) + 0.5*var(deviance)
+  output_processed$diagnostics$DIC_Gelman <- DIC
   
   ## Parameters
   output_processed$parameters <- list(data = data,
