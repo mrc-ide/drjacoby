@@ -50,13 +50,17 @@ define_params <- function(...) {
   # check input format of arguments
   assert_gr(length(x), 0, message = "input cannot be empty")
   assert_in(names(x), c("name", "min", "max", "init", "block"))
+  use_init <- ("init" %in% names(x))
   use_block <- ("block" %in% names(x))
-  n_cols <- ifelse(use_block, 5, 4)
+  n_cols <- 3 + use_init + use_block
   if ((length(x) %% n_cols) != 0) {
     stop("must have the same number of inputs per parameter")
   }
   n_param <- length(x) / n_cols
-  arg_names <-c("name", "min", "max", "init")
+  arg_names <-c("name", "min", "max")
+  if (use_init) {
+    arg_names <- c(arg_names, "init")
+  }
   if (use_block) {
     arg_names <- c(arg_names, "block")
   }
@@ -67,7 +71,9 @@ define_params <- function(...) {
   ret <- data.frame(name = unlist(x[1 + v]),
                     min = unlist(x[2 + v]),
                     max = unlist(x[3 + v]))
-  ret$init <- x[4 + v]
+  if (use_init) {
+    ret$init <- x[4 + v]
+  }
   if (use_block) {
     ret$block <- x[5 + v]
   }
@@ -86,13 +92,16 @@ check_params <- function(x) {
   
   # check dataframe has correct elements
   assert_dataframe(x)
-  assert_in(c("name", "min", "max", "init"), names(x),
-            message = "df_params must contain the columns 'name', 'min', 'max', 'init'")
+  assert_in(c("name", "min", "max"), names(x),
+            message = "df_params must contain the columns 'name', 'min', 'max'")
+  use_init <- ("init" %in% names(x))
   use_block <- ("block" %in% names(x))
   
   # coerce init and block to list
-  if (!is.list(x$init)) {
-    x$init <- as.list(x$init)
+  if (use_init) {
+    if (!is.list(x$init)) {
+      x$init <- as.list(x$init)
+    }
   }
   if (use_block) {
     if (!is.list(x$block)) {
@@ -107,15 +116,19 @@ check_params <- function(x) {
     assert_single_string(x$name[i], message = "parameter names must be character strings")
     assert_single_numeric(x$min[i], message = "min values must be single values")
     assert_single_numeric(x$max[i], message = "min values must be single values")
-    assert_vector_numeric(x$init[[i]], message = "init values must be numeric")
+    if (use_init) {
+      assert_vector_numeric(x$init[[i]], message = "init values must be numeric")
+    }
     if (use_block) {
       assert_vector_numeric(x$block[[i]], message = "block values must be numeric")
     }
     
     # check order
     assert_leq(x$min[i], x$max[i], message = "min values must be less than or equal to max values")
-    assert_greq(x$init[[i]], x$min[i], message = "init values must be greater than or equal to min values")
-    assert_leq(x$init[[i]], x$max[i], message = "init values must be less than or equal to max values")
+    if (use_init) {
+      assert_greq(x$init[[i]], x$min[i], message = "init values must be greater than or equal to min values")
+      assert_leq(x$init[[i]], x$max[i], message = "init values must be less than or equal to max values")
+    }
   }
   
   return(x)
@@ -160,7 +173,7 @@ check_params <- function(x) {
 #' @param silent whether to suppress all console output.
 #'
 #' @importFrom utils txtProgressBar
-#' @importFrom stats setNames var
+#' @importFrom stats setNames var runif
 #' @export
 
 run_mcmc <- function(data,
@@ -210,13 +223,14 @@ run_mcmc <- function(data,
   
   # check df_params
   df_params <- check_params(df_params)
-  if (!("block" %in% names(df_params))) {  # default values of block
-    df_params$block <- as.list(rep(1, nrow(df_params)))
-  }
-  for (i in 1:nrow(df_params)) {
-    if (length(df_params$init[[i]]) != 1) {
-      assert_length(df_params$init[[i]], chains, message = paste0("must define one df_params$init value per parameter, ",
-                                                                  "or alternatively a list of values one for each chain"))
+  use_init <- ("init" %in% names(df_params))
+  use_block <- ("block" %in% names(df_params))
+  if (use_init) {
+    for (i in 1:nrow(df_params)) {
+      if (length(df_params$init[[i]]) != 1) {
+        assert_length(df_params$init[[i]], chains, message = paste0("must define one df_params$init value per parameter, ",
+                                                                    "or alternatively a list of values one for each chain"))
+      }
     }
   }
   
@@ -248,6 +262,29 @@ run_mcmc <- function(data,
   
   # flag to skip over fixed parameters
   skip_param <- (df_params$min == df_params$max)
+  
+  # define default init values
+  if (!use_init) {
+    init_list <- list()
+    p <- runif(chains)
+    for (i in 1:nrow(df_params)) {
+      if (df_params$trans_type[i] == 0) {
+        init_list[[i]] <- log(p) - log(1 - p)
+      } else if (df_params$trans_type[i] == 1) {
+        init_list[[i]] <- log(p) + df_params$max[i]
+      } else if (df_params$trans_type[i] == 2) {
+        init_list[[i]] <- df_params$min[i] - log(p)
+      } else if (df_params$trans_type[i] == 3) {
+        init_list[[i]] <- df_params$min[i] + (df_params$max[i] - df_params$min[i])*p
+      }
+    }
+    df_params$init <- init_list
+  }
+  
+  # define default blocks
+  if (!use_block) {
+    df_params$block <- as.list(rep(1, nrow(df_params)))
+  }
   
   # get initial values into matrix. Rows for parameters, columns for chains
   init_mat <- do.call(rbind, mapply(function(x) {
