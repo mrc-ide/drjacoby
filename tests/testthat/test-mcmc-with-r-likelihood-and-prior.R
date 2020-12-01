@@ -23,23 +23,23 @@ test_that("R likelihood and prior", {
   expect_identical(df_params, df_params_base)
   
   # Null log likelihood
-  r_loglike_null <- function(params, param_i, data, misc) {
+  r_loglike_null <- function(params, data, misc) {
     return(0)
   }
   
   # Log likelihood
-  r_loglike <- function(params, param_i, data, misc) {
+  r_loglike <- function(params, data, misc) {
     sum(dnorm(data$x, mean = params["mu"], sd = params["sigma"], log = TRUE))
   }
   
   # Log prior
-  r_logprior_strong <- function(params, param_i, misc) {
+  r_logprior_strong <- function(params, misc) {
     dnorm(params["mu"], 6, 0.1, log = TRUE) +
       dnorm(params["sigma"], 1, 0.1, log = TRUE)
   }
   
   # Null log prior
-  r_logprior_null <- function(params, param_i, misc) {
+  r_logprior_null <- function(params, misc) {
     return(0)
   }
   

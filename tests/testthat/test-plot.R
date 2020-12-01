@@ -11,12 +11,12 @@ test_that("plots do not produce errors", {
   names(df_params) <- c("name", "min", "max", "init")
 
   # log likelihood
-  r_loglike <- function(params, param_i, data, misc) {
+  r_loglike <- function(params, data, misc) {
     sum(dnorm(data$x, mean = params["mu"], sd = params["sigma"], log = TRUE))
   }
   
   # log prior
-  r_logprior <- function(params, param_i, misc) {
+  r_logprior <- function(params, misc) {
     dnorm(params["mu"], log = TRUE) + dlnorm(params["sigma"])
   }
   

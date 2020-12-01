@@ -31,6 +31,8 @@ void Particle::init(System &s, double beta_raised) {
   bw_stepsize = 1.0;
   
   // likelihoods and priors
+  loglike_block = vector<double>(s_ptr->n_block);
+  loglike_prop_block = vector<double>(s_ptr->n_block);
   loglike = 0;
   loglike_prop = 0;
   logprior = 0;

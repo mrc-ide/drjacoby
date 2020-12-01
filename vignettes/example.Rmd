@@ -50,7 +50,7 @@ sigma_true <- 2
 data_list <- list(x = rnorm(10, mean = mu_true, sd = sigma_true))
 ```
 
-Notice that data needs to be defined as a named list. For our example MCMC we will assume that we know the correct distribution of the data (i.e. we know the data is normally distributed), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the parameters of the distribution are unknown. Parameters within *drjacoby* are defined in dataframe format, where we specify minimum, maximum, and initial values of all parameters. The function `define_params()` makes it slightly easier to define this dataframe, but standard methods are also fine:
+Notice that data needs to be defined as a named list. For our example MCMC we will assume that we know the correct distribution of the data (i.e. we know the data is normally distributed), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the parameters of the distribution are unknown. Parameters within *drjacoby* are defined in dataframe format, where we specify minimum, maximum, and initial values of all parameters. The function `define_params()` makes it slightly easier to define this dataframe, but standard methods for making dataframes are also fine:
 
 ```{r}
 # define parameters dataframe
@@ -62,14 +62,13 @@ print(df_params)
 
 In this example we have one parameter (`mu`) that occupies a finite range [-10, 10], and another parameter (`sigma`) that can take any positive value. *drjacoby* deals with different parameter ranges using reparameterisation, which all occurs internally meaning we don't need to worry about these constraints affecting our inference.
 
-Next, we need a likelihood function. This **must** have the following four input arguments, in this order:
+Next, we need a likelihood function. This **must** have the following input arguments, specified in this order:
 
 1. `params` - a named vector of parameter values
-2. `param_i` - an index for the current parameter being updated
 3. `data` - a named list of data
 4. `misc` - a named list of miscellaneous values
 
-Not all of these inputs will necessarily be used, for example we might have no need for the parameter index or any miscellaneous values, but the `params` and `data` objects will usually be vital. Finally, the function **must** return a single value for the likelihood **in log space**. These constraints on the format of the likelihood function might seem a bit restrictive, but they are needed in order for *drjacoby* to know how to use the function internally. The issue of taking logs is particularly important, as the MCMC will still run even if we forget to take logs, but the results produced will be nonsense!
+Finally, the function **must** return a single value for the likelihood **in log space**. These constraints on the format of the likelihood function might seem a bit restrictive, but they are needed in order for *drjacoby* to know how to use the function internally. The issue of taking logs is particularly important, as the MCMC will still run even if we forget to take logs, but the results produced will be nonsense!
 
 ![Do not underestimate the importance of taking logs.](https://raw.githubusercontent.com/mrc-ide/drjacoby/version1.0/R_ignore/images/loglady.jpg)
 
@@ -77,7 +76,7 @@ Inside the likelihood function we can extract individual parameter values from t
 
 ```{r}
 # define log-likelihood function
-r_loglike <- function(params, param_i, data, misc) {
+r_loglike <- function(params, data, misc) {
   
   # extract parameter values
   mu <- params["mu"]
@@ -91,11 +90,11 @@ r_loglike <- function(params, param_i, data, misc) {
 }
 ```
 
-Finally, we need a prior function. This **must** have three of the four arguments used in the likelihood function (we have no need of the data in the prior), and it **must** return a single value for the prior probability of those parameters **in log space**. Again, this strict format is required for *drjacoby* to know how to use the prior internally. In our case we will assume a uniform prior on `mu`, and a log-normal prior on `sigma`:
+Notice that we don't use the `misc` object at all here, which is perfectly fine. Finally, we need a prior function. This **must** have the `params` and `misc` arguments as above, and it **must** return a single value for the prior probability of those parameters **in log space**. Again, this strict format is required for *drjacoby* to know how to use the prior internally. In our case we will assume a uniform prior on `mu`, and a log-normal prior on `sigma`:
 
 ```{r}
 # define log-prior function
-r_logprior <- function(params, param_i, misc) {
+r_logprior <- function(params, misc) {
   
   # extract parameter values
   mu <- params["mu"]
@@ -149,7 +148,7 @@ Notice that for all five chains both `mu` and `sigma` move quickly from their in
 mcmc$diagnostics$rhat
 ```
 
-Values close to 1 indicate that the MCMC has converged (typically the threshold <1.1 is used). This output is only availble when running multiple chains.
+Values close to 1 indicate that the MCMC has converged (typically the threshold <1.1 is used). This output uses the variance between chains, and therefore is only availble when running multiple chains.
 
 By setting `phase = "sampling"` we can look at trace plots from the sampling phase only:
 
@@ -158,7 +157,7 @@ plot_par(mcmc, show = "mu", phase = "sampling")
 plot_par(mcmc, show = "sigma", phase = "sampling")
 ```
 
-Here we can see that the MCMC continues to move freely after the burn-in phase, and that all chains appear to be exploring the same part of the parameter space. The final plot shows the autocorrelation of the chains, which in this case falls off fairly rapidly with samples being approximately independent at around 5 lags. This is an indication that the MCMC is mixing well. The marginal histogram shows a single clear peak, although this is still a bit rough so we may want to re-run the MCMC with a larger number of sampling iterations to get a smoother result. We can also explore this by looking at the effective sample size (ESS), which is stored within the MCMC diagnostics:
+Here we can see that the MCMC continues to move freely after the burn-in phase, and that all chains appear to be exploring the same part of the parameter space. The final plot shows the autocorrelation of the chains, which in this case falls off rapidly with samples being approximately independent at around 5 lags. This is an indication that the MCMC is mixing well. The marginal histogram shows a single clear peak, although this is still a bit rough so we may want to re-run the MCMC with a larger number of sampling iterations to get a smoother result. We can also explore this by looking at the effective sample size (ESS), which is stored within the MCMC diagnostics:
 
 ```{r}
 mcmc$diagnostics$ess
@@ -166,27 +165,26 @@ mcmc$diagnostics$ess
 
 We can see that despite running the MCMC for 1000 sampling iterations, the actual number of effectively independent samples accounting for autocorrelation is much lower. When doing any calculation that relies on the number of samples, we should use the ESS rather than the raw number of sampling iterations. For example if we want to know the standard error of our estimate of `mu` we should do `sd(mu)/sqrt(ESS)`. But just as importantly, when producing any summary of the posterior that does not make direct use of this number - for example when producing posterior histograms - we should *use all posterior samples*, and we should [not thin samples](https://doi.org/10.1111/j.2041-210X.2011.00131.x) to reduce autocorrelation. This is because a histogram produced from all samples is more accurate than one produce from thinned samples, even if the samples are autocorrelated.
 
-The final question is how can we be confident that our MCMC has actually explored the space well? Although the trace plot above looks good, it is possible to get results that look like this from very pathological MCMC runs. This is a more complex problem that is dealt with to some extent in [another vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html).
+The final question is how confident can we be that our MCMC has actually explored the space well? Although the trace plot above looks good, it is possible to get results that look like this from very pathological MCMC runs. This is a more complex problem that is dealt with in [another vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html).
 
 
 ## Using C++ functions
 
 Although *drjacoby* is an R package, under the hood it is running C++ through the fantastic [Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html) package. When we pass an R likelihood function to `run_mcmc()`, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This comes at a computational cost, which can be avoided by specifying functions directly within C++.
 
-To use C++ functions within *drjacoby* we simply write them directly within R as character strings. As before, there are some constraints on what this function must look like. It **must** take the same four input arguments described above, defined in the following format:
+To use C++ functions within *drjacoby* we simply write them directly within R as character strings. As before, there are some constraints on what this function must look like. It **must** take the same three input arguments described above, defined as follows:
 
 1. `params` must be an `Rcpp::NumericVector`
-2. `params_i` must be an `int`
 3. `data` must be an `Rcpp::List`
 4. `misc` must be an `Rcpp::List`
 
-All numeric values will be coerced to `double` within the code, hence data consisting of integer or boolean values should be dealt with as though they are continuous values (for example `TRUE = 1.0`, `FALSE = 0.0`). Second, the function **must** return an object of class `SEXP`. The easiest way to achieve this is to calculate the raw return value as a double, and to use the `Rcpp::wrap()` function to transform to `SEXP`. As before, the value returned should be the likelihood evaluated in **log space**.
+All parameter values will be coerced to `double` within the code, hence parameters consisting of integer or boolean values should be dealt with as though they are continuous (for example `TRUE = 1.0`, `FALSE = 0.0`). Second, the function **must** return an object of class `SEXP`. The easiest way to achieve this is to calculate the raw return value as a double, and to use the `Rcpp::wrap()` function to transform to `SEXP`. As before, the value returned should be the likelihood evaluated in **log space**.
 
-Even though we are workin in C++, we still have access to most of R's nice distribution functions through the `R::` namespace. For example, the `dnorm()` function can be accessed within C++ using `R::dnorm()`. A list of probability distributions available within Rcpp can be found [here](https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution). The `r_loglike()` function defined above can be re-written in C++ as follows:
+Even though we are working in C++, we still have access to most of R's nice distribution functions through the `R::` namespace. For example, the `dnorm()` function can be accessed within C++ using `R::dnorm()`. A list of probability distributions available within Rcpp can be found [here](https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution). The `r_loglike()` function defined above can be re-written in C++ as follows:
 
 ```{r}
 # define cpp log-likelihood function as character string
-cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
+cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
   
   // unpack data
   std::vector<double> x = Rcpp::as< std::vector<double> >(data[\"x\"]);
@@ -206,11 +204,11 @@ cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List
 }"
 ```
 
-Similarly, we can define the prior as a C++ function, subject to the same constraints. The `r_logprior()` function defined above can be re-written in C++ as follows:
+We can also define the prior as a C++ function. The `r_logprior()` function defined above can be re-written in C++ as follows:
 
 ```{r}
 # define cpp logprior function
-cpp_logprior <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
+cpp_logprior <- "SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
   
   // extract parameters
   double sigma = params[\"sigma\"];
@@ -236,6 +234,6 @@ mcmc <- run_mcmc(data = data_list,
                  pb_markdown = TRUE)
 ```
 
-You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. On the other hand, writing C++ functions in this way is more error prone and difficult to debug mistakes. In summary, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R functions might be a better choice.
+You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. On the other hand, writing C++ functions in this way is more error-prone and difficult to debug than simple R functions. Hence, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R functions might be a better choice.
 
-This was a very easy problem, and so required no fancy MCMC tricks. The [next vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) demonstrates how *drjacoby* can be applied to more challenging problems.
+This was a very easy problem, and so required no fancy MCMC tricks. The [next vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) demonstrates how *drjacoby* can be applied to a more challenging problem.
