@@ -83,6 +83,7 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   }
   
   # get 95% credible intervals over plotting values
+  data$rung <- factor(data$rung, levels = sprintf("rung%s", 1:rungs))
   y_intervals <- data %>%
     dplyr::group_by(rung) %>%
     dplyr::summarise(Q2.5 = quantile(loglikelihood, 0.025),
