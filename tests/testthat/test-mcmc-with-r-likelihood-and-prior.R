@@ -76,7 +76,7 @@ test_that("R likelihood and prior", {
                           silent = TRUE)
   
   # subset output
-  pe <- dplyr::filter(r_mcmc_null$output, stage == "sampling", chain == "chain1") %>%
+  pe <- dplyr::filter(r_mcmc_null$output, phase == "sampling", chain == "chain1") %>%
     dplyr::select(mu, sigma)
   
   # check posterior estimates
@@ -99,7 +99,7 @@ test_that("R likelihood and prior", {
                           silent = TRUE)
   
   # subset output
-  pe <- dplyr::filter(r_mcmc_data$output, stage == "sampling", chain == "chain1") %>%
+  pe <- dplyr::filter(r_mcmc_data$output, phase == "sampling", chain == "chain1") %>%
     dplyr::select(mu, sigma)
   
   # check posterior estimates

@@ -33,7 +33,7 @@ drjacoby_cols <- function() {
 plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1, y_axis_type = 1) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- rung <- value <- loglikelihood <- NULL
+  rung <- value <- loglikelihood <- NULL
   
   # check inputs
   assert_class(x, "drjacoby_output")
@@ -60,7 +60,7 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   }
   
   # get plotting values (loglikelihoods)
-  data <- dplyr::filter(x$output, chain == chain_get, stage == phase)
+  data <- dplyr::filter(x$output, chain == chain_get, phase == phase)
   y_lab <- "log-likelihood"
   
   # move to plotting deviance if specified
@@ -135,7 +135,7 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
 plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type = 1) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- value <- link <- NULL
+  value <- link <- NULL
   
   # check inputs
   assert_class(x, "drjacoby_output")
@@ -167,13 +167,13 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
   # get chain properties
   if (chain == "all") {
     chain_get <- unique(x$output$chain)
-    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, stage == phase, chain %in% chain_get) %>%
+    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, phase == phase, chain %in% chain_get) %>%
       dplyr::group_by(link) %>% 
       dplyr::summarise(value = mean(value)) %>% 
       dplyr::pull(value)
   } else {
     chain_get <- paste0("chain", chain)
-    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, stage == phase, chain == chain_get) %>%
+    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, phase == phase, chain == chain_get) %>%
       dplyr::pull(value)
   }
   
@@ -211,13 +211,13 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
 plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling", rung = NULL) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- iteration <- logprior <- loglikelihood <- NULL
+  iteration <- logprior <- loglikelihood <- NULL
   
   # check inputs
   assert_class(x, "drjacoby_output")
   assert_single_bounded(lag, 1, 500)
   if (is.null(par)) {
-    par <- setdiff(names(x$output), c("chain", "rung", "iteration", "stage",
+    par <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase",
                                       "logprior", "loglikelihood"))
   }
   assert_vector_string(par)
@@ -235,8 +235,8 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   # get output for the chosen chain, phase and rung
   chain_get <- paste0("chain", chain)
   rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, chain == chain_get, rung == rung_get, stage == phase) %>%
-    dplyr::select(-chain, -rung, -iteration, -stage, -logprior, -loglikelihood) %>%
+  data <- dplyr::filter(x$output, chain == chain_get, rung == rung_get, phase == phase) %>%
+    dplyr::select(-chain, -rung, -iteration, -phase, -logprior, -loglikelihood) %>%
     as.data.frame()
   
   # select parameters
@@ -295,7 +295,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
                      chain = "all", display = TRUE) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- NULL
+  #stage <- NULL
   
   # check inputs
   assert_class(x, "drjacoby_output")
@@ -323,10 +323,10 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   } else {
     chain_get <- paste0("chain", chain)
   }
-  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase, chain %in% chain_get) 
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase, chain %in% chain_get) 
   
   # subset to chosen parameters
-  parameter <- setdiff(names(data), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
+  parameter <- setdiff(names(data), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
   if(!is.null(show)){
     stopifnot(is.character(show))
     parameter <- parameter[grepl(paste(show, collapse = "|"), parameter)]
@@ -431,7 +431,7 @@ plot_cor <- function(x, parameter1, parameter2,
                      chain = "all", rung = NULL) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- NULL
+  #stage <- NULL
   
   # check inputs
   assert_class(x, "drjacoby_output")
@@ -460,7 +460,7 @@ plot_cor <- function(x, parameter1, parameter2,
   } else {
     chain_get <- paste0("chain", chain)
   }
-  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase, chain %in% chain_get)
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase, chain %in% chain_get)
   
   # subset to corr params
   data <- data[,c("chain", parameter1, parameter2)]  
@@ -498,7 +498,7 @@ plot_cor <- function(x, parameter1, parameter2,
 plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param_names = NULL) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- NULL
+  #stage <- NULL
   
   # check inputs
   assert_class(x, "drjacoby_output")
@@ -516,7 +516,7 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
   
   # define defaults
   if (is.null(show)) {
-    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
+    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
   }
   if (is.null(param_names)) {
     param_names <- show
@@ -529,7 +529,7 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
   
   # subset based on phase and rung
   rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase)
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase)
   data <- data[, show, drop = FALSE]
   
   # get quantiles
@@ -580,7 +580,7 @@ plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_
   
   # define defaults
   if (is.null(show)) {
-    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
+    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
   }
   if (is.null(param_names)) {
     param_names <- show
@@ -593,7 +593,7 @@ plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_
   
   # subset based on phase and rung
   rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase)
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase)
   data <- data[, show, drop = FALSE]
   n <- ncol(data)
   

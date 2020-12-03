@@ -13,11 +13,11 @@ sample_chains <- function(x, sample_n) {
   assert_gr(sample_n, 0)
   
   # declare variables to avoid "no visible binding" issues
-  stage <- chain <- rung <- iteration <- logprior <- loglikelihood <- NULL
+  phase <- chain <- rung <- iteration <- logprior <- loglikelihood <- NULL
   
   # Join chains
-  all_chains <- dplyr::filter(x$output, stage == "sampling") %>%
-    dplyr::select(-chain, -rung, -iteration, -stage, -logprior, -loglikelihood)
+  all_chains <- dplyr::filter(x$output, phase == "sampling") %>%
+    dplyr::select(-chain, -rung, -iteration, -phase, -logprior, -loglikelihood)
   assert_leq(sample_n, nrow(all_chains))
   
   # Sample chains
