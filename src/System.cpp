@@ -1,6 +1,6 @@
 
 #include "System.h"
-#include "misc_v7.h"
+#include "misc_v10.h"
 
 using namespace std;
 
@@ -31,7 +31,7 @@ void System::load(Rcpp::List args) {
   samples = rcpp_to_int(args_params["samples"]);
   rungs = rcpp_to_int(args_params["rungs"]);
   coupling_on = rcpp_to_bool(args_params["coupling_on"]);
-  GTI_pow = rcpp_to_double(args_params["GTI_pow"]);
+  beta_raised = rcpp_to_vector_double(args_params["beta_raised"]);
   chain = rcpp_to_int(args_params["chain"]);
   
   // misc parameters

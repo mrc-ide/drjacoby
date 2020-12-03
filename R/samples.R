@@ -8,7 +8,7 @@
 sample_chains <- function(x, sample_n) {
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_int(sample_n, "sample_n")
   assert_gr(sample_n, 0)
   

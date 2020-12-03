@@ -10,7 +10,8 @@ plot_cor(
   parameter2,
   downsample = TRUE,
   phase = "sampling",
-  rung = 1
+  chain = "all",
+  rung = NULL
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ plot_cor(
 \item{downsample}{Downsample chain for efficiency}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
+
+\item{chain}{which chain to plot.}
 
 \item{rung}{Rung}
 }

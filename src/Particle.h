@@ -2,7 +2,7 @@
 #pragma once
 
 #include "System.h"
-#include "misc_v7.h"
+#include "misc_v10.h"
 #include "probability_v3.h"
 
 #include <Rcpp.h>
@@ -20,8 +20,7 @@ public:
   // local copies of some parameters for convenience
   int d;
   
-  // beta_raised stores values of beta (the thermodynamic power), raised to the
-  // power GTI_pow
+  // thermodynamic power
   double beta_raised;
   
   // theta is the parameter vector in natural space

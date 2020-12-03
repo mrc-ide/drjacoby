@@ -1,6 +1,6 @@
 
 #include "main.h"
-#include "misc_v7.h"
+#include "misc_v10.h"
 #include "probability_v3.h"
 #include "System.h"
 
@@ -105,15 +105,11 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   int rungs = s.rungs;
   
   // initialise vector of particles
-  vector<double> beta_raised_vec(rungs);
   vector<Particle> particle_vec(rungs);
   for (int r = 0; r < rungs; ++r) {
     
-    // calculate thermodynamic power of this rung
-    beta_raised_vec[r] = (rungs == 1) ? 1 : pow(1.0 - r/double(rungs-1), s.GTI_pow);
-    
     // initialise particle
-    particle_vec[r].init(s, beta_raised_vec[r]);
+    particle_vec[r].init(s, s.beta_raised[r]);
     
     // initialise particle initial likelihood and prior values
     particle_vec[r].init_like(get_loglike, get_logprior);
@@ -241,8 +237,8 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   
   // print final diagnostics
   if (!s.silent) {
-    double accept_rate = particle_vec[rungs-1].accept_count/double(s.samples*d);
-    Rcpp::Rcout << "acceptance rate: " << round(accept_rate*1000)/10.0 << "%\n";
+    double accept_rate = particle_vec[rungs-1].accept_count / double(s.samples*d);
+    Rcpp::Rcout << "acceptance rate: " << round(accept_rate*1000) / 10.0 << "%\n";
   }
   
   
@@ -251,7 +247,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   // end timer
   if (!s.silent) {
     print("");
-    chrono_timer(t1);
+    chrono_timer(t1, "chain completed in ");
   }
   
   // return as Rcpp list
@@ -261,7 +257,6 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
                                       Rcpp::Named("loglike_sampling") = loglike_sampling,
                                       Rcpp::Named("logprior_sampling") = logprior_sampling,
                                       Rcpp::Named("theta_sampling") = theta_sampling,
-                                      Rcpp::Named("beta_raised_vec") = beta_raised_vec,
                                       Rcpp::Named("mc_accept_burnin") = mc_accept_burnin,
                                       Rcpp::Named("mc_accept_sampling") = mc_accept_sampling);
   return ret;

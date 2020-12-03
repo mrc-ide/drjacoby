@@ -11,29 +11,39 @@ plot_par(
   lag = 20,
   downsample = TRUE,
   phase = "sampling",
-  rung = 1,
+  rung = NULL,
+  chain = "all",
   display = TRUE
 )
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
-\item{show}{Optional character (or vector of characters) to filter parameters by.
+\item{show}{optional character (or vector of characters) to filter parameters by.
 Parameters matching show will be included.}
 
-\item{hide}{Optional character (or vector of characters) to filter parameters by.
+\item{hide}{optional character (or vector of characters) to filter parameters by.
 Parameters matching show will be hidden.}
 
-\item{lag}{Maximum lag. Must be an integer between 20 and 500}
+\item{lag}{maximum lag. Must be an integer between 1 and 500.}
 
-\item{downsample}{Downsample chain for efficiency}
+\item{downsample}{boolean. Whether to downsample chain to make plotting more
+efficient.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
-\item{rung}{Rung}
+\item{rung}{which temperature rung to plot. If \code{NULL} then defaults to
+the cold rung.}
 
-\item{display}{Show plots}
+\item{chain}{which chain to plot, e.g. \code{"chain1"}. The default
+\code{"all"} plots all chains.}
+
+\item{display}{boolean. Whether to show plots, if \code{FALSE} then plotting
+objects are returned without displaying.}
 }
 \description{
-Plot parameter estimates
+Produce a series of plots corresponding to each parameter,
+  including the raw trace, the posterior histogram and an autocorrelation
+  plot. Plotting objects can be cycled through interactively, or can be
+  returned as an object allowing them to be viewed/edited by the user.
 }

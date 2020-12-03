@@ -13,8 +13,7 @@ void Particle::init(System &s, double beta_raised) {
   // local copies of some parameters for convenience
   d = s_ptr->d;
   
-  // beta_raised stores values of beta (the thermodynamic power), raised to the
-  // power GTI_pow
+  // thermodynamic power
   this->beta_raised = beta_raised;
   
   // theta is the parameter vector in natural space

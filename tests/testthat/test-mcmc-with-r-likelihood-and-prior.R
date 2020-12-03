@@ -12,10 +12,15 @@ test_that("R likelihood and prior", {
   data_list <- list(x = x)
   
   # define parameters dataframe
-  df_params <- data.frame(name = c("mu", "sigma"),
-                          min = c(-10, 0),
-                          max = c(10, Inf),
-                          init = c(5, 1))
+  df_params <- define_params(name = "mu", min = -10, max = 10, init = 5,
+                             name = "sigma", min = 0, max = Inf, init = 1)
+  
+  # define same parameters dataframe using base R method and check identical
+  df_params_base <- data.frame(name = c("mu", "sigma"),
+                               min = c(-10, 0),
+                               max = c(10, Inf))
+  df_params_base$init <- list(init = 5, init = 1)
+  expect_identical(df_params, df_params_base)
   
   # Null log likelihood
   r_loglike_null <- function(params, param_i, data, misc) {
@@ -96,5 +101,34 @@ test_that("R likelihood and prior", {
   
   expect_type(r_mcmc_data, "list")
   expect_type(summary(r_mcmc_data), "list")
+  
+  ## Check behaviour with multiple chains
+  # set variable init values
+  df_params$init <- list(c(-5, 5), 1)
+  
+  # check for error when init does not match chain number
+  expect_error(run_mcmc(data = data_list,
+                        df_params = df_params,
+                        loglike = r_loglike,
+                        logprior = r_logprior_null,
+                        burnin = 1e2,
+                        samples = 1e2,
+                        chains = 3,
+                        silent = TRUE))
+  
+  # run with correct number of chains
+  r_mcmc_chains <- run_mcmc(data = data_list,
+                            df_params = df_params,
+                            loglike = r_loglike,
+                            logprior = r_logprior_null,
+                            burnin = 1e2,
+                            samples = 1e2,
+                            chains = 2,
+                            silent = TRUE)
+  
+  # check that first values in output match initial values over all chains
+  first_it <- subset(r_mcmc_chains$output, iteration == 1)
+  expect_equal(first_it$mu, df_params$init[[1]])
+  expect_equal(first_it$sigma, rep(df_params$init[[2]], 2))
   
 })
