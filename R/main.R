@@ -375,8 +375,8 @@ run_mcmc <- function(data,
   # ---------- process output ----------
   
   # define names
-  chain_names <- sprintf("chain%s", 1:chains)
-  rung_names <- sprintf("rung%s", 1:rungs)
+  chain_names <- 1:chains
+  rung_names <- 1:rungs
   param_names <- df_params$name
   
   # get raw output into dataframe
@@ -427,7 +427,7 @@ run_mcmc <- function(data,
   }
   
   # ESS
-  output_sub <- subset(output_processed$output, phase == "sampling" & rung == sprintf("rung%s", rungs),
+  output_sub <- subset(output_processed$output, phase == "sampling" & rung == rungs,
                        select = as.character(param_names))
   ess_est <- apply(output_sub, 2, coda::effectiveSize)
   ess_est[skip_param] <- NA
@@ -453,7 +453,7 @@ run_mcmc <- function(data,
   output_processed$diagnostics$mc_accept <- mc_accept
   
   # DIC
-  output_sub <- subset(output_processed$output, phase == "sampling" & rung == sprintf("rung%s", rungs))
+  output_sub <- subset(output_processed$output, phase == "sampling" & rung == rungs)
   deviance <- -2*output_sub$loglikelihood
   DIC <- mean(deviance) + 0.5*var(deviance)
   output_processed$diagnostics$DIC_Gelman <- DIC

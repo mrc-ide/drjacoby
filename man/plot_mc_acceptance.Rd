@@ -4,12 +4,12 @@
 \alias{plot_mc_acceptance}
 \title{Plot Metropolis coupling acceptance rates}
 \usage{
-plot_mc_acceptance(x, chain = "all", phase = "sampling", x_axis_type = 1)
+plot_mc_acceptance(x, chain = NULL, phase = "sampling", x_axis_type = 1)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
-\item{chain}{which chain to plot.}
+\item{chain}{which chain to plot. If \code{NULL} then plot all chains.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 

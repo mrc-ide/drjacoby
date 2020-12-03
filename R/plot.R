@@ -46,7 +46,6 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   assert_in(y_axis_type, 1:3)
   
   # get useful quantities
-  chain_get <- paste0("chain", chain)
   thermo_power <- x$diagnostics$rung_details$thermodynamic_power
   rungs <- length(thermo_power)
   
@@ -60,7 +59,9 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   }
   
   # get plotting values (loglikelihoods)
-  data <- dplyr::filter(x$output, chain == chain_get, phase == phase)
+  phase_get <- phase
+  chain_get <- chain
+  data <- dplyr::filter(x$output, chain == chain_get, phase == phase_get)
   y_lab <- "log-likelihood"
   
   # move to plotting deviance if specified
@@ -83,7 +84,6 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   }
   
   # get 95% credible intervals over plotting values
-  data$rung <- factor(data$rung, levels = sprintf("rung%s", 1:rungs))
   y_intervals <- data %>%
     dplyr::group_by(rung) %>%
     dplyr::summarise(Q2.5 = quantile(loglikelihood, 0.025),
@@ -97,7 +97,6 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   
   # produce plot
   plot1 <- df %>% 
-    dplyr::mutate(rung = as.numeric(sub("rung", "", rung))) %>% # coerce character to numeric 
     ggplot() + 
     geom_vline(aes(xintercept = x_vec), col = grey(0.9)) +
     geom_pointrange(aes_(x = ~x, ymin = ~Q2.5, y = ~Q50, ymax = ~Q97.5, col = ~col)) + 
@@ -127,19 +126,23 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
 #' @description Plot Metropolis coupling acceptance rates between all rungs.
 #'
 #' @inheritParams plot_rung_loglike
+#' @param chain which chain to plot. If \code{NULL} then plot all chains.
 #'
 #' @import ggplot2 dplyr
 #' @importFrom grDevices grey
 #' @export
 
-plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type = 1) {
+plot_mc_acceptance <- function(x, chain = NULL, phase = "sampling", x_axis_type = 1) {
   
   # declare variables to avoid "no visible binding" issues
   value <- link <- NULL
   
   # check inputs
   assert_class(x, "drjacoby_output")
-  assert_in(chain, c("all", gsub("chain", "", unique(x$output$chain))))
+  if (!is.null(chain)) {
+    assert_single_pos_int(chain, zero_allowed = FALSE)
+    assert_in(chain, unique(x$output$chain))
+  }
   assert_in(phase, c("burnin", "sampling"))
   assert_single_pos_int(x_axis_type)
   assert_in(x_axis_type, 1:2)
@@ -164,16 +167,15 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
     x_vec <- thermo_power_mid
     x_lab <- "thermodynamic power"
   }
+  
   # get chain properties
-  if (chain == "all") {
-    chain_get <- unique(x$output$chain)
-    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, phase == phase, chain %in% chain_get) %>%
-      dplyr::group_by(link) %>% 
-      dplyr::summarise(value = mean(value)) %>% 
+  phase_get <- phase
+  if (is.null(chain)) {
+    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, phase == phase_get) %>%
       dplyr::pull(value)
   } else {
-    chain_get <- paste0("chain", chain)
-    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, phase == phase, chain == chain_get) %>%
+    chain_get <- chain
+    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, phase == phase_get, chain == chain_get) %>%
       dplyr::pull(value)
   }
   
@@ -233,9 +235,10 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   assert_leq(rung, max_rungs)
   
   # get output for the chosen chain, phase and rung
-  chain_get <- paste0("chain", chain)
-  rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, chain == chain_get, rung == rung_get, phase == phase) %>%
+  chain_get <- chain
+  rung_get <- rung
+  phase_get <- phase
+  data <- dplyr::filter(x$output, chain == chain_get, rung == rung_get, phase == phase_get) %>%
     dplyr::select(-chain, -rung, -iteration, -phase, -logprior, -loglikelihood) %>%
     as.data.frame()
   
@@ -283,8 +286,6 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #'   efficient.
 #' @param rung which temperature rung to plot. If \code{NULL} then defaults to
 #'   the cold rung.
-#' @param chain which chain to plot, e.g. \code{"chain1"}. The default
-#'   \code{"all"} plots all chains.
 #' @param display boolean. Whether to show plots, if \code{FALSE} then plotting
 #'   objects are returned without displaying.
 #'
@@ -292,10 +293,7 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 
 plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
                      downsample = TRUE, phase = "sampling", rung = NULL,
-                     chain = "all", display = TRUE) {
-  
-  # declare variables to avoid "no visible binding" issues
-  #stage <- NULL
+                     chain = NULL, display = TRUE) {
   
   # check inputs
   assert_class(x, "drjacoby_output")
@@ -308,7 +306,10 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   }
   assert_single_pos_int(rung)
   assert_leq(rung, max_rungs)
-  assert_in(chain, c("all", gsub("chain", "", unique(x$output$chain))))
+  if (is.null(chain)) {
+    chain <- unique(x$output$chain)
+  }
+  assert_pos_int(chain, zero_allowed = FALSE)
   assert_single_logical(display)
   
   # deal with phase = "both" situation
@@ -317,13 +318,10 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   }
   
   # subset based on rung, chain and phase
-  rung_get <- paste0("rung", rung)
-  if (chain == "all") {
-    chain_get <- unique(x$output$chain)
-  } else {
-    chain_get <- paste0("chain", chain)
-  }
-  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase, chain %in% chain_get) 
+  rung_get <- rung
+  chain_get <- chain
+  phase_get <- phase
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get, chain %in% chain_get) 
   
   # subset to chosen parameters
   parameter <- setdiff(names(data), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
@@ -371,7 +369,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
       ggplot2::theme_bw()
     
     # Trace plots
-    p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$iteration, y = .data$y, col = .data$chain)) + 
+    p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$iteration, y = .data$y, col = as.factor(.data$chain))) + 
       ggplot2::geom_line() +
       scale_color_discrete(name = "Chain") +
       ggplot2::xlab("Iteration") +
@@ -428,7 +426,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 
 plot_cor <- function(x, parameter1, parameter2,
                      downsample = TRUE, phase = "sampling",
-                     chain = "all", rung = NULL) {
+                     chain = NULL, rung = NULL) {
   
   # declare variables to avoid "no visible binding" issues
   #stage <- NULL
@@ -441,6 +439,10 @@ plot_cor <- function(x, parameter1, parameter2,
   assert_in(parameter2, names(x$output))
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling", "both"))
+  if (is.null(chain)) {
+    chain <- unique(x$output$chain)
+  }
+  assert_pos_int(chain)
   max_rungs <- max(x$diagnostics$rung_details$rung)
   if (is.null(rung)) {
     rung <- max_rungs
@@ -454,13 +456,10 @@ plot_cor <- function(x, parameter1, parameter2,
   }
   
   # get basic quantities
-  rung_get <- paste0("rung", rung)
-  if (chain == "all") {
-    chain_get <- unique(x$output$chain)
-  } else {
-    chain_get <- paste0("chain", chain)
-  }
-  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase, chain %in% chain_get)
+  rung_get <- rung
+  chain_get <- chain
+  phase_get <- phase
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get, chain %in% chain_get)
   
   # subset to corr params
   data <- data[,c("chain", parameter1, parameter2)]  
@@ -497,9 +496,6 @@ plot_cor <- function(x, parameter1, parameter2,
 
 plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param_names = NULL) {
   
-  # declare variables to avoid "no visible binding" issues
-  #stage <- NULL
-  
   # check inputs
   assert_class(x, "drjacoby_output")
   if (!is.null(show)) {
@@ -528,8 +524,9 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
   }
   
   # subset based on phase and rung
-  rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase)
+  rung_get <- rung
+  phase_get <- phase
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get)
   data <- data[, show, drop = FALSE]
   
   # get quantiles
@@ -592,8 +589,9 @@ plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_
   }
   
   # subset based on phase and rung
-  rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase)
+  rung_get <- rung
+  phase_get <- phase
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get)
   data <- data[, show, drop = FALSE]
   n <- ncol(data)
   

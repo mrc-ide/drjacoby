@@ -125,14 +125,14 @@ test_that("Cpp likelihood and prior", {
   expect_length(cpp_mcmc_chains, 3)
   
   # subset output to chain1 and check posterior estimates
-  pe <- dplyr::filter(cpp_mcmc_chains$output, phase == "sampling", chain == "chain1") %>%
+  pe <- dplyr::filter(cpp_mcmc_chains$output, phase == "sampling", chain == 1) %>%
     dplyr::select(mu, sigma)
   posterior_estimate3a <- apply(pe, 2, median)
   expect_lt(posterior_estimate3a["mu"] - mu_true, 0.1)
   expect_lt(posterior_estimate3a["sigma"] - sigma_true, 0.1)
   
   # subset output to chain2 and check posterior estimates
-  pe <- dplyr::filter(cpp_mcmc_chains$output, phase == "sampling", chain == "chain2") %>%
+  pe <- dplyr::filter(cpp_mcmc_chains$output, phase == "sampling", chain == 2) %>%
     dplyr::select(mu, sigma)
   posterior_estimate3b <- apply(pe, 2, median)
   expect_lt(posterior_estimate3b["mu"] - mu_true, 0.1)
@@ -149,7 +149,7 @@ test_that("Cpp likelihood and prior", {
                           silent = TRUE)
   
   # subset output
-  pe <- dplyr::filter(mcmc_out_MC$output, phase == "sampling", chain == "chain1") %>%
+  pe <- dplyr::filter(mcmc_out_MC$output, phase == "sampling") %>%
     dplyr::select(mu, sigma)
   
   # check posterior estimates
