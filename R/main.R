@@ -15,7 +15,7 @@ check_drjacoby_loaded <- function() {
 #' @title Define parameters dataframe
 #'
 #' @description Provides a convenient way of defining parameters in the format
-#'   required by \code{run_mcmc()}. Each parameter must have the following four
+#'   required by \code{run_mcmc()}. Each parameter must have the following three
 #'   elements, defined in order:
 #'   \itemize{
 #'     \item \code{name} - the parameter name.
@@ -23,14 +23,15 @@ check_drjacoby_loaded <- function() {
 #'     allowed.
 #'     \item \code{max} - the maximum value of the parameter. \code{Inf} is
 #'     allowed.
+#'   }
+#'   There following arguments are also optional:
+#'   \itemize{
 #'     \item \code{init} - the initial value of the parameter. If running
 #'     multiple chains a vector of initial values can be used to specify distinct
 #'     values for each chain.
+#'     \item \code{block} - which likelihood block(s) this parameter belongs to.
+#'     See vignettes for instructions on using likelihood blocks.
 #'   }
-#'   Optionally the user can also define the \code{block} of each parameter, as
-#'   either a single value or a vector. This method can be used to calculate the
-#'   log-likelihood in a series of blocks, with the final log-likelihood being
-#'   the sum over blocks.
 #'
 #' @param ... a series of named input arguments.
 #'   
