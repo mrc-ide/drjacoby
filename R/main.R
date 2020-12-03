@@ -73,10 +73,10 @@ define_params <- function(...) {
                     min = unlist(x[2 + v]),
                     max = unlist(x[3 + v]))
   if (use_init) {
-    ret$init <- x[4 + v]
+    ret$init <- x[which(arg_names == "init") + v]
   }
   if (use_block) {
-    ret$block <- x[5 + v]
+    ret$block <- x[which(arg_names == "block") + v]
   }
   
   # run checks and standardise format
@@ -95,6 +95,9 @@ check_params <- function(x) {
   assert_dataframe(x)
   assert_in(c("name", "min", "max"), names(x),
             message = "df_params must contain the columns 'name', 'min', 'max'")
+  if (any(duplicated(x$name))) {
+    stop("parameter names must be unique")
+  }
   use_init <- ("init" %in% names(x))
   use_block <- ("block" %in% names(x))
   
