@@ -11,12 +11,12 @@ test_that("plots do not produce errors", {
   names(df_params) <- c("name", "min", "max", "init")
 
   # log likelihood
-  r_loglike <- function(params, param_i, data, misc) {
+  r_loglike <- function(params, data, misc) {
     sum(dnorm(data$x, mean = params["mu"], sd = params["sigma"], log = TRUE))
   }
   
   # log prior
-  r_logprior <- function(params, param_i, misc) {
+  r_logprior <- function(params, misc) {
     dnorm(params["mu"], log = TRUE) + dlnorm(params["sigma"])
   }
   
@@ -33,6 +33,7 @@ test_that("plots do not produce errors", {
   # expect no output (messages or warnings) in all standard plotting functions
   expect_silent(plot_autocorrelation(mcmc_out))
   expect_silent(plot_cor(mcmc_out, parameter1 = "mu", parameter2 = "sigma"))
+  expect_silent(plot_cor_mat(mcmc_out))
   expect_silent(plot_credible(mcmc_out))
   expect_silent(plot_mc_acceptance(mcmc_out))
   expect_silent(plot_par(mcmc_out, display = FALSE))

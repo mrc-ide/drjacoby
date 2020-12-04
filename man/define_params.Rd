@@ -7,14 +7,33 @@
 define_params(...)
 }
 \arguments{
-\item{...}{define parameters one at a time, for each one defining four
-elements: name, min, max, init.}
+\item{...}{a series of named input arguments.}
 }
 \description{
 Provides a convenient way of defining parameters in the format
-  required by \code{run_mcmc()}.
+  required by \code{run_mcmc()}. Each parameter must have the following three
+  elements, defined in order:
+  \itemize{
+    \item \code{name} - the parameter name.
+    \item \code{min} - the minimum value of the parameter. \code{-Inf} is
+    allowed.
+    \item \code{max} - the maximum value of the parameter. \code{Inf} is
+    allowed.
+  }
+  There following arguments are also optional:
+  \itemize{
+    \item \code{init} - the initial value of the parameter. If running
+    multiple chains a vector of initial values can be used to specify distinct
+    values for each chain.
+    \item \code{block} - which likelihood block(s) this parameter belongs to.
+    See vignettes for instructions on using likelihood blocks.
+  }
 }
 \examples{
 define_params(name = "mu", min = -10, max = 10, init = 0,
-              name = "sigma", min = 0, max = 5, init = 1)
+              name = "sigma", min = 0, max = 5, init = c(1, 2))
+              
+define_params(name = "mu1", min = -10, max = 10, init = 0, block = 1,
+              name = "mu2", min = -10, max = 10, init = 0, block = 2,
+              name = "sigma", min = 0, max = 5, init = 1, block = c(1, 2))
 }

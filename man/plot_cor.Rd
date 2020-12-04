@@ -10,7 +10,7 @@ plot_cor(
   parameter2,
   downsample = TRUE,
   phase = "sampling",
-  chain = "all",
+  chain = NULL,
   rung = NULL
 )
 }

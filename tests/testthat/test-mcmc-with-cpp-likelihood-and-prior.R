@@ -12,18 +12,16 @@ test_that("Cpp likelihood and prior", {
   data_list <- list(x = x)
   
   # define parameters dataframe
-  df_params <- data.frame(name = c("mu", "sigma"),
-                          min = c(-10, 0),
-                          max = c(10, 10),
-                          init = c(5, 1))
+  df_params <- define_params(name = "mu", min = -10, max = 10, init = 5,
+                             name = "sigma", min = 0, max = 10, init = 1)
   
   # Null log likelihood
-  cpp_loglike_null <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
+  cpp_loglike_null <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
     return Rcpp::wrap(0.0);
   }"
   
   # Log likelihood
-  cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
+  cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
     
     // unpack data
     std::vector<double> x = Rcpp::as< std::vector<double> >(data[\"x\"]);
@@ -48,7 +46,7 @@ test_that("Cpp likelihood and prior", {
   }"
   
   # Log prior
-  cpp_logprior_strong <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
+  cpp_logprior_strong <- "SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
     
     // unpack params
     double mu = params[\"mu\"];
@@ -68,7 +66,7 @@ test_that("Cpp likelihood and prior", {
   }"
 
   # Null log prior
-  cpp_logprior_null <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
+  cpp_logprior_null <- "SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
     return Rcpp::wrap(0.0);
   }"
   
@@ -89,7 +87,7 @@ test_that("Cpp likelihood and prior", {
                             silent = TRUE)
   
   # subset output
-  pe <- dplyr::filter(cpp_mcmc_null$output, stage == "sampling") %>%
+  pe <- dplyr::filter(cpp_mcmc_null$output, phase == "sampling") %>%
     dplyr::select(mu, sigma)
   
   # check posterior estimates
@@ -107,7 +105,7 @@ test_that("Cpp likelihood and prior", {
                             silent = TRUE)
   
   # subset output
-  pe <- dplyr::filter(cpp_mcmc_data$output, stage == "sampling") %>%
+  pe <- dplyr::filter(cpp_mcmc_data$output, phase == "sampling") %>%
     dplyr::select(mu, sigma)
   
   # check posterior estimates
@@ -127,14 +125,14 @@ test_that("Cpp likelihood and prior", {
   expect_length(cpp_mcmc_chains, 3)
   
   # subset output to chain1 and check posterior estimates
-  pe <- dplyr::filter(cpp_mcmc_chains$output, stage == "sampling", chain == "chain1") %>%
+  pe <- dplyr::filter(cpp_mcmc_chains$output, phase == "sampling", chain == 1) %>%
     dplyr::select(mu, sigma)
   posterior_estimate3a <- apply(pe, 2, median)
   expect_lt(posterior_estimate3a["mu"] - mu_true, 0.1)
   expect_lt(posterior_estimate3a["sigma"] - sigma_true, 0.1)
   
   # subset output to chain2 and check posterior estimates
-  pe <- dplyr::filter(cpp_mcmc_chains$output, stage == "sampling", chain == "chain2") %>%
+  pe <- dplyr::filter(cpp_mcmc_chains$output, phase == "sampling", chain == 2) %>%
     dplyr::select(mu, sigma)
   posterior_estimate3b <- apply(pe, 2, median)
   expect_lt(posterior_estimate3b["mu"] - mu_true, 0.1)
@@ -151,7 +149,7 @@ test_that("Cpp likelihood and prior", {
                           silent = TRUE)
   
   # subset output
-  pe <- dplyr::filter(mcmc_out_MC$output, stage == "sampling", chain == "chain1") %>%
+  pe <- dplyr::filter(mcmc_out_MC$output, phase == "sampling") %>%
     dplyr::select(mu, sigma)
   
   # check posterior estimates
