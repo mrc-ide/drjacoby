@@ -2,11 +2,14 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-SEXP loglike(std::vector<double> params, std::vector<double> x) {
+SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
   
   // extract parameters
-  double mu = params[0];
-  double sigma = params[1];
+  double mu = params["mu"];
+  double sigma = params["sigma"];
+  
+  // unpack data
+  std::vector<double> x = Rcpp::as< std::vector<double> >(data["x"]);
   
   // sum log-likelihood over all data
   double ret = 0.0;
