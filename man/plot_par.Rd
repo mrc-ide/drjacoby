@@ -12,7 +12,7 @@ plot_par(
   downsample = TRUE,
   phase = "sampling",
   rung = NULL,
-  chain = "all",
+  chain = NULL,
   display = TRUE
 )
 }
@@ -35,8 +35,7 @@ efficient.}
 \item{rung}{which temperature rung to plot. If \code{NULL} then defaults to
 the cold rung.}
 
-\item{chain}{which chain to plot, e.g. \code{"chain1"}. The default
-\code{"all"} plots all chains.}
+\item{chain}{which chain to plot.}
 
 \item{display}{boolean. Whether to show plots, if \code{FALSE} then plotting
 objects are returned without displaying.}

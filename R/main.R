@@ -197,7 +197,7 @@ run_mcmc <- function(data,
                      silent = FALSE) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- rung <- value <- chain <- link <- NULL
+  phase <- rung <- value <- chain <- link <- NULL
   
   # Cleanup pointers on exit
   on.exit(gc())
@@ -375,8 +375,8 @@ run_mcmc <- function(data,
   # ---------- process output ----------
   
   # define names
-  chain_names <- sprintf("chain%s", 1:chains)
-  rung_names <- sprintf("rung%s", 1:rungs)
+  chain_names <- 1:chains
+  rung_names <- 1:rungs
   param_names <- df_params$name
   
   # get raw output into dataframe
@@ -391,7 +391,7 @@ run_mcmc <- function(data,
       ret <- data.frame(chain = chain_names[j],
                         rung = rung_names[i],
                         iteration = seq_along(loglike),
-                        stage = rep(c("burnin", "sampling"), times = c(burnin, samples)),
+                        phase = rep(c("burnin", "sampling"), times = c(burnin, samples)),
                         logprior = logprior,
                         loglikelihood = loglike)
       
@@ -418,7 +418,7 @@ run_mcmc <- function(data,
   if (chains > 1) {
     rhat_est <- c()
     for (p in seq_along(param_names)) {
-      pm <- subset(output_processed$output, stage == "sampling", select = c("chain", param_names[p]))
+      pm <- subset(output_processed$output, phase == "sampling", select = c("chain", param_names[p]))
       rhat_est[p] <- gelman_rubin(pm, chains, samples)
     }
     rhat_est[skip_param] <- NA
@@ -427,7 +427,7 @@ run_mcmc <- function(data,
   }
   
   # ESS
-  output_sub <- subset(output_processed$output, stage == "sampling" & rung == sprintf("rung%s", rungs),
+  output_sub <- subset(output_processed$output, phase == "sampling" & rung == rungs,
                        select = as.character(param_names))
   ess_est <- apply(output_sub, 2, coda::effectiveSize)
   ess_est[skip_param] <- NA
@@ -446,14 +446,14 @@ run_mcmc <- function(data,
     mc_accept <- expand.grid(link = seq_len(rungs - 1), chain = chain_names)
     mc_accept_burnin <- unlist(lapply(output_raw, function(x){x$mc_accept_burnin})) / burnin
     mc_accept_sampling <- unlist(lapply(output_raw, function(x){x$mc_accept_sampling})) / samples
-    mc_accept <- rbind(cbind(mc_accept, stage = "burnin", value = mc_accept_burnin),
-                       cbind(mc_accept, stage = "sampling", value = mc_accept_sampling))
+    mc_accept <- rbind(cbind(mc_accept, phase = "burnin", value = mc_accept_burnin),
+                       cbind(mc_accept, phase = "sampling", value = mc_accept_sampling))
     
   }
   output_processed$diagnostics$mc_accept <- mc_accept
   
   # DIC
-  output_sub <- subset(output_processed$output, stage == "sampling" & rung == sprintf("rung%s", rungs))
+  output_sub <- subset(output_processed$output, phase == "sampling" & rung == rungs)
   deviance <- -2*output_sub$loglikelihood
   DIC <- mean(deviance) + 0.5*var(deviance)
   output_processed$diagnostics$DIC_Gelman <- DIC
