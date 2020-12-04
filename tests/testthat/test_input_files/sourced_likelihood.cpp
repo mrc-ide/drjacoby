@@ -3,7 +3,7 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 // drjacoby_function_start
-SEXP loglike(std::vector<double> params, std::vector<double> x) {
+SEXP loglike(std::vector<double> params, std::vector<double> x, Rcpp::List misc) {
   
   // extract parameters
   double mu = params[0];
