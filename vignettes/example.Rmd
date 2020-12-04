@@ -172,7 +172,27 @@ The final question is how confident can we be that our MCMC has actually explore
 
 Although *drjacoby* is an R package, under the hood it is running C++ through the fantastic [Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html) package. When we pass an R likelihood function to `run_mcmc()`, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This comes at a computational cost, which can be avoided by specifying functions directly within C++.
 
-To use C++ functions within *drjacoby* we simply write them directly within R as character strings. As before, there are some constraints on what this function must look like. It **must** take the same three input arguments described above, defined as follows:
+To use C++ a function within *drjacoby* we first write it out as stand-alone file. The example used here can be found inside the *inst/extdata* folder of the package, and reads as follows:
+
+```{r, echo = FALSE, comment = ''}
+likelihood_filename <- system.file("extdata/", "example_loglike.cpp", package = 'drjacoby', mustWork = TRUE)
+cat(readLines(likelihood_filename), sep = '\n')
+```
+
+The logic of this function is identical to the R version above, just written in the language of C++. Notice that immediately before the function we have the line `// drjacoby_function_start`, and immediately after we have the line `// drjacoby_function_end`. These are tags that are read and interpreted by `cpp_function_get()` and used to convert the .cpp file into a character string. We can see this in action here:
+
+```{r, eval = FALSE}
+likelihood_filename <- "your_filename_here.cpp"
+```
+```{r}
+cpp_loglike <- cpp_function_get(likelihood_filename)
+
+print(cpp_loglike)
+```
+
+The object `cpp_loglike` ends up containing the body of the function in one long (and rather ugly) character string. We then simply pass this character string to `run_mcmc()` as our likelihood function where it will be compiled and used within the MCMC.
+
+As before, there are some constraints on what this function must look like. It **must** take the same three input arguments described in the previous section, defined in the following formats:
 
 1. `params` must be an `Rcpp::NumericVector`
 3. `data` must be an `Rcpp::List`
@@ -180,45 +200,22 @@ To use C++ functions within *drjacoby* we simply write them directly within R as
 
 All parameter values will be coerced to `double` within the code, hence parameters consisting of integer or boolean values should be dealt with as though they are continuous (for example `TRUE = 1.0`, `FALSE = 0.0`). Second, the function **must** return an object of class `SEXP`. The easiest way to achieve this is to calculate the raw return value as a double, and to use the `Rcpp::wrap()` function to transform to `SEXP`. As before, the value returned should be the likelihood evaluated in **log space**.
 
-Even though we are working in C++, we still have access to most of R's nice distribution functions through the `R::` namespace. For example, the `dnorm()` function can be accessed within C++ using `R::dnorm()`. A list of probability distributions available within Rcpp can be found [here](https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution). The `r_loglike()` function defined above can be re-written in C++ as follows:
+Even though we are working in C++, we still have access to most of R's nice distribution functions through the `R::` namespace. For example, the `dnorm()` function can be accessed within C++ using `R::dnorm()`. A list of probability distributions available within Rcpp can be found [here](https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution).
 
-```{r}
-# define cpp log-likelihood function as character string
-cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
-  
-  // unpack data
-  std::vector<double> x = Rcpp::as< std::vector<double> >(data[\"x\"]);
-  
-  // unpack parameters
-  double mu = params[\"mu\"];
-  double sigma = params[\"sigma\"];
-  
-  // sum log-likelihood over all data
-  double ret = 0.0;
-  for (unsigned int i = 0; i < x.size(); ++i) {
-    ret += R::dnorm(x[i], mu, sigma, true);
-  }
-  
-  // return as SEXP
-  return Rcpp::wrap(ret);
-}"
+We define the prior in the same way, as a stand-alone .cpp file. The prior used in this example reads as follows:
+
+```{r, echo = FALSE, comment = ''}
+prior_filename <- system.file("extdata/", "example_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
+cat(readLines(prior_filename), sep = '\n')
 ```
 
-We can also define the prior as a C++ function. The `r_logprior()` function defined above can be re-written in C++ as follows:
+which we can source with:
 
-```{r}
-# define cpp logprior function
-cpp_logprior <- "SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
-  
-  // extract parameters
-  double sigma = params[\"sigma\"];
-  
-  // calculate logprior
-  double ret = -log(20.0) + R::dlnorm(sigma, 0.0, 1.0, true);
-  
-  // return as SEXP
-  return Rcpp::wrap(ret);
-}"
+```{r, eval = FALSE}
+cpp_logprior <- cpp_function_get("your_filename_here.cpp")
+```
+```{r, echo = FALSE}
+cpp_logprior <- cpp_function_get(prior_filename)
 ```
 
 With these two functions in hand we can run the MCMC exactly the same as before, passing in the new functions:
