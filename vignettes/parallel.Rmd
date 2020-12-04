@@ -1,10 +1,10 @@
 ---
-title: "Running Parallel Chains"
+title: "Running in Parallel"
 author: "Bob Verity and Pete Winskill"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Running Parallel Chains}
+  %\VignetteIndexEntry{Running in Parallel}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -41,12 +41,12 @@ data_list <- list(x = rnorm(10))
 df_params <- data.frame(name = "mu", min = -10, max = 10, init = 0)
 
 # define loglike function
-r_loglike <- function(params, param_i, data, misc) {
+r_loglike <- function(params, data, misc) {
   sum(dnorm(data$x, mean = params["mu"], sd = 1.0, log = TRUE))
 }
 
 # define logprior function
-r_logprior <- function(params, param_i, misc) {
+r_logprior <- function(params, misc) {
   dunif(params["mu"], min = -10, max = 10, log = TRUE)
 }
 ```

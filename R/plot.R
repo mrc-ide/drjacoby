@@ -83,6 +83,7 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   }
   
   # get 95% credible intervals over plotting values
+  data$rung <- factor(data$rung, levels = sprintf("rung%s", 1:rungs))
   y_intervals <- data %>%
     dplyr::group_by(rung) %>%
     dplyr::summarise(Q2.5 = quantile(loglikelihood, 0.025),
@@ -541,5 +542,83 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
     ggplot2::geom_segment(ggplot2::aes(x = .data$param, y = .data$Q2.5, xend = .data$param, yend = .data$Q97.5)) +
     ggplot2::xlab("") +
     ggplot2::ylab("95% CrI")
+  
+}
+
+#------------------------------------------------
+#' @title Plot posterior correlation matrix
+#'
+#' @description Produces a matrix showing the correlation between all parameters
+#'   from posterior draws.
+#' 
+#' @inheritParams plot_rung_loglike
+#' @param show Vector of parameter names to plot.
+#' @param rung Which rung to plot.
+#' @param param_names Optional vector of names to replace the default parameter names.
+#'
+#' @importFrom stats cor
+#' @export
+
+plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_names = NULL) {
+  
+  # declare variables to avoid "no visible binding" issues
+  xi <- yi <- NULL
+  
+  # check inputs
+  assert_class(x, "drjacoby_output")
+  if (!is.null(show)) {
+    assert_string(show)
+    assert_in(show, names(x$output))
+  }
+  assert_in(phase, c("burnin", "sampling", "both"))
+  max_rungs <- max(x$diagnostics$rung_details$rung)
+  if (is.null(rung)) {
+    rung <- max_rungs
+  }
+  assert_single_pos_int(rung)
+  assert_leq(rung, max_rungs)
+  
+  # define defaults
+  if (is.null(show)) {
+    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
+  }
+  if (is.null(param_names)) {
+    param_names <- show
+  }
+  
+  # deal with phase = "both" situation
+  if (phase == "both") {
+    phase <- c("burnin", "sampling")
+  }
+  
+  # subset based on phase and rung
+  rung_get <- paste0("rung", rung)
+  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase)
+  data <- data[, show, drop = FALSE]
+  n <- ncol(data)
+  
+  # get correlation matrix into dataframe for ggplot
+  m <- cor(data)
+  df_plot <- data.frame(x = rep(names(data), each = n),
+                        xi = rep(1:n, each = n),
+                        y = names(data),
+                        yi = 1:n,
+                        z = as.vector(m))
+  df_plot <- subset(df_plot, xi < yi)
+  df_plot$x <- factor(df_plot$x, levels = names(data))
+  df_plot$y <- factor(df_plot$y, levels = names(data))
+  
+  # get colour range
+  max_range <- max(abs(range(df_plot$z)))
+  max_plot <- ceiling(max_range * 10) / 10
+  
+  # produce plot
+  ggplot2::ggplot(df_plot) + ggplot2::theme_bw() +
+    ggplot2::geom_raster(ggplot2::aes_(x = ~x, y = ~y, fill = ~z)) +
+    ggplot2::scale_fill_gradientn(colours = c("red", "white", "blue"),
+                                  values = c(0, 0.5, 1),
+                                  limits = c(-max_plot, max_plot),
+                                  name = "correlation") +
+    ggplot2::xlab("") + ggplot2::ylab("")
   
 }

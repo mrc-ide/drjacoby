@@ -22,6 +22,8 @@ public:
   Rcpp::NumericVector theta_vector;
   std::vector<double> theta_min;
   std::vector<double> theta_max;
+  std::vector<std::vector<int>> block;
+  int n_block;
   std::vector<int> trans_type;
   std::vector<bool> skip_param;
   int d;

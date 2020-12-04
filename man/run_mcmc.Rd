@@ -28,18 +28,7 @@ the likelihood and/or prior these values are treated internally as doubles,
 so while integer and boolean values can be used, keep in mind that these
 will be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).}
 
-\item{df_params}{a dataframe of parameters. Must contain the following
-elements:
-\itemize{
-  \item \code{name} - the parameter name.
-  \item \code{min} - the minimum value of the parameter. \code{-Inf} is
-  allowed.
-  \item \code{max} - the maximum value of the parameter. \code{Inf} is
-  allowed.
-  \item \code{init} - the initial value of the parameter. If running
-  multiple chains a list of initial values can be used to specify distinct
-  values for each chain.
-}}
+\item{df_params}{a dataframe of parameters (see \code{?define_params}).}
 
 \item{misc}{optional list object passed to likelihood and prior.}
 

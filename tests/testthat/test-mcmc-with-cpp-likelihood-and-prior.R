@@ -12,18 +12,16 @@ test_that("Cpp likelihood and prior", {
   data_list <- list(x = x)
   
   # define parameters dataframe
-  df_params <- data.frame(name = c("mu", "sigma"),
-                          min = c(-10, 0),
-                          max = c(10, 10),
-                          init = c(5, 1))
+  df_params <- define_params(name = "mu", min = -10, max = 10, init = 5,
+                             name = "sigma", min = 0, max = 10, init = 1)
   
   # Null log likelihood
-  cpp_loglike_null <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
+  cpp_loglike_null <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
     return Rcpp::wrap(0.0);
   }"
   
   # Log likelihood
-  cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
+  cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
     
     // unpack data
     std::vector<double> x = Rcpp::as< std::vector<double> >(data[\"x\"]);
@@ -48,7 +46,7 @@ test_that("Cpp likelihood and prior", {
   }"
   
   # Log prior
-  cpp_logprior_strong <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
+  cpp_logprior_strong <- "SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
     
     // unpack params
     double mu = params[\"mu\"];
@@ -68,7 +66,7 @@ test_that("Cpp likelihood and prior", {
   }"
 
   # Null log prior
-  cpp_logprior_null <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
+  cpp_logprior_null <- "SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
     return Rcpp::wrap(0.0);
   }"
   

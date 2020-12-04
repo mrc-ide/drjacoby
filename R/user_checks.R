@@ -12,7 +12,6 @@ check_likelihood_compilation <- function(cpp_loglike){
   cat(sprintf("\rChecking compilation...success\n"))
   cat(sprintf("Checking types..."))
   RcppXPtrUtils::checkXPtr(temp, "SEXP", c("Rcpp::NumericVector",
-                                           "int",
                                            "Rcpp::List",
                                            "Rcpp::List"))
   cat(sprintf("\rChecking types...success\n"))
@@ -32,7 +31,6 @@ check_prior_compilation <- function(cpp_logprior){
   cat(sprintf("\rChecking compilation...success\n"))
   cat(sprintf("Checking types..."))
   RcppXPtrUtils::checkXPtr(temp, "SEXP", c("Rcpp::NumericVector",
-                                           "int",
                                            "Rcpp::List"))
   cat(sprintf("\rChecking types...success\n"))
 }

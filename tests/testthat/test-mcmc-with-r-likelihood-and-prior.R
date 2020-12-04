@@ -1,5 +1,40 @@
 context("test-mcmc-with-r-likelihood-and-prior")
 
+#------------------------------------------------
+test_that("define_params() working as expected", {
+  
+  # expect error if bad name
+  expect_error(define_params(name = "mu", min = -10, max = 10, foo = 5))
+  
+  # expect error if duplicated names
+  expect_error(define_params(name = "mu", min = -10, max = 10,
+                             name = "mu", min = -10, max = 10))
+  
+  # expect error if missing some args
+  expect_error(define_params(name = "mu1", min = -10, max = 10, init = 5,
+                             name = "mu2", min = -10, max = 10))
+  
+  # expect blocks in correct format
+  df_params <- define_params(name = "mu", min = -10, max = 10, block = 1,
+                             name = "sigma", min = 0, max = Inf, block = 1)
+  expect_equal(df_params$block, list(block = 1, block = 1))
+  
+  # correctly defined dataframe
+  df_params <- define_params(name = "mu", min = -10, max = 10, init = 5,
+                             name = "sigma", min = 0, max = Inf, init = 1)
+  
+  # same parameters dataframe using base R method
+  df_params_base <- data.frame(name = c("mu", "sigma"),
+                               min = c(-10, 0),
+                               max = c(10, Inf))
+  df_params_base$init <- list(init = 5, init = 1)
+  
+  # check identical
+  expect_identical(df_params, df_params_base)
+  
+})
+
+#------------------------------------------------
 test_that("R likelihood and prior", {
   set.seed(1)
   
@@ -8,38 +43,26 @@ test_that("R likelihood and prior", {
   sigma_true <- 2
   
   # draw example data
-  x <- rnorm(1000, mean = mu_true, sd = sigma_true)
-  data_list <- list(x = x)
+  data_list <- list(x = rnorm(1000, mean = mu_true, sd = sigma_true))
   
   # define parameters dataframe
   df_params <- define_params(name = "mu", min = -10, max = 10, init = 5,
                              name = "sigma", min = 0, max = Inf, init = 1)
   
-  # define same parameters dataframe using base R method and check identical
-  df_params_base <- data.frame(name = c("mu", "sigma"),
-                               min = c(-10, 0),
-                               max = c(10, Inf))
-  df_params_base$init <- list(init = 5, init = 1)
-  expect_identical(df_params, df_params_base)
-  
-  # Null log likelihood
-  r_loglike_null <- function(params, param_i, data, misc) {
-    return(0)
-  }
-  
-  # Log likelihood
-  r_loglike <- function(params, param_i, data, misc) {
+  # Log likelihood and log prior
+  r_loglike <- function(params, data, misc) {
     sum(dnorm(data$x, mean = params["mu"], sd = params["sigma"], log = TRUE))
   }
-  
-  # Log prior
-  r_logprior_strong <- function(params, param_i, misc) {
+  r_logprior_strong <- function(params, misc) {
     dnorm(params["mu"], 6, 0.1, log = TRUE) +
       dnorm(params["sigma"], 1, 0.1, log = TRUE)
   }
   
-  # Null log prior
-  r_logprior_null <- function(params, param_i, misc) {
+  # Null log likelihood and log prior
+  r_loglike_null <- function(params, data, misc) {
+    return(0)
+  }
+  r_logprior_null <- function(params, misc) {
     return(0)
   }
   
@@ -102,33 +125,135 @@ test_that("R likelihood and prior", {
   expect_type(r_mcmc_data, "list")
   expect_type(summary(r_mcmc_data), "list")
   
-  ## Check behaviour with multiple chains
-  # set variable init values
-  df_params$init <- list(c(-5, 5), 1)
+})
+
+#------------------------------------------------
+test_that("Run with multiple chains", {
+  set.seed(1)
+  
+  # define data
+  data_list <- list(x = rnorm(10))
+  
+  # define parameters dataframe with multiple init values
+  df_params <- define_params(name = "mu", min = -10, max = 10, init = c(-5, 5),
+                             name = "sigma", min = 0, max = Inf, init = 1)
+  
+  # log likelihood and log prior
+  r_loglike <- function(params, data, misc) {
+    return(0)
+  }
+  r_logprior <- function(params, misc) {
+    dnorm(params["mu"], 0, sd = 1, log = TRUE) +
+      dgamma(params["sigma"], shape = 1, rate = 1, log = TRUE)
+  }
   
   # check for error when init does not match chain number
   expect_error(run_mcmc(data = data_list,
                         df_params = df_params,
                         loglike = r_loglike,
-                        logprior = r_logprior_null,
+                        logprior = r_logprior,
                         burnin = 1e2,
                         samples = 1e2,
                         chains = 3,
                         silent = TRUE))
   
   # run with correct number of chains
-  r_mcmc_chains <- run_mcmc(data = data_list,
-                            df_params = df_params,
-                            loglike = r_loglike,
-                            logprior = r_logprior_null,
-                            burnin = 1e2,
-                            samples = 1e2,
-                            chains = 2,
-                            silent = TRUE)
+  mcmc <- run_mcmc(data = data_list,
+                   df_params = df_params,
+                   loglike = r_loglike,
+                   logprior = r_logprior,
+                   burnin = 1e2,
+                   samples = 1e2,
+                   chains = 2,
+                   silent = TRUE)
   
   # check that first values in output match initial values over all chains
-  first_it <- subset(r_mcmc_chains$output, iteration == 1)
+  first_it <- subset(mcmc$output, iteration == 1)
   expect_equal(first_it$mu, df_params$init[[1]])
   expect_equal(first_it$sigma, rep(df_params$init[[2]], 2))
+  
+})
+
+#------------------------------------------------
+test_that("All parameter transformation types", {
+  set.seed(1)
+  
+  # define data
+  data_list <- list(x = rnorm(10))
+  
+  # define parameters with all transformation types
+  df_params <- define_params(name = "p1", min = -Inf, max = Inf,
+                             name = "p2", min = -Inf, max = 0,
+                             name = "p3", min = 0, max = Inf,
+                             name = "p4", min = 0, max = 1)
+  
+  # log likelihood and log prior
+  r_loglike <- function(params, data, misc) {
+    return(0)
+  }
+  r_logprior <- function(params, misc) {
+    dnorm(params["p1"], 0, sd = 1, log = TRUE) +
+      dgamma(-params["p2"], shape = 1, rate = 1, log = TRUE) +
+      dgamma(params["p3"], shape = 1, rate = 1, log = TRUE) +
+      dbeta(params["p4"], shape1 = 1, shape2 = 1, log = TRUE)
+  }
+  
+  # should run without error
+  mcmc <- run_mcmc(data = data_list,
+                   df_params = df_params,
+                   loglike = r_loglike,
+                   logprior = r_logprior,
+                   burnin = 1e2,
+                   samples = 1e2,
+                   chains = 3,
+                   silent = TRUE)
+  
+  # should run without error
+  expect_silent(run_mcmc(data = data_list,
+                         df_params = df_params,
+                         loglike = r_loglike,
+                         logprior = r_logprior,
+                         burnin = 1e2,
+                         samples = 1e2,
+                         chains = 3,
+                         silent = TRUE))
+  
+})
+
+#------------------------------------------------
+test_that("Checks on misc input", {
+  set.seed(1)
+  
+  # define data
+  data_list <- list(x = rnorm(10))
+  
+  # define parameters
+  df_params <- define_params(name = "mu", min = -Inf, max = Inf)
+  
+  # log likelihood and log prior
+  r_loglike <- function(params, data, misc) {
+    return(0)
+  }
+  r_logprior <- function(params, misc) {
+    dnorm(params["mu"], 0, sd = 1, log = TRUE)
+  }
+  
+  # expect error if misc not a list
+  expect_error(run_mcmc(data = data_list,
+                        df_params = df_params,
+                        loglike = r_loglike,
+                        logprior = r_logprior,
+                        misc = 5,
+                        burnin = 1e2,
+                        samples = 1e2))
+  
+  # expect error if misc contains element "block"
+  expect_error(run_mcmc(data = data_list,
+                        df_params = df_params,
+                        loglike = r_loglike,
+                        logprior = r_logprior,
+                        misc = list("block" = 5),
+                        burnin = 1e2,
+                        samples = 1e2))
   
 })

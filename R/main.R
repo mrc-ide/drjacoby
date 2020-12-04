@@ -15,37 +15,127 @@ check_drjacoby_loaded <- function() {
 #' @title Define parameters dataframe
 #'
 #' @description Provides a convenient way of defining parameters in the format
-#'   required by \code{run_mcmc()}.
+#'   required by \code{run_mcmc()}. Each parameter must have the following three
+#'   elements, defined in order:
+#'   \itemize{
+#'     \item \code{name} - the parameter name.
+#'     \item \code{min} - the minimum value of the parameter. \code{-Inf} is
+#'     allowed.
+#'     \item \code{max} - the maximum value of the parameter. \code{Inf} is
+#'     allowed.
+#'   }
+#'   There following arguments are also optional:
+#'   \itemize{
+#'     \item \code{init} - the initial value of the parameter. If running
+#'     multiple chains a vector of initial values can be used to specify distinct
+#'     values for each chain.
+#'     \item \code{block} - which likelihood block(s) this parameter belongs to.
+#'     See vignettes for instructions on using likelihood blocks.
+#'   }
 #'
-#' @param ... define parameters one at a time, for each one defining four
-#'   elements: name, min, max, init.
+#' @param ... a series of named input arguments.
+#'   
 #'
 #' @export
 #' @examples
 #' define_params(name = "mu", min = -10, max = 10, init = 0,
-#'               name = "sigma", min = 0, max = 5, init = 1)
+#'               name = "sigma", min = 0, max = 5, init = c(1, 2))
+#'               
+#' define_params(name = "mu1", min = -10, max = 10, init = 0, block = 1,
+#'               name = "mu2", min = -10, max = 10, init = 0, block = 2,
+#'               name = "sigma", min = 0, max = 5, init = 1, block = c(1, 2))
 
 define_params <- function(...) {
   x <- list(...)
   
-  # check input format
+  # check input format of arguments
   assert_gr(length(x), 0, message = "input cannot be empty")
-  if ((length(x) %% 4) != 0) {
-    stop("each parameter must have 4 inputs: {name, min, max, init}")
+  assert_in(names(x), c("name", "min", "max", "init", "block"))
+  use_init <- ("init" %in% names(x))
+  use_block <- ("block" %in% names(x))
+  n_cols <- 3 + use_init + use_block
+  if ((length(x) %% n_cols) != 0) {
+    stop("must have the same number of inputs per parameter")
   }
-  n <- length(x) / 4
-  v <- 4*(0:(n-1))
-  mapply(function(x) {assert_single_string(x, message = "parameter names must be character strings")}, x[1 + v])
-  mapply(function(x) {assert_single_numeric(x, message = "min values must be single values")}, x[2 + v])
-  mapply(function(x) {assert_single_numeric(x, message = "max values must be single values")}, x[3 + v])
-  mapply(function(x) {assert_vector_numeric(x, message = "init values must be numeric")}, x[4 + v])
+  n_param <- length(x) / n_cols
+  arg_names <-c("name", "min", "max")
+  if (use_init) {
+    arg_names <- c(arg_names, "init")
+  }
+  if (use_block) {
+    arg_names <- c(arg_names, "block")
+  }
+  assert_eq(names(x), rep(arg_names, n_param))
   
-  # return dataframe
+  # create params dataframe
+  v <- n_cols*(0:(n_param - 1))
   ret <- data.frame(name = unlist(x[1 + v]),
                     min = unlist(x[2 + v]),
                     max = unlist(x[3 + v]))
-  ret$init <- x[4 + v]
-  ret
+  if (use_init) {
+    ret$init <- x[which(arg_names == "init") + v]
+  }
+  if (use_block) {
+    ret$block <- x[which(arg_names == "block") + v]
+  }
+  
+  # run checks and standardise format
+  ret <- check_params(ret)
+  
+  return(ret)
+}
+
+#------------------------------------------------
+# Check that params dataframe formatted correctly, and return in standardised
+# format (init and block coerced to list)
+#' @noRd
+check_params <- function(x) {
+  
+  # check dataframe has correct elements
+  assert_dataframe(x)
+  assert_in(c("name", "min", "max"), names(x),
+            message = "df_params must contain the columns 'name', 'min', 'max'")
+  if (any(duplicated(x$name))) {
+    stop("parameter names must be unique")
+  }
+  use_init <- ("init" %in% names(x))
+  use_block <- ("block" %in% names(x))
+  
+  # coerce init and block to list
+  if (use_init) {
+    if (!is.list(x$init)) {
+      x$init <- as.list(x$init)
+    }
+  }
+  if (use_block) {
+    if (!is.list(x$block)) {
+      x$block <- as.list(x$block)
+    }
+  }
+  
+  # check each row in turn
+  for (i in seq_len(nrow(x))) {
+    
+    # check format
+    assert_single_string(x$name[i], message = "parameter names must be character strings")
+    assert_single_numeric(x$min[i], message = "min values must be single values")
+    assert_single_numeric(x$max[i], message = "min values must be single values")
+    if (use_init) {
+      assert_vector_numeric(x$init[[i]], message = "init values must be numeric")
+    }
+    if (use_block) {
+      assert_vector_numeric(x$block[[i]], message = "block values must be numeric")
+    }
+    
+    # check order
+    assert_leq(x$min[i], x$max[i], message = "min values must be less than or equal to max values")
+    if (use_init) {
+      assert_greq(x$init[[i]], x$min[i], message = "init values must be greater than or equal to min values")
+      assert_leq(x$init[[i]], x$max[i], message = "init values must be less than or equal to max values")
+    }
+  }
+  
+  return(x)
 }
 
 #------------------------------------------------
@@ -58,18 +148,7 @@ define_params <- function(...) {
 #'   the likelihood and/or prior these values are treated internally as doubles,
 #'   so while integer and boolean values can be used, keep in mind that these
 #'   will be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).
-#' @param df_params a dataframe of parameters. Must contain the following
-#'   elements:
-#'   \itemize{
-#'     \item \code{name} - the parameter name.
-#'     \item \code{min} - the minimum value of the parameter. \code{-Inf} is
-#'     allowed.
-#'     \item \code{max} - the maximum value of the parameter. \code{Inf} is
-#'     allowed.
-#'     \item \code{init} - the initial value of the parameter. If running
-#'     multiple chains a list of initial values can be used to specify distinct
-#'     values for each chain.
-#'   }
+#' @param df_params a dataframe of parameters (see \code{?define_params}).
 #' @param misc optional list object passed to likelihood and prior.
 #' @param loglike,logprior the log-likelihood and log-prior functions used in
 #'   the MCMC. Can either be passed in as R functions, or as character strings
@@ -98,7 +177,7 @@ define_params <- function(...) {
 #' @param silent whether to suppress all console output.
 #'
 #' @importFrom utils txtProgressBar
-#' @importFrom stats setNames
+#' @importFrom stats setNames var runif
 #' @export
 
 run_mcmc <- function(data,
@@ -129,26 +208,7 @@ run_mcmc <- function(data,
   assert_list_named(data)
   assert_numeric(unlist(data))
   
-  # check df_params
-  assert_dataframe(df_params)
-  assert_in(c("name", "min", "max", "init"), names(df_params),
-            message = "df_params must contain the columns 'name', 'min', 'max', 'init'")
-  assert_numeric(df_params$min)
-  assert_numeric(df_params$max)
-  assert_leq(df_params$min, df_params$max)
-  if (!is.list(df_params$init)) {
-    df_params$init <- as.list(df_params$init)
-  }
-  mapply(function(i) {  # checks on each initial value
-    assert_vector_numeric(df_params$init[[i]], message = "all df_params$init must be numeric")
-    if (length(df_params$init[[i]]) != 1) {
-      assert_length(df_params$init[[i]], chains, message = paste0("must define one df_params$init value per parameter, ",
-                                                                  "or alternatively a list of values one for each chain"))
-    }
-    msg_range <- "all df_params$init must be within specified range"
-    assert_greq(df_params$init[[i]], df_params$min[i], message = msg_range)
-    assert_leq(df_params$init[[i]], df_params$max[i], message = msg_range)
-  }, seq_along(df_params$init))
+  # (check df_params below)
   
   # check misc
   assert_list(misc)
@@ -164,6 +224,19 @@ run_mcmc <- function(data,
   assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_logical(coupling_on)
   assert_single_pos(GTI_pow)
+  
+  # check df_params
+  df_params <- check_params(df_params)
+  use_init <- ("init" %in% names(df_params))
+  use_block <- ("block" %in% names(df_params))
+  if (use_init) {
+    for (i in 1:nrow(df_params)) {
+      if (length(df_params$init[[i]]) != 1) {
+        assert_length(df_params$init[[i]], chains, message = paste0("must define one df_params$init value per parameter, ",
+                                                                    "or alternatively a list of values one for each chain"))
+      }
+    }
+  }
   
   # calculate/check final temperature vector
   if (is.null(beta_manual)) {
@@ -194,6 +267,29 @@ run_mcmc <- function(data,
   # flag to skip over fixed parameters
   skip_param <- (df_params$min == df_params$max)
   
+  # define default init values
+  if (!use_init) {
+    init_list <- list()
+    p <- runif(chains)
+    for (i in 1:nrow(df_params)) {
+      if (df_params$trans_type[i] == 0) {
+        init_list[[i]] <- log(p) - log(1 - p)
+      } else if (df_params$trans_type[i] == 1) {
+        init_list[[i]] <- log(p) + df_params$max[i]
+      } else if (df_params$trans_type[i] == 2) {
+        init_list[[i]] <- df_params$min[i] - log(p)
+      } else if (df_params$trans_type[i] == 3) {
+        init_list[[i]] <- df_params$min[i] + (df_params$max[i] - df_params$min[i])*p
+      }
+    }
+    df_params$init <- init_list
+  }
+  
+  # define default blocks
+  if (!use_block) {
+    df_params$block <- as.list(rep(1, nrow(df_params)))
+  }
+  
   # get initial values into matrix. Rows for parameters, columns for chains
   init_mat <- do.call(rbind, mapply(function(x) {
     if (length(x) == 1) {
@@ -203,13 +299,19 @@ run_mcmc <- function(data,
     }
   }, df_params$init, SIMPLIFY = FALSE))
   
-  # flag whether likelihood/prior are C++ functions
+  # flag whether likelihood and/or prior are C++ functions
   loglike_use_cpp <- inherits(loglike, "character")
   logprior_use_cpp <- inherits(logprior, "character")
   
-  # raise temperature vector to power (prepping for later version which will
-  # implement generalised thermodynamic integration)
+  # raise temperature vector to power
   beta_raised <- beta_manual^GTI_pow
+  
+  # make sure "block" is not an element of misc already being used, and if not
+  # create dummy element for storing current block
+  if (length(misc) > 0) {
+    assert_not_in("block", names(misc), message = "'block' is a reserved name within misc object")
+  }
+  misc$block <- -1
   
   
   # ---------- define argument lists ----------
@@ -221,6 +323,8 @@ run_mcmc <- function(data,
                       logprior_use_cpp = logprior_use_cpp,
                       theta_min = df_params$min,
                       theta_max = df_params$max,
+                      block = df_params$block,
+                      n_block = max(unlist(df_params$block)),
                       trans_type = df_params$trans_type,
                       skip_param = skip_param,
                       burnin = burnin,
@@ -348,6 +452,12 @@ run_mcmc <- function(data,
   }
   output_processed$diagnostics$mc_accept <- mc_accept
   
+  # DIC
+  output_sub <- subset(output_processed$output, stage == "sampling" & rung == sprintf("rung%s", rungs))
+  deviance <- -2*output_sub$loglikelihood
+  DIC <- mean(deviance) + 0.5*var(deviance)
+  output_processed$diagnostics$DIC_Gelman <- DIC
+  
   ## Parameters
   output_processed$parameters <- list(data = data,
                                       df_params = df_params,
@@ -376,11 +486,11 @@ deploy_chain <- function(args) {
   # convert C++ functions to pointers
   if (args$args_params$loglike_use_cpp) {
     args$args_functions$loglike <- RcppXPtrUtils::cppXPtr(args$args_functions$loglike)
-    RcppXPtrUtils::checkXPtr(args$args_functions$loglike, "SEXP", c("Rcpp::NumericVector", "int", "Rcpp::List", "Rcpp::List"))
+    RcppXPtrUtils::checkXPtr(args$args_functions$loglike, "SEXP", c("Rcpp::NumericVector", "Rcpp::List", "Rcpp::List"))
   }
   if (args$args_params$logprior_use_cpp) {
     args$args_functions$logprior <- RcppXPtrUtils::cppXPtr(args$args_functions$logprior)
-    RcppXPtrUtils::checkXPtr(args$args_functions$logprior, "SEXP", c("Rcpp::NumericVector", "int", "Rcpp::List"))
+    RcppXPtrUtils::checkXPtr(args$args_functions$logprior, "SEXP", c("Rcpp::NumericVector", "Rcpp::List"))
   }
   
   # get parameters
