@@ -106,6 +106,7 @@ public:
       loglike_prop = sum(loglike_prop_block);
       // Check for NA/NaN/Inf
       if(R_IsNaN(loglike_prop) || loglike_prop == R_PosInf || loglike_prop == R_NegInf || R_IsNA(loglike_prop)){
+        Rcpp::Rcerr << "\n Current theta " << theta_prop << std::endl;
         Rcpp::stop("NA, NaN or Inf in likelihood");
       }
       logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, s_ptr->misc));
