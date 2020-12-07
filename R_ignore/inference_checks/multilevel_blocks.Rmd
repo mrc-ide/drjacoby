@@ -46,6 +46,8 @@ cpp_logprior <- cpp_function_get(prior_filename)
 cat(readLines(prior_filename), sep = '\n')
 ```
 
+Parameters dataframe:
+
 ```{r}
 L <- 5
 df_params <- define_params(name = "mu_1", min = -L, max = L, block = c(1, 6),
