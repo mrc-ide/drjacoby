@@ -97,7 +97,7 @@ for (i in 1:5) {
   # overlay plots
   hist(mu_draws, breaks = seq(-L, L, l = 1001), probability = TRUE, col = "black",
        main = sprintf("mu_%s", i))
-  lines(x, fx, col = 2)
-  lines(x, fx2, col = 3)
+  lines(x, fx, col = 2, lwd = 4)
+  lines(x, fx2, col = 3, lwd = 4)
 }
 ```

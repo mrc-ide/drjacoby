@@ -69,6 +69,6 @@ fx <- dnorm(x, mean = mean(data_list$x), sd = sqrt(1/n))
 
 # histogram and overlay analytical
 hist(mu_draws, breaks = seq(-1, 1, 0.01), probability = TRUE, col = "black")
-lines(x, fx, col = 2)
+lines(x, fx, col = 2, lwd = 4)
 ```
 
