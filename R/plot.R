@@ -277,10 +277,10 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #'   returned as an object allowing them to be viewed/edited by the user.
 #'
 #' @inheritParams plot_rung_loglike
-#' @param show optional character (or vector of characters) to filter parameters by.
-#'  Parameters matching show will be included.
-#' @param hide optional character (or vector of characters) to filter parameters by.
-#'  Parameters matching show will be hidden.
+#' @param show optional vector of parameter names to plot. Parameters matching
+#'   show will be included.
+#' @param hide optional vector of parameter names to filter out. Parameters
+#'   matching hide will be hidden.
 #' @param lag maximum lag. Must be an integer between 1 and 500.
 #' @param downsample boolean. Whether to downsample chain to make plotting more
 #'   efficient.
@@ -295,8 +295,25 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
                      downsample = TRUE, phase = "sampling", rung = NULL,
                      chain = NULL, display = TRUE) {
   
-  # check inputs
+  # check inputs and define defaults
   assert_class(x, "drjacoby_output")
+  assert_non_null(x$output)
+  param_names <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
+  if (!is.null(show)) {
+    assert_vector_string(show)
+    assert_in(show, param_names)
+    param_names <- show
+  }
+  if (!is.null(hide)) {
+    assert_vector_string(hide)
+    assert_in(hide, param_names)
+    param_names <- setdiff(param_names, hide)
+  }
+  assert_gr(length(param_names), 0, message = "at least one parameter must be specified")
+  if (length(param_names) > 10){
+    message("More than 10 parameters to summarise, consider using the show or hide arguments 
+            to select parameters and reduce computation time.")
+  }
   assert_single_bounded(lag, 1, 500)
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling", "both"))
@@ -323,28 +340,13 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   phase_get <- phase
   data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get, chain %in% chain_get) 
   
-  # subset to chosen parameters
-  parameter <- setdiff(names(data), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
-  if(!is.null(show)){
-    stopifnot(is.character(show))
-    parameter <- parameter[grepl(paste(show, collapse = "|"), parameter)]
-  }
-  if(!is.null(hide)){
-    stopifnot(is.character(hide))
-    parameter <- parameter[!grepl(paste(hide, collapse = "|"), parameter)]
-  }
-  if(length(parameter) > 10){
-    message("More than 10 parameters to summarise, consider using the show or hide arguments 
-            to select parameters and reduce computation time.")
-  }
-  
   # Downsample
   if (downsample & nrow(data) > 2000) {
     data <- data[round(seq(1, nrow(data), length.out = 2000)),]
   }
   
   # Autocorrealtion (on downsample)
-  ac_data <- as.data.frame(apply(data[,parameter,drop = FALSE], 2, acf_data, lag = lag))
+  ac_data <- as.data.frame(apply(data[, param_names, drop = FALSE], 2, acf_data, lag = lag))
   ac_data$lag <- 0:lag
   
   # Set minimum bin number
@@ -352,20 +354,20 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   
   # produce plots over all parameters
   plot_list <- c()
-  for(j in 1:length(parameter)){
+  for(j in 1:length(param_names)){
     
     # create plotting data
-    pd <- data[, c("chain", "iteration", parameter[j])]
+    pd <- data[, c("chain", "iteration", param_names[j])]
     names(pd) <- c("chain", "iteration", "y")
     
-    pd2 <- ac_data[, c("lag", parameter[j])]
+    pd2 <- ac_data[, c("lag", param_names[j])]
     names(pd2) <- c("lag", "Autocorrelation")
     
     # Histogram
     p1 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$y)) + 
       ggplot2::geom_histogram(bins = b, fill = "deepskyblue3", col = "darkblue") + 
       ggplot2::ylab("Count") + 
-      ggplot2::xlab(parameter[j]) +
+      ggplot2::xlab(param_names[j]) +
       ggplot2::theme_bw()
     
     # Trace plots
@@ -373,7 +375,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
       ggplot2::geom_line() +
       scale_color_discrete(name = "Chain") +
       ggplot2::xlab("Iteration") +
-      ggplot2::ylab(parameter[j]) +
+      ggplot2::ylab(param_names[j]) +
       ggplot2::theme_bw()
     
     # Autocorrealtion
@@ -394,11 +396,11 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
                            acf = p3,
                            combined = pc2)
   }
-  names(plot_list) <- paste0("Plot_", parameter)
+  names(plot_list) <- paste0("Plot_", param_names)
   
   # Display plots, asking user for next page if multiple parameters
   if (display) {
-    for (j in 1:length(parameter)) {
+    for (j in 1:length(param_names)) {
       graphics::plot(plot_list[[j]]$combined)
       if (j == 1) {
         default_ask <- grDevices::devAskNewPage()

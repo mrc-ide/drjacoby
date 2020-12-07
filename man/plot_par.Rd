@@ -19,11 +19,11 @@ plot_par(
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
-\item{show}{optional character (or vector of characters) to filter parameters by.
-Parameters matching show will be included.}
+\item{show}{optional vector of parameter names to plot. Parameters matching
+show will be included.}
 
-\item{hide}{optional character (or vector of characters) to filter parameters by.
-Parameters matching show will be hidden.}
+\item{hide}{optional vector of parameter names to filter out. Parameters
+matching hide will be hidden.}
 
 \item{lag}{maximum lag. Must be an integer between 1 and 500.}
 
