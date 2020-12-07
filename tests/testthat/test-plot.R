@@ -7,7 +7,7 @@ test_that("plots do not produce errors", {
   
   # define parameters dataframe
   df_params <- rbind.data.frame(list("mu", -10, 10, 5),
-                                list("sigma", 0, Inf, 1))
+                                list("sigma", 0, 20, 1))
   names(df_params) <- c("name", "min", "max", "init")
 
   # log likelihood
