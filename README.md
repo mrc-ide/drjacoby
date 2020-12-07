@@ -27,4 +27,4 @@ So far, *drjacoby* has been used in the following projects:
     *drjacoby* **version 1.0.1**
   - The report [COVID-19 Infection Fatality Ratio: Estimates from
     Seroprevalence](https://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/covid-19/report-34-ifr/)
-    used *drjacoby* **version X.Y.Z**
+    used *drjacoby* **version 1.2.0**
