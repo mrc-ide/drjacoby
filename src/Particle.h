@@ -104,12 +104,17 @@ public:
       
       // calculate overall likelihood and prior of proposed theta
       loglike_prop = sum(loglike_prop_block);
-      // Check for NA/NaN/Inf
+      logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, s_ptr->misc));
+      
+      // Check for NA/NaN/Inf in likelihood or prior
       if(R_IsNaN(loglike_prop) || loglike_prop == R_PosInf || loglike_prop == R_NegInf || R_IsNA(loglike_prop)){
         Rcpp::Rcerr << "\n Current theta " << theta_prop << std::endl;
         Rcpp::stop("NA, NaN or Inf in likelihood");
       }
-      logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, s_ptr->misc));
+      if(R_IsNaN(logprior_prop) || logprior_prop == R_PosInf || logprior_prop == R_NegInf || R_IsNA(logprior_prop)){
+        Rcpp::Rcerr << "\n Current theta " << theta_prop << std::endl;
+        Rcpp::stop("NA, NaN or Inf in prior");
+      }
       
       // calculate Metropolis-Hastings ratio
       double MH = beta_raised*(loglike_prop - loglike) + (logprior_prop - logprior) + adj;

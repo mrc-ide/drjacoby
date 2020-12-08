@@ -270,8 +270,8 @@ run_mcmc <- function(data,
   # define default init values
   if (!use_init) {
     init_list <- list()
-    p <- runif(chains)
     for (i in 1:nrow(df_params)) {
+      p <- runif(chains)
       if (df_params$trans_type[i] == 0) {
         init_list[[i]] <- log(p) - log(1 - p)
       } else if (df_params$trans_type[i] == 1) {

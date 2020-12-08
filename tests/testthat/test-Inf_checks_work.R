@@ -1,4 +1,4 @@
-test_that("Checks on likelihood errors work", {
+test_that("Checks on likelihood and prior errors work", {
   
   # define true parameter values
   mu_true <- 3
@@ -11,7 +11,7 @@ test_that("Checks on likelihood errors work", {
   df_params <- define_params(name = "mu", min = -10, max = 10, init = 1)
   
   
-  # define log-likelihood functions
+  # define failing log-likelihood functions
   r_loglike1 <- function(params, data, misc) {
     Inf
   }
@@ -30,12 +30,12 @@ test_that("Checks on likelihood errors work", {
   }
   
   expect_error(run_mcmc(data = data_list,
-                   df_params = df_params,
-                   loglike = r_loglike1,
-                   logprior = r_logprior,
-                   burnin = 1e3,
-                   samples = 1e3,
-                   chains = 1))
+                        df_params = df_params,
+                        loglike = r_loglike1,
+                        logprior = r_logprior,
+                        burnin = 1e3,
+                        samples = 1e3,
+                        chains = 1))
   expect_error(run_mcmc(data = data_list,
                         df_params = df_params,
                         loglike = r_loglike2,
@@ -50,4 +50,44 @@ test_that("Checks on likelihood errors work", {
                         burnin = 1e3,
                         samples = 1e3,
                         chains = 1))
+  
+  # define failing log-prior functions
+  r_loglike <- function(params, data, misc) {
+    0
+  }
+  
+  r_logprior1 <- function(params, data, misc) {
+    Inf
+  }
+  
+  r_logprior2 <- function(params, data, misc) {
+    NA
+  }
+  
+  r_logprior3 <- function(params, data, misc) {
+    NaN
+  }
+  
+  expect_error(run_mcmc(data = data_list,
+                        df_params = df_params,
+                        loglike = r_loglike,
+                        logprior = r_logprior1,
+                        burnin = 1e3,
+                        samples = 1e3,
+                        chains = 1))
+  expect_error(run_mcmc(data = data_list,
+                        df_params = df_params,
+                        loglike = r_loglike,
+                        logprior = r_logprior2,
+                        burnin = 1e3,
+                        samples = 1e3,
+                        chains = 1))
+  expect_error(run_mcmc(data = data_list,
+                        df_params = df_params,
+                        loglike = r_loglike,
+                        logprior = r_logprior3,
+                        burnin = 1e3,
+                        samples = 1e3,
+                        chains = 1))
+  
 })

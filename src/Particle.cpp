@@ -108,7 +108,7 @@ double Particle::get_adjustment(int i) {
     // (no adjustment needed)
     break;
   case 1:
-    ret = log(theta_prop[i] - s_ptr->theta_max[i]) - log(theta[i] - s_ptr->theta_max[i]);
+    ret = log(s_ptr->theta_max[i] - theta_prop[i]) - log(s_ptr->theta_max[i] - theta[i]);
     break;
   case 2:
     ret = log(theta_prop[i] - s_ptr->theta_min[i]) - log(theta[i] - s_ptr->theta_min[i]);
