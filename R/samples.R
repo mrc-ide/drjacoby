@@ -1,3 +1,12 @@
+# return 95% quantile
+#' @importFrom stats quantile
+#' @noRd
+quantile_95 <- function(x) {
+  ret <- quantile(x, probs = c(0.025, 0.5, 0.975))
+  names(ret) <- c("Q2.5", "Q50", "Q97.5")
+  return(ret)
+}
+
 #' Sample N draws from all available chains
 #'
 #' @param x an object of class \code{drjacoby_output}
