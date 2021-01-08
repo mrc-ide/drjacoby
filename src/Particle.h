@@ -2,8 +2,7 @@
 #pragma once
 
 #include "System.h"
-#include "misc_v10.h"
-#include "probability_v3.h"
+#include "misc.h"
 
 #include <Rcpp.h>
 
@@ -120,7 +119,7 @@ public:
       double MH = beta_raised*(loglike_prop - loglike) + (logprior_prop - logprior) + adj;
       
       // accept or reject move
-      bool MH_accept = (log(runif_0_1()) < MH);
+      bool MH_accept = (log(R::runif(0,1)) < MH);
       
       // implement changes
       if (MH_accept) {

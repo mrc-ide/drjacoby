@@ -15,7 +15,14 @@
 #'
 #' @return Gelman-Rubin statistic
 gelman_rubin <- function(par_matrix, chains, samples){
+  
+  # Check that >1 chains and >1 samples
+  assert_gr(chains, 1)
+  assert_gr(samples, 1)
+  
+  # Coerce to matrix
   par_matrix <- as.data.frame(par_matrix)
+  
   # Mean over all samples
   all_mean <- mean(par_matrix[,2])
   
@@ -45,6 +52,12 @@ acf_data <- function(x, lag){
 #' @importFrom coda mcmc
 #' @noRd
 test_convergence <- function(x, n, alpha = 0.01) {
+  
+  # check inputs
+  assert_vector_numeric(x)
+  assert_single_pos_int(n)
+  assert_single_bounded(alpha)
+  
   # fail if n = 1
   if (n == 1) {
     return(FALSE)
@@ -62,9 +75,6 @@ test_convergence <- function(x, n, alpha = 0.01) {
   # fail if geweke p-value < threshold
   g <- geweke_pvalue(mcmc(x[1:n]))
   ret <- (g > alpha)
-  if (is.na(ret)) {
-    ret <- FALSE;
-  }
   
   # return
   return(ret)
@@ -77,8 +87,8 @@ test_convergence <- function(x, n, alpha = 0.01) {
 #' @importFrom stats pnorm
 #' @importFrom coda geweke.diag
 #' @noRd
-geweke_pvalue <- function(x) {
-  ret <- 2*pnorm(abs(coda::geweke.diag(x)$z), lower.tail=FALSE)
+geweke_pvalue <- function(x) { 
+  ret <- 2*pnorm(abs(coda::geweke.diag(x)$z), lower.tail = FALSE)
   return(ret)
 }
 

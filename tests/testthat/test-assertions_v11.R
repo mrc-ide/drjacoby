@@ -1,4 +1,4 @@
-context("assertions_v6")
+context("assertions_v11")
 
 #------------------------------------------------
 test_that("nice_format working correctly", {
@@ -624,6 +624,15 @@ test_that("assert_noduplicates working correctly", {
 })
 
 #------------------------------------------------
+test_that("assert_file_exists working correctly", {
+  expect_true(assert_file_exists("../../DESCRIPTION"))
+  
+  expect_error(assert_file_exists(NULL))
+  expect_error(assert_file_exists(4))
+  expect_error(assert_file_exists("foobar"))
+})
+
+#------------------------------------------------
 test_that("assert_increasing working correctly", {
   expect_true(assert_increasing(1))
   expect_true(assert_increasing(rep(1,5)))
@@ -639,7 +648,7 @@ test_that("assert_decreasing working correctly", {
   expect_true(assert_decreasing(1))
   expect_true(assert_decreasing(rep(1,5)))
   expect_true(assert_decreasing(5:-5))
-
+  
   expect_error(assert_decreasing(NULL))
   expect_error(assert_decreasing(-5:5))
   expect_error(assert_decreasing("foo"))

@@ -123,7 +123,8 @@ test_that("R likelihood and prior", {
   expect_error(sample_chains(1, 100))
   
   expect_type(r_mcmc_data, "list")
-  expect_type(summary(r_mcmc_data), "list")
+  expect_message(print(r_mcmc_data))
+  expect_message(summary(r_mcmc_data))
   
 })
 
@@ -181,11 +182,12 @@ test_that("All parameter transformation types", {
   # define data
   data_list <- list(x = rnorm(10))
   
-  # define parameters with all transformation types
+  # define parameters with all transformation types, including a fixed parameter
   df_params <- define_params(name = "p1", min = -Inf, max = Inf,
                              name = "p2", min = -Inf, max = 0,
                              name = "p3", min = 0, max = Inf,
-                             name = "p4", min = 0, max = 1)
+                             name = "p4", min = 0, max = 1,
+                             name = "p5", min = 0, max = 0)
   
   # log likelihood and log prior
   r_loglike <- function(params, data, misc) {
