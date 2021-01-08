@@ -73,7 +73,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.3.0</span>
       </span>
     </div>
 
@@ -97,6 +97,9 @@
     </li>
     <li>
       <a href="../articles/parallel.html">Running Parallel Chains</a>
+    </li>
+    <li>
+      <a href="../articles/blocks.html">Using Likelihood Blocks</a>
     </li>
   </ul>
 </li>
@@ -149,6 +152,7 @@
   <span class='kw'>beta_manual</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>cluster</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>pb_markdown</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>save_data</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>silent</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
 )</pre>
 
@@ -164,17 +168,7 @@ will be recast as doubles in the likelihood (i.e. <code>TRUE = 1.0</code>).</p><
     </tr>
     <tr>
       <th>df_params</th>
-      <td><p>a dataframe of parameters. Must contain the following
-elements:</p><ul>
-<li><p><code>name</code> - the parameter name.</p></li>
-<li><p><code>min</code> - the minimum value of the parameter. <code>-Inf</code> is
-  allowed.</p></li>
-<li><p><code>max</code> - the maximum value of the parameter. <code>Inf</code> is
-  allowed.</p></li>
-<li><p><code>init</code> - the initial value of the parameter. If running
-  multiple chains a list of initial values can be used to specify distinct
-  values for each chain.</p></li>
-</ul></td>
+      <td><p>a dataframe of parameters (see <code><a href='define_params.html'>?define_params</a></code>).</p></td>
     </tr>
     <tr>
       <th>misc</th>
@@ -219,7 +213,7 @@ temperature scale.</p></td>
     <tr>
       <th>beta_manual</th>
       <td><p>option to manually define temperature ladder. These values
-are raised to the power <code>GTI_pow</code>, hence you should use <code>GTI_code
+are raised to the power <code>GTI_pow</code>, hence you should use <code>GTI_pow
 = 1</code> if you want to fix powers exactly. If <code>NULL</code> then an equal
 spacing of length <code>rungs</code> is used between 0 and 1.</p></td>
     </tr>
@@ -233,6 +227,12 @@ run in parallel (see package "parallel").</p></td>
       <td><p>whether to run progress bars in markdown mode, meaning
 they are only updated when they reach 100<!-- % to avoid large amounts of output -->
 being printed to markdown files.</p></td>
+    </tr>
+    <tr>
+      <th>save_data</th>
+      <td><p>if <code>TRUE</code> (the default) the raw input data is stored
+for reference in the project output. This allows complete reproducibility
+from a project, but may be undesirable when datasets are very large.</p></td>
     </tr>
     <tr>
       <th>silent</th>

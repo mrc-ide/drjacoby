@@ -17,6 +17,8 @@ navbar:
           href: articles/metropolis_coupling.html
         - text: "Running Parallel Chains"
           href: articles/parallel.html
+        - text: "Using Likelihood Blocks"
+          href: articles/blocks.html
     - text: "Functions"
       href: reference/index.html
   right:

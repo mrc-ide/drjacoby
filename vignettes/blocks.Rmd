@@ -64,7 +64,7 @@ One way to fit this model in *drjacoby* is to write a likelihood function that s
 
 You can imagine likelihood blocks as a vector of values, each of which gives the log-likelihood of one small part of the model. The overall log-likelihood is simply the sum over this vector. We are free to define as many blocks as we like, and the exact number we need will depend on the model design. A good way of figuring out how many blocks you need is to sketch out a "conditional dependence" table like the one shown below.
 
-![Conditional dependence table for the random effects model](https://raw.githubusercontent.com/mrc-ide/drjacoby/version1.0/R_ignore/images/conditional_dependence.png)
+<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/dependence_table.png" width="400px" />
 
 In the first column we list all the data and free parameters of our model, and in the second column we list every parameter on which the first column depends ("depends" in this context means we need to know this parameter value in order to write down the probability). Don't put data or fixed values in the second column, only free parameters, i.e. those we are trying to infer. We need **one block for every unique combination of parameters in the second column**. For example, $\mu_1$ and $\mu_2$ depend on the same combination of parameters ($\phi$ and $\tau$) therefore they belong in the same block. We find that we need seven blocks in this example.
 
