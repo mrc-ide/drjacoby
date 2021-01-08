@@ -56,7 +56,7 @@ Provides a convenient way of concentrating rungs towards one end of the
 temperature scale.}
 
 \item{beta_manual}{option to manually define temperature ladder. These values
-are raised to the power \code{GTI_pow}, hence you should use \code{GTI_code
+are raised to the power \code{GTI_pow}, hence you should use \code{GTI_pow
 = 1} if you want to fix powers exactly. If \code{NULL} then an equal
 spacing of length \code{rungs} is used between 0 and 1.}
 
