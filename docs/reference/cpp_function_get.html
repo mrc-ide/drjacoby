@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Estimate autocorrelation — acf_data • drjacoby</title>
+<title>Get .cpp function — cpp_function_get • drjacoby</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,13 @@
 
 
 
-<meta property="og:title" content="Estimate autocorrelation — acf_data" />
-<meta property="og:description" content="Estimate autocorrelation" />
+<meta property="og:title" content="Get .cpp function — cpp_function_get" />
+<meta property="og:description" content="Scrapes an appropriately tagged .cpp function for use in drJacoby. This is convenient as it
+facilitates development and testing of a .cpp likelihood or prior via standard Rcpp::sourceCpp.
+Once ready the same .cpp file can be imported for use in drJacoby using cpp_function_get().
+To allow this the user must add two tags. The first, // drjacoby_function_start, should
+be on the line immediately before the start of the function and the second, // drjacoby_function_end,
+on the line immediately after the function. Only one function should be tagged in this manner per file." />
 
 
 
@@ -126,30 +131,34 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Estimate autocorrelation</h1>
-    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/drjacoby/blob/master/R/diagnostic.R'><code>R/diagnostic.R</code></a></small>
-    <div class="hidden name"><code>acf_data.Rd</code></div>
+    <h1>Get .cpp function</h1>
+    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/drjacoby/blob/master/R/get_cpp_function.R'><code>R/get_cpp_function.R</code></a></small>
+    <div class="hidden name"><code>cpp_function_get.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Estimate autocorrelation</p>
+    <p>Scrapes an appropriately tagged .cpp function for use in drJacoby. This is convenient as it
+facilitates development and testing of a .cpp likelihood or prior via standard Rcpp::sourceCpp.
+Once ready the same .cpp file can be imported for use in drJacoby using <code>cpp_function_get()</code>.
+To allow this the user must add two tags. The first, <code>// drjacoby_function_start</code>, should
+be on the line immediately before the start of the function and the second, <code>// drjacoby_function_end</code>,
+on the line immediately after the function. Only one function should be tagged in this manner per file.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>acf_data</span>(<span class='no'>x</span>, <span class='no'>lag</span>)</pre>
+    <pre class="usage"><span class='fu'>cpp_function_get</span>(<span class='no'>address</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>Single chain.</p></td>
-    </tr>
-    <tr>
-      <th>lag</th>
-      <td><p>maximum lag. Must be an integer between 1 and 500.</p></td>
+      <th>address</th>
+      <td><p>Address of .cpp file</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>A drJacoby compatible string function</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Estimate autocorrelation — acf_data • drjacoby</title>
+<title>Plot posterior correlation matrix — plot_cor_mat • drjacoby</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,9 @@
 
 
 
-<meta property="og:title" content="Estimate autocorrelation — acf_data" />
-<meta property="og:description" content="Estimate autocorrelation" />
+<meta property="og:title" content="Plot posterior correlation matrix — plot_cor_mat" />
+<meta property="og:description" content="Produces a matrix showing the correlation between all parameters
+  from posterior draws." />
 
 
 
@@ -126,27 +127,46 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Estimate autocorrelation</h1>
-    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/drjacoby/blob/master/R/diagnostic.R'><code>R/diagnostic.R</code></a></small>
-    <div class="hidden name"><code>acf_data.Rd</code></div>
+    <h1>Plot posterior correlation matrix</h1>
+    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/drjacoby/blob/master/R/plot.R'><code>R/plot.R</code></a></small>
+    <div class="hidden name"><code>plot_cor_mat.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Estimate autocorrelation</p>
+    <p>Produces a matrix showing the correlation between all parameters
+  from posterior draws.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>acf_data</span>(<span class='no'>x</span>, <span class='no'>lag</span>)</pre>
+    <pre class="usage"><span class='fu'>plot_cor_mat</span>(
+  <span class='no'>x</span>,
+  <span class='kw'>show</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>,
+  <span class='kw'>rung</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>param_names</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>Single chain.</p></td>
+      <td><p>an object of class <code>drjacoby_output</code></p></td>
     </tr>
     <tr>
-      <th>lag</th>
-      <td><p>maximum lag. Must be an integer between 1 and 500.</p></td>
+      <th>show</th>
+      <td><p>Vector of parameter names to plot.</p></td>
+    </tr>
+    <tr>
+      <th>phase</th>
+      <td><p>which phase to plot. Must be either "burnin" or "sampling".</p></td>
+    </tr>
+    <tr>
+      <th>rung</th>
+      <td><p>Which rung to plot.</p></td>
+    </tr>
+    <tr>
+      <th>param_names</th>
+      <td><p>Optional vector of names to replace the default parameter names.</p></td>
     </tr>
     </table>
 

@@ -75,7 +75,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.3.0</span>
       </span>
     </div>
 
@@ -99,6 +99,9 @@
     </li>
     <li>
       <a href="../articles/parallel.html">Running Parallel Chains</a>
+    </li>
+    <li>
+      <a href="../articles/blocks.html">Using Likelihood Blocks</a>
     </li>
   </ul>
 </li>
@@ -146,7 +149,7 @@
   <span class='kw'>downsample</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>"sampling"</span>,
   <span class='kw'>rung</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>chain</span> <span class='kw'>=</span> <span class='st'>"all"</span>,
+  <span class='kw'>chain</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>display</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
 )</pre>
 
@@ -159,13 +162,13 @@
     </tr>
     <tr>
       <th>show</th>
-      <td><p>optional character (or vector of characters) to filter parameters by.
-Parameters matching show will be included.</p></td>
+      <td><p>optional vector of parameter names to plot. Parameters matching
+show will be included.</p></td>
     </tr>
     <tr>
       <th>hide</th>
-      <td><p>optional character (or vector of characters) to filter parameters by.
-Parameters matching show will be hidden.</p></td>
+      <td><p>optional vector of parameter names to filter out. Parameters
+matching hide will be hidden.</p></td>
     </tr>
     <tr>
       <th>lag</th>
@@ -187,8 +190,7 @@ the cold rung.</p></td>
     </tr>
     <tr>
       <th>chain</th>
-      <td><p>which chain to plot, e.g. <code>"chain1"</code>. The default
-<code>"all"</code> plots all chains.</p></td>
+      <td><p>which chain to plot.</p></td>
     </tr>
     <tr>
       <th>display</th>

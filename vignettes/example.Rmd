@@ -70,7 +70,8 @@ Next, we need a likelihood function. This **must** have the following three inpu
 
 Finally, the function **must** return a single value for the likelihood **in log space**. These constraints on the format of the likelihood function might seem a bit restrictive, but they are needed in order for *drjacoby* to know how to use the function internally. The issue of taking logs is particularly important, as the MCMC will still run even if we forget to take logs, but the results produced will be nonsense!
 
-![Do not underestimate the importance of taking logs.](https://raw.githubusercontent.com/mrc-ide/drjacoby/version1.0/R_ignore/images/loglady.jpg)
+![Do not underestimate the importance of taking logs.](https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/loglady.jpg)
+
 
 Inside the likelihood function we can extract individual parameter values from the input vector and then use these values to calculate the probability of the data. In our example, the likelihood function is quite simple thanks to the `dnorm()` function which can return the density of the normal distribution already in log space:
 
