@@ -1,19 +1,3 @@
-#------------------------------------------------
-#' @title Series of standard colours used within the drjacoby package
-#'   
-#' @description Returns a series of standard colours used within the drjacoby
-#'   package.
-#' 
-#' @importFrom grDevices rgb
-#' @export
-
-drjacoby_cols <- function() {
-  ret <- c(rgb(159, 196, 232, maxColorValue = 255),
-           rgb(78, 122, 166, maxColorValue = 255),
-           rgb(202, 90, 106, maxColorValue = 255),
-           rgb(195, 42, 85, maxColorValue = 255))
-  return(ret)
-}
 
 #------------------------------------------------
 #' @title Plot loglikelihood 95\% credible intervals
@@ -568,6 +552,7 @@ plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_
   if (!is.null(show)) {
     assert_string(show)
     assert_in(show, names(x$output))
+    assert_gr(length(show), 1, message = "must show at least two parameters")
   }
   assert_in(phase, c("burnin", "sampling", "both"))
   max_rungs <- max(x$diagnostics$rung_details$rung)

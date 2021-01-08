@@ -174,6 +174,9 @@ check_params <- function(x) {
 #' @param pb_markdown whether to run progress bars in markdown mode, meaning
 #'   they are only updated when they reach 100% to avoid large amounts of output
 #'   being printed to markdown files.
+#' @param save_data if \code{TRUE} (the default) the raw input data is stored
+#'   for reference in the project output. This allows complete reproducibility
+#'   from a project, but may be undesirable when datasets are very large.
 #' @param silent whether to suppress all console output.
 #'
 #' @importFrom utils txtProgressBar
@@ -194,6 +197,7 @@ run_mcmc <- function(data,
                      beta_manual = NULL,
                      cluster = NULL,
                      pb_markdown = FALSE,
+                     save_data = TRUE,
                      silent = FALSE) {
   
   # declare variables to avoid "no visible binding" issues
@@ -252,6 +256,7 @@ run_mcmc <- function(data,
     assert_class(cluster, "cluster")
   }
   assert_single_logical(pb_markdown)
+  assert_single_logical(save_data)
   assert_single_logical(silent)
   
   
@@ -459,7 +464,11 @@ run_mcmc <- function(data,
   output_processed$diagnostics$DIC_Gelman <- DIC
   
   ## Parameters
-  output_processed$parameters <- list(data = data,
+  data_store <- NULL
+  if (save_data) {
+    data_store <- data
+  }
+  output_processed$parameters <- list(data = data_store,
                                       df_params = df_params,
                                       loglike = loglike,
                                       logprior = logprior,
@@ -510,5 +519,21 @@ deploy_chain <- function(args) {
   rm(args)
   
   return(ret)
+}
+
+#------------------------------------------------
+# update progress bar
+# pb_list = list of progress bar objects
+# name = name of this progress bar
+# i = new value of bar
+# max_i = max value of bar (close when reach this value)
+# close = whether to close when reach end
+#' @importFrom utils setTxtProgressBar
+#' @noRd
+update_progress <- function(pb_list, name, i, max_i, close = TRUE) {
+  setTxtProgressBar(pb_list[[name]], i)
+  if (i == max_i & close) {
+    close(pb_list[[name]])
+  }
 }
 

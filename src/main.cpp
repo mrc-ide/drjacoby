@@ -1,7 +1,6 @@
 
 #include "main.h"
-#include "misc_v10.h"
-#include "probability_v3.h"
+#include "misc.h"
 #include "System.h"
 
 #include <chrono>
@@ -288,7 +287,7 @@ void coupling(vector<Particle> &particle_vec, vector<int> &mc_accept) {
     double acceptance = (loglike2*beta_raised1 + loglike1*beta_raised2) - (loglike1*beta_raised1 + loglike2*beta_raised2);
     
     // accept or reject move
-    bool accept_move = (log(runif_0_1()) < acceptance);
+    bool accept_move = (log(R::runif(0,1)) < acceptance);
     
     // implement swap
     if (accept_move) {
