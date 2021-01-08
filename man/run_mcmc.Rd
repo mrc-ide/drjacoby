@@ -19,6 +19,7 @@ run_mcmc(
   beta_manual = NULL,
   cluster = NULL,
   pb_markdown = FALSE,
+  save_data = TRUE,
   silent = FALSE
 )
 }
@@ -65,6 +66,10 @@ run in parallel (see package "parallel").}
 \item{pb_markdown}{whether to run progress bars in markdown mode, meaning
 they are only updated when they reach 100% to avoid large amounts of output
 being printed to markdown files.}
+
+\item{save_data}{if \code{TRUE} (the default) the raw input data is stored
+for reference in the project output. This allows complete reproducibility
+from a project, but may be undesirable when datasets are very large.}
 
 \item{silent}{whether to suppress all console output.}
 }
