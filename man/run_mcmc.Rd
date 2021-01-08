@@ -19,6 +19,7 @@ run_mcmc(
   beta_manual = NULL,
   cluster = NULL,
   pb_markdown = FALSE,
+  save_data = TRUE,
   silent = FALSE
 )
 }
@@ -28,16 +29,7 @@ the likelihood and/or prior these values are treated internally as doubles,
 so while integer and boolean values can be used, keep in mind that these
 will be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).}
 
-\item{df_params}{a dataframe of parameters. Must contain the following
-elements:
-\itemize{
-  \item \code{name} - the parameter name.
-  \item \code{min} - the minimum value of the parameter. \code{-Inf} is
-  allowed.
-  \item \code{max} - the maximum value of the parameter. \code{Inf} is
-  allowed.
-  \item \code{init} - the initial value of the parameter.
-}}
+\item{df_params}{a dataframe of parameters (see \code{?define_params}).}
 
 \item{misc}{optional list object passed to likelihood and prior.}
 
@@ -59,12 +51,14 @@ parallel, otherwise they are run in serial.}
 \item{coupling_on}{whether to implement Metropolis-coupling over temperature 
 rungs.}
 
-\item{GTI_pow}{values in the temperature ladder are raised to this power.}
+\item{GTI_pow}{values in the temperature ladder are raised to this power.
+Provides a convenient way of concentrating rungs towards one end of the
+temperature scale.}
 
 \item{beta_manual}{option to manually define temperature ladder. These values
-are raised to the power \code{GTI_pow}, hence you should use \code{GTI_code
-= 1} to fix powers exactly. If \code{NULL} then an equal spacing of length
-\code{rungs} is used between 0 and 1.}
+are raised to the power \code{GTI_pow}, hence you should use \code{GTI_pow
+= 1} if you want to fix powers exactly. If \code{NULL} then an equal
+spacing of length \code{rungs} is used between 0 and 1.}
 
 \item{cluster}{option to pass in a cluster environment, allowing chains to be
 run in parallel (see package "parallel").}
@@ -72,6 +66,10 @@ run in parallel (see package "parallel").}
 \item{pb_markdown}{whether to run progress bars in markdown mode, meaning
 they are only updated when they reach 100% to avoid large amounts of output
 being printed to markdown files.}
+
+\item{save_data}{if \code{TRUE} (the default) the raw input data is stored
+for reference in the project output. This allows complete reproducibility
+from a project, but may be undesirable when datasets are very large.}
 
 \item{silent}{whether to suppress all console output.}
 }

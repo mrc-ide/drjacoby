@@ -1,19 +1,3 @@
-#------------------------------------------------
-#' @title Series of standard colours used within the drjacoby package
-#'   
-#' @description Returns a series of standard colours used within the drjacoby
-#'   package.
-#' 
-#' @importFrom grDevices rgb
-#' @export
-
-drjacoby_cols <- function() {
-  ret <- c(rgb(159, 196, 232, maxColorValue = 255),
-           rgb(78, 122, 166, maxColorValue = 255),
-           rgb(202, 90, 106, maxColorValue = 255),
-           rgb(195, 42, 85, maxColorValue = 255))
-  return(ret)
-}
 
 #------------------------------------------------
 #' @title Plot loglikelihood 95\% credible intervals
@@ -33,10 +17,10 @@ drjacoby_cols <- function() {
 plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1, y_axis_type = 1) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- rung <- value <- loglikelihood <- NULL
+  rung <- value <- loglikelihood <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
   assert_in(phase, c("burnin", "sampling"))
@@ -46,7 +30,6 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   assert_in(y_axis_type, 1:3)
   
   # get useful quantities
-  chain_get <- paste0("chain", chain)
   thermo_power <- x$diagnostics$rung_details$thermodynamic_power
   rungs <- length(thermo_power)
   
@@ -60,7 +43,9 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   }
   
   # get plotting values (loglikelihoods)
-  data <- dplyr::filter(x$output, chain == chain_get, stage == phase)
+  phase_get <- phase
+  chain_get <- chain
+  data <- dplyr::filter(x$output, chain == chain_get, phase == phase_get)
   y_lab <- "log-likelihood"
   
   # move to plotting deviance if specified
@@ -96,7 +81,6 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   
   # produce plot
   plot1 <- df %>% 
-    dplyr::mutate(rung = as.numeric(sub("rung", "", rung))) %>% # coerce character to numeric 
     ggplot() + 
     geom_vline(aes(xintercept = x_vec), col = grey(0.9)) +
     geom_pointrange(aes_(x = ~x, ymin = ~Q2.5, y = ~Q50, ymax = ~Q97.5, col = ~col)) + 
@@ -126,19 +110,23 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
 #' @description Plot Metropolis coupling acceptance rates between all rungs.
 #'
 #' @inheritParams plot_rung_loglike
+#' @param chain which chain to plot. If \code{NULL} then plot all chains.
 #'
 #' @import ggplot2 dplyr
 #' @importFrom grDevices grey
 #' @export
 
-plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type = 1) {
+plot_mc_acceptance <- function(x, chain = NULL, phase = "sampling", x_axis_type = 1) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- value <- link <- NULL
+  value <- link <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
-  assert_in(chain, c("all", gsub("chain", "", unique(x$output$chain))))
+  assert_class(x, "drjacoby_output")
+  if (!is.null(chain)) {
+    assert_single_pos_int(chain, zero_allowed = FALSE)
+    assert_in(chain, unique(x$output$chain))
+  }
   assert_in(phase, c("burnin", "sampling"))
   assert_single_pos_int(x_axis_type)
   assert_in(x_axis_type, 1:2)
@@ -163,16 +151,15 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
     x_vec <- thermo_power_mid
     x_lab <- "thermodynamic power"
   }
+  
   # get chain properties
-  if (chain == "all") {
-    chain_get <- unique(x$output$chain)
-    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, stage == phase, chain %in% chain_get) %>%
-      dplyr::group_by(link) %>% 
-      dplyr::summarise(value = mean(value)) %>% 
+  phase_get <- phase
+  if (is.null(chain)) {
+    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, phase == phase_get) %>%
       dplyr::pull(value)
   } else {
-    chain_get <- paste0("chain", chain)
-    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, stage == phase, chain == chain_get) %>%
+    chain_get <- chain
+    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, phase == phase_get, chain == chain_get) %>%
       dplyr::pull(value)
   }
   
@@ -210,17 +197,16 @@ plot_mc_acceptance <- function(x, chain = "all", phase = "sampling", x_axis_type
 plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling", rung = NULL) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- iteration <- logprior <- loglikelihood <- NULL
+  iteration <- logprior <- loglikelihood <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_bounded(lag, 1, 500)
   if (is.null(par)) {
-    par <- setdiff(names(x$output), c("chain", "rung", "iteration", "stage",
+    par <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase",
                                       "logprior", "loglikelihood"))
   }
-  assert_vector(par)
-  assert_string(par)
+  assert_vector_string(par)
   assert_in(par, names(x$output))
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
@@ -233,10 +219,11 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   assert_leq(rung, max_rungs)
   
   # get output for the chosen chain, phase and rung
-  chain_get <- paste0("chain", chain)
-  rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, chain == chain_get, rung == rung_get, stage == phase) %>%
-    dplyr::select(-chain, -rung, -iteration, -stage, -logprior, -loglikelihood) %>%
+  chain_get <- chain
+  rung_get <- rung
+  phase_get <- phase
+  data <- dplyr::filter(x$output, chain == chain_get, rung == rung_get, phase == phase_get) %>%
+    dplyr::select(-chain, -rung, -iteration, -phase, -logprior, -loglikelihood) %>%
     as.data.frame()
   
   # select parameters
@@ -274,17 +261,15 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #'   returned as an object allowing them to be viewed/edited by the user.
 #'
 #' @inheritParams plot_rung_loglike
-#' @param show optional character (or vector of characters) to filter parameters by.
-#'  Parameters matching show will be included.
-#' @param hide optional character (or vector of characters) to filter parameters by.
-#'  Parameters matching show will be hidden.
+#' @param show optional vector of parameter names to plot. Parameters matching
+#'   show will be included.
+#' @param hide optional vector of parameter names to filter out. Parameters
+#'   matching hide will be hidden.
 #' @param lag maximum lag. Must be an integer between 1 and 500.
 #' @param downsample boolean. Whether to downsample chain to make plotting more
 #'   efficient.
 #' @param rung which temperature rung to plot. If \code{NULL} then defaults to
 #'   the cold rung.
-#' @param chain which chain to plot, e.g. \code{"chain1"}. The default
-#'   \code{"all"} plots all chains.
 #' @param display boolean. Whether to show plots, if \code{FALSE} then plotting
 #'   objects are returned without displaying.
 #'
@@ -292,13 +277,27 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 
 plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
                      downsample = TRUE, phase = "sampling", rung = NULL,
-                     chain = "all", display = TRUE) {
+                     chain = NULL, display = TRUE) {
   
-  # declare variables to avoid "no visible binding" issues
-  stage <- NULL
-  
-  # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  # check inputs and define defaults
+  assert_class(x, "drjacoby_output")
+  assert_non_null(x$output)
+  param_names <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
+  if (!is.null(show)) {
+    assert_vector_string(show)
+    assert_in(show, param_names)
+    param_names <- show
+  }
+  if (!is.null(hide)) {
+    assert_vector_string(hide)
+    assert_in(hide, param_names)
+    param_names <- setdiff(param_names, hide)
+  }
+  assert_gr(length(param_names), 0, message = "at least one parameter must be specified")
+  if (length(param_names) > 10){
+    message("More than 10 parameters to summarise, consider using the show or hide arguments 
+            to select parameters and reduce computation time.")
+  }
   assert_single_bounded(lag, 1, 500)
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling", "both"))
@@ -308,7 +307,10 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   }
   assert_single_pos_int(rung)
   assert_leq(rung, max_rungs)
-  assert_in(chain, c("all", gsub("chain", "", unique(x$output$chain))))
+  if (is.null(chain)) {
+    chain <- unique(x$output$chain)
+  }
+  assert_pos_int(chain, zero_allowed = FALSE)
   assert_single_logical(display)
   
   # deal with phase = "both" situation
@@ -316,41 +318,19 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
     phase <- c("burnin", "sampling")
   }
   
-  # get basic properties
-  rung_get <- paste0("rung", rung)
-  if (chain == "all") {
-    chain_get <- unique(x$output$chain)
-  } else {
-    chain_get <- paste0("chain", chain)
-  }
-  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase, chain %in% chain_get) 
-  
-  # choose which parameters to plot
-  parameter <- setdiff(names(data), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
-  if(!is.null(show)){
-    stopifnot(is.character(show))
-    parameter <- parameter[grepl(paste(show, collapse = "|"), parameter)]
-  }
-  if(!is.null(hide)){
-    stopifnot(is.character(hide))
-    parameter <- parameter[!grepl(paste(hide, collapse = "|"), parameter)]
-  }
-  if(length(parameter) > 10){
-    message("More than 10 parameters to summarise, consider using the show or hide arguments 
-            to select parameters and reduce computation time.")
-  }
+  # subset based on rung, chain and phase
+  rung_get <- rung
+  chain_get <- chain
+  phase_get <- phase
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get, chain %in% chain_get) 
   
   # Downsample
-  if(downsample & nrow(data) > 2000){
+  if (downsample & nrow(data) > 2000) {
     data <- data[round(seq(1, nrow(data), length.out = 2000)),]
   }
   
-  data <- dplyr::group_by(data, chain)
-  data <- dplyr::mutate(data, plot_par_x = 1:dplyr::n())
-  data <- dplyr::ungroup(data)
-  
   # Autocorrealtion (on downsample)
-  ac_data <- as.data.frame(apply(data[,parameter], 2, acf_data, lag = lag))
+  ac_data <- as.data.frame(apply(data[, param_names, drop = FALSE], 2, acf_data, lag = lag))
   ac_data$lag <- 0:lag
   
   # Set minimum bin number
@@ -358,25 +338,28 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   
   # produce plots over all parameters
   plot_list <- c()
-  for(j in 1:length(parameter)){
-    pd <- data[, c("chain", "plot_par_x", parameter[j])]
-    names(pd) <- c("chain", "plot_par_x", "y")
-    pd2 <- ac_data[, c("lag", parameter[j])]
+  for(j in 1:length(param_names)){
+    
+    # create plotting data
+    pd <- data[, c("chain", "iteration", param_names[j])]
+    names(pd) <- c("chain", "iteration", "y")
+    
+    pd2 <- ac_data[, c("lag", param_names[j])]
     names(pd2) <- c("lag", "Autocorrelation")
     
     # Histogram
     p1 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$y)) + 
       ggplot2::geom_histogram(bins = b, fill = "deepskyblue3", col = "darkblue") + 
       ggplot2::ylab("Count") + 
-      ggplot2::xlab(parameter[j]) +
+      ggplot2::xlab(param_names[j]) +
       ggplot2::theme_bw()
     
-    # Chains
-    p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$plot_par_x, y = .data$y, col = .data$chain)) + 
+    # Trace plots
+    p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$iteration, y = .data$y, col = as.factor(.data$chain))) + 
       ggplot2::geom_line() +
       scale_color_discrete(name = "Chain") +
       ggplot2::xlab("Iteration") +
-      ggplot2::ylab(parameter[j]) +
+      ggplot2::ylab(param_names[j]) +
       ggplot2::theme_bw()
     
     # Autocorrealtion
@@ -397,15 +380,13 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
                            acf = p3,
                            combined = pc2)
   }
-  names(plot_list) <- paste0("Plot_", parameter)
+  names(plot_list) <- paste0("Plot_", param_names)
   
-  if (!display) {
-    return(invisible(plot_list))
-  } else {
-    # Display plots, asking user for next page if multiple parameters
-    for(j in 1:length(parameter)){
+  # Display plots, asking user for next page if multiple parameters
+  if (display) {
+    for (j in 1:length(param_names)) {
       graphics::plot(plot_list[[j]]$combined)
-      if(j == 1){
+      if (j == 1) {
         default_ask <- grDevices::devAskNewPage()
         on.exit(grDevices::devAskNewPage(default_ask))
         grDevices::devAskNewPage(ask = TRUE)
@@ -431,19 +412,23 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 
 plot_cor <- function(x, parameter1, parameter2,
                      downsample = TRUE, phase = "sampling",
-                     chain = "all", rung = NULL) {
+                     chain = NULL, rung = NULL) {
   
   # declare variables to avoid "no visible binding" issues
-  stage <- NULL
+  #stage <- NULL
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_single_string(parameter1)
   assert_single_string(parameter2)
   assert_in(parameter1, names(x$output))
   assert_in(parameter2, names(x$output))
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling", "both"))
+  if (is.null(chain)) {
+    chain <- unique(x$output$chain)
+  }
+  assert_pos_int(chain)
   max_rungs <- max(x$diagnostics$rung_details$rung)
   if (is.null(rung)) {
     rung <- max_rungs
@@ -457,13 +442,10 @@ plot_cor <- function(x, parameter1, parameter2,
   }
   
   # get basic quantities
-  rung_get <- paste0("rung", rung)
-  if (chain == "all") {
-    chain_get <- unique(x$output$chain)
-  } else {
-    chain_get <- paste0("chain", chain)
-  }
-  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase, chain %in% chain_get)
+  rung_get <- rung
+  chain_get <- chain
+  phase_get <- phase
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get, chain %in% chain_get)
   
   # subset to corr params
   data <- data[,c("chain", parameter1, parameter2)]  
@@ -500,11 +482,8 @@ plot_cor <- function(x, parameter1, parameter2,
 
 plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param_names = NULL) {
   
-  # declare variables to avoid "no visible binding" issues
-  stage <- NULL
-  
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   if (!is.null(show)) {
     assert_string(show)
     assert_in(show, names(x$output))
@@ -519,7 +498,7 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
   
   # define defaults
   if (is.null(show)) {
-    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "stage", "logprior", "loglikelihood"))
+    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
   }
   if (is.null(param_names)) {
     param_names <- show
@@ -531,8 +510,9 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
   }
   
   # subset based on phase and rung
-  rung_get <- paste0("rung", rung)
-  data <- dplyr::filter(x$output, rung == rung_get, stage %in% phase)
+  rung_get <- rung
+  phase_get <- phase
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get)
   data <- data[, show, drop = FALSE]
   
   # get quantiles
@@ -545,5 +525,85 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
     ggplot2::geom_segment(ggplot2::aes(x = .data$param, y = .data$Q2.5, xend = .data$param, yend = .data$Q97.5)) +
     ggplot2::xlab("") +
     ggplot2::ylab("95% CrI")
+  
+}
+
+#------------------------------------------------
+#' @title Plot posterior correlation matrix
+#'
+#' @description Produces a matrix showing the correlation between all parameters
+#'   from posterior draws.
+#' 
+#' @inheritParams plot_rung_loglike
+#' @param show Vector of parameter names to plot.
+#' @param rung Which rung to plot.
+#' @param param_names Optional vector of names to replace the default parameter names.
+#'
+#' @importFrom stats cor
+#' @export
+
+plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_names = NULL) {
+  
+  # declare variables to avoid "no visible binding" issues
+  xi <- yi <- NULL
+  
+  # check inputs
+  assert_class(x, "drjacoby_output")
+  if (!is.null(show)) {
+    assert_string(show)
+    assert_in(show, names(x$output))
+    assert_gr(length(show), 1, message = "must show at least two parameters")
+  }
+  assert_in(phase, c("burnin", "sampling", "both"))
+  max_rungs <- max(x$diagnostics$rung_details$rung)
+  if (is.null(rung)) {
+    rung <- max_rungs
+  }
+  assert_single_pos_int(rung)
+  assert_leq(rung, max_rungs)
+  
+  # define defaults
+  if (is.null(show)) {
+    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
+  }
+  if (is.null(param_names)) {
+    param_names <- show
+  }
+  
+  # deal with phase = "both" situation
+  if (phase == "both") {
+    phase <- c("burnin", "sampling")
+  }
+  
+  # subset based on phase and rung
+  rung_get <- rung
+  phase_get <- phase
+  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get)
+  data <- data[, show, drop = FALSE]
+  n <- ncol(data)
+  
+  # get correlation matrix into dataframe for ggplot
+  m <- cor(data)
+  df_plot <- data.frame(x = rep(names(data), each = n),
+                        xi = rep(1:n, each = n),
+                        y = names(data),
+                        yi = 1:n,
+                        z = as.vector(m))
+  df_plot <- subset(df_plot, xi < yi)
+  df_plot$x <- factor(df_plot$x, levels = names(data))
+  df_plot$y <- factor(df_plot$y, levels = names(data))
+  
+  # get colour range
+  max_range <- max(abs(range(df_plot$z)))
+  max_plot <- ceiling(max_range * 10) / 10
+  
+  # produce plot
+  ggplot2::ggplot(df_plot) + ggplot2::theme_bw() +
+    ggplot2::geom_raster(ggplot2::aes_(x = ~x, y = ~y, fill = ~z)) +
+    ggplot2::scale_fill_gradientn(colours = c("red", "white", "blue"),
+                                  values = c(0, 0.5, 1),
+                                  limits = c(-max_plot, max_plot),
+                                  name = "correlation") +
+    ggplot2::xlab("") + ggplot2::ylab("")
   
 }

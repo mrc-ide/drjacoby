@@ -1,0 +1,81 @@
+---
+title: "Return prior"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE}
+# set random seed
+set.seed(1)
+
+# load the drjacoby package
+library(drjacoby)
+```
+**Purpose:** to check that *drjacoby* returns the prior distribution when no likelihood is used.
+
+## Model
+
+Four parameters, each representing a different one of the four possible parameter transformations internally. Each parameter is given a suitable informative prior over it's domain.
+
+Parameters dataframe:
+
+```{r}
+df_params <- define_params(name = "real_line", min = -Inf, max = Inf,
+                           name = "neg_line", min = -Inf, max = 0,
+                           name = "pos_line", min = 0, max = Inf,
+                           name = "unit_interval", min = 0, max = 1)
+```
+
+Likelihood and prior:
+
+```{r, echo = FALSE, comment = ''}
+likelihood_filename <- "source/returnprior_loglike.cpp"
+cpp_loglike <- cpp_function_get(likelihood_filename)
+cat(readLines(likelihood_filename), sep = '\n')
+
+prior_filename <- "source/returnprior_logprior.cpp"
+cpp_logprior <- cpp_function_get(prior_filename)
+cat(readLines(prior_filename), sep = '\n')
+```
+
+## Run MCMC
+
+```{r}
+mcmc <- run_mcmc(data = list(x = -1),
+                 df_params = df_params,
+                 loglike = cpp_loglike,
+                 logprior = cpp_logprior,
+                 burnin = 1e3,
+                 samples = 1e5,
+                 chains = 10,
+                 pb_markdown = TRUE)
+```
+
+## Plots
+
+```{r}
+output_sub <- subset(mcmc$output, phase == "sampling")
+
+# real_line
+hist(output_sub$real_line, breaks = 100, probability = TRUE, col = "black", main = "real_line")
+x <- seq(-5, 5, l = 1001)
+lines(x, dnorm(x), col = 2, lwd = 2)
+
+# neg_line
+hist(output_sub$neg_line, breaks = 100, probability = TRUE, col = "black", main = "neg_line")
+x <- seq(-100, 0, l = 1001)
+lines(x, dgamma(-x, shape = 5, scale = 5), col = 2, lwd = 2)
+
+# pos_line
+hist(output_sub$pos_line, breaks = 100, probability = TRUE, col = "black", main = "pos_line")
+x <- seq(0, 100, l = 1001)
+lines(x, dgamma(x, shape = 5, scale = 5), col = 2, lwd = 2)
+
+# unit_interval
+hist(output_sub$unit_interval, breaks = seq(0, 1, 0.01), probability = TRUE, col = "black", main = "unit_interval")
+x <- seq(0, 10, l = 1001)
+lines(x, dbeta(x, shape1 = 3, shape2 = 3), col = 2, lwd = 2)
+```

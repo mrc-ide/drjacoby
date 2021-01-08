@@ -11,7 +11,7 @@ navbar:
       menu:
         - text: "Installation"
           href: articles/installation.html
-        - text: "Example MCMC Implementation"
+        - text: "Basic Example"
           href: articles/example.html
         - text: "Metropolis Coupling"
           href: articles/metropolis_coupling.html

@@ -1,3 +1,12 @@
+# return 95% quantile
+#' @importFrom stats quantile
+#' @noRd
+quantile_95 <- function(x) {
+  ret <- quantile(x, probs = c(0.025, 0.5, 0.975))
+  names(ret) <- c("Q2.5", "Q50", "Q97.5")
+  return(ret)
+}
+
 #' Sample N draws from all available chains
 #'
 #' @param x an object of class \code{drjacoby_output}
@@ -8,16 +17,16 @@
 sample_chains <- function(x, sample_n) {
   
   # check inputs
-  assert_custom_class(x, "drjacoby_output")
+  assert_class(x, "drjacoby_output")
   assert_int(sample_n, "sample_n")
   assert_gr(sample_n, 0)
   
   # declare variables to avoid "no visible binding" issues
-  stage <- chain <- rung <- iteration <- logprior <- loglikelihood <- NULL
+  phase <- chain <- rung <- iteration <- logprior <- loglikelihood <- NULL
   
   # Join chains
-  all_chains <- dplyr::filter(x$output, stage == "sampling") %>%
-    dplyr::select(-chain, -rung, -iteration, -stage, -logprior, -loglikelihood)
+  all_chains <- dplyr::filter(x$output, phase == "sampling") %>%
+    dplyr::select(-chain, -rung, -iteration, -phase, -logprior, -loglikelihood)
   assert_leq(sample_n, nrow(all_chains))
   
   # Sample chains

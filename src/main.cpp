@@ -1,7 +1,6 @@
 
 #include "main.h"
-#include "misc_v10.h"
-#include "probability_v3.h"
+#include "misc.h"
 #include "System.h"
 
 #include <chrono>
@@ -9,8 +8,8 @@
 using namespace std;
 
 // specify exact pattern that loglike and logprior function must take in C++
-typedef SEXP (*pattern_cpp_loglike)(Rcpp::NumericVector, int param_i, Rcpp::List, Rcpp::List);
-typedef SEXP (*pattern_cpp_logprior)(Rcpp::NumericVector, int param_i, Rcpp::List);
+typedef SEXP (*pattern_cpp_loglike)(Rcpp::NumericVector, Rcpp::List, Rcpp::List);
+typedef SEXP (*pattern_cpp_logprior)(Rcpp::NumericVector, Rcpp::List);
 
 
 //------------------------------------------------
@@ -169,7 +168,7 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     
     // update progress bars
     if (!s.silent) {
-      int remainder = rep % int(ceil(double(s.burnin)/100));
+      int remainder = rep % int(ceil(double(s.burnin) / 100));
       if ((remainder == 0 && !s.pb_markdown) || ((rep+1) == s.burnin)) {
         update_progress(args_progress, "pb_burnin", rep+1, s.burnin, false);
         if ((rep+1) == s.burnin) {
@@ -182,8 +181,8 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   
   // print phase diagnostics
   if (!s.silent) {
-    double accept_rate = particle_vec[rungs-1].accept_count/double(s.burnin*d);
-    Rcpp::Rcout << "acceptance rate: " << round(accept_rate*1000)/10.0 << "%\n";
+    double accept_rate = particle_vec[rungs - 1].accept_count / double(s.burnin*d);
+    Rcpp::Rcout << "acceptance rate: " << round(accept_rate*1000) / 10.0 << "%\n";
   }
   
   
@@ -224,9 +223,9 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
     
     // update progress bars
     if (!s.silent) {
-      int remainder = rep % int(ceil(double(s.samples)/100));
-      if ((remainder == 0 && !s.pb_markdown) || ((rep+1) == s.samples)) {
-        update_progress(args_progress, "pb_samples", rep+1, s.samples, false);
+      int remainder = rep % int(ceil(double(s.samples) / 100));
+      if ((remainder == 0 && !s.pb_markdown) || ((rep + 1) == s.samples)) {
+        update_progress(args_progress, "pb_samples", rep + 1, s.samples, false);
         if ((rep+1) == s.samples) {
           print("");
         }
@@ -288,7 +287,7 @@ void coupling(vector<Particle> &particle_vec, vector<int> &mc_accept) {
     double acceptance = (loglike2*beta_raised1 + loglike1*beta_raised2) - (loglike1*beta_raised1 + loglike2*beta_raised2);
     
     // accept or reject move
-    bool accept_move = (log(runif_0_1()) < acceptance);
+    bool accept_move = (log(R::runif(0,1)) < acceptance);
     
     // implement swap
     if (accept_move) {
@@ -303,6 +302,10 @@ void coupling(vector<Particle> &particle_vec, vector<int> &mc_accept) {
       particle_vec[rung2].phi = Rcpp::clone(phi_tmp);
       
       // swap loglikelihoods
+      vector<double> loglike_block_tmp = particle_vec[rung1].loglike_block;
+      particle_vec[rung1].loglike_block = particle_vec[rung2].loglike_block;
+      particle_vec[rung2].loglike_block = loglike_block_tmp;
+      
       double loglike_tmp = particle_vec[rung1].loglike;
       particle_vec[rung1].loglike = particle_vec[rung2].loglike;
       particle_vec[rung2].loglike = loglike_tmp;

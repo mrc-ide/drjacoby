@@ -1,10 +1,10 @@
 ---
-title: "Running Multiple Chains"
+title: "Running in Parallel"
 author: "Bob Verity and Pete Winskill"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Running Multiple Chains}
+  %\VignetteIndexEntry{Running in Parallel}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,7 +24,7 @@ set.seed(1)
 library(drjacoby)
 ```
 
-Running multiple chains is a good way of checking that our MCMC is working, in the sense that it is converging on the same stationary distribution. Each chain is completely independent of all others, and so this qualifies as an [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) problem.
+Running multiple chains is a good way of checking that our MCMC is working well. Each chain is completely independent of all others, and so this qualifies as an [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) problem.
 
 This vignette will demonstrate how to run *drjacoby* with multiple chains, first in serial and then in parallel over multiple cores.
 
@@ -40,30 +40,15 @@ data_list <- list(x = rnorm(10))
 # define parameters dataframe
 df_params <- data.frame(name = "mu", min = -10, max = 10, init = 0)
 
-# define cpp loglike function
-cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, int param_i, Rcpp::List data, Rcpp::List misc) {
-  
-  // unpack data
-  std::vector<double> x = Rcpp::as< std::vector<double> >(data[\"x\"]);
-  
-  // unpack parameters
-  double mu = params[\"mu\"];
-  
-  // sum log-likelihood over all data
-  double ret = 0.0;
-  for (unsigned int i = 0; i < x.size(); ++i) {
-    ret += R::dnorm(x[i], mu, 1.0, true);
-  }
+# define loglike function
+r_loglike <- function(params, data, misc) {
+  sum(dnorm(data$x, mean = params["mu"], sd = 1.0, log = TRUE))
+}
 
-  // return as SEXP
-  return Rcpp::wrap(ret);
-}"
-
-# define cpp logprior function
-cpp_logprior <- "SEXP logprior(Rcpp::NumericVector params, int param_i, Rcpp::List misc) {
-  double ret = -log(20.0);
-  return Rcpp::wrap(ret);
-}"
+# define logprior function
+r_logprior <- function(params, misc) {
+  dunif(params["mu"], min = -10, max = 10, log = TRUE)
+}
 ```
 
 ## Running multiple chains
@@ -74,11 +59,11 @@ Whenever the input argument `cluster` is `NULL`, chains will run in serial. This
 # run MCMC in serial
 mcmc <- run_mcmc(data = data_list,
                  df_params = df_params,
-                 loglike = cpp_loglike,
-                 logprior = cpp_logprior,
+                 loglike = r_loglike,
+                 logprior = r_logprior,
                  burnin = 1e3,
                  samples = 1e3,
-                 chains = 1,
+                 chains = 2,
                  pb_markdown = TRUE)
 ```
 
@@ -104,7 +89,7 @@ Next we make a cluster object, which creates multiple copies of R running in par
 cl <- parallel::makeCluster(cores)
 ```
 
-We then run the usual `run_mcmc()` function, this time passing in the cluster as an argument. This causes *drjacoby* to use a `clusterApplyLB()` call rather than an ordinary `lapply()` call over different chains. Each chain is added to a queue over the specified number of cores - when the first job completes, the next job is placed on the node that has become free and this continues until all jobs are complete.
+We then run the usual `run_mcmc()` function, this time passing in the cluster object as an argument. This causes *drjacoby* to use a `clusterApplyLB()` call rather than an ordinary `lapply()` call over different chains. Each chain is added to a queue over the specified number of cores - when the first job completes, the next job is placed on the node that has become available and this continues until all jobs are complete.
 
 Note that output is supressed when running in parallel to avoid sending print commands to multiple cores, so you will not see the usual progress bars.
 
@@ -112,8 +97,8 @@ Note that output is supressed when running in parallel to avoid sending print co
 # run MCMC in parallel
 mcmc <- run_mcmc(data = data_list,
                  df_params = df_params,
-                 loglike = cpp_loglike,
-                 logprior = cpp_logprior,
+                 loglike = r_loglike,
+                 logprior = r_logprior,
                  burnin = 1e3,
                  samples = 1e3,
                  chains = 2,

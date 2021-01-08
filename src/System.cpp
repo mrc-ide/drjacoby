@@ -1,6 +1,6 @@
 
 #include "System.h"
-#include "misc_v10.h"
+#include "misc.h"
 
 using namespace std;
 
@@ -22,6 +22,8 @@ void System::load(Rcpp::List args) {
   theta_vector = args_params["theta_vector"];
   theta_min = rcpp_to_vector_double(args_params["theta_min"]);
   theta_max = rcpp_to_vector_double(args_params["theta_max"]);
+  block = rcpp_to_matrix_int(args_params["block"]);
+  n_block = rcpp_to_int(args_params["n_block"]);
   trans_type = rcpp_to_vector_int(args_params["trans_type"]);
   skip_param = rcpp_to_vector_bool(args_params["skip_param"]);
   d = int(theta_min.size());

@@ -31,6 +31,8 @@ void Particle::init(System &s, double beta_raised) {
   bw_stepsize = 1.0;
   
   // likelihoods and priors
+  loglike_block = vector<double>(s_ptr->n_block);
+  loglike_prop_block = vector<double>(s_ptr->n_block);
   loglike = 0;
   loglike_prop = 0;
   logprior = 0;
@@ -44,7 +46,7 @@ void Particle::init(System &s, double beta_raised) {
 //------------------------------------------------
 // propose new value of phi[i] from univariate normal distribution
 void Particle::propose_phi(int i) {
-  phi_prop[i] = rnorm1(phi[i], bw[i]);
+  phi_prop[i] = R::rnorm(phi[i], bw[i]);
 }
 
 //------------------------------------------------
@@ -106,7 +108,7 @@ double Particle::get_adjustment(int i) {
     // (no adjustment needed)
     break;
   case 1:
-    ret = log(theta_prop[i] - s_ptr->theta_max[i]) - log(theta[i] - s_ptr->theta_max[i]);
+    ret = log(s_ptr->theta_max[i] - theta_prop[i]) - log(s_ptr->theta_max[i] - theta[i]);
     break;
   case 2:
     ret = log(theta_prop[i] - s_ptr->theta_min[i]) - log(theta[i] - s_ptr->theta_min[i]);

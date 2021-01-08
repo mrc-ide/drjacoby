@@ -15,7 +15,14 @@
 #'
 #' @return Gelman-Rubin statistic
 gelman_rubin <- function(par_matrix, chains, samples){
+  
+  # Check that >1 chains and >1 samples
+  assert_gr(chains, 1)
+  assert_gr(samples, 1)
+  
+  # Coerce to matrix
   par_matrix <- as.data.frame(par_matrix)
+  
   # Mean over all samples
   all_mean <- mean(par_matrix[,2])
   
@@ -38,3 +45,50 @@ gelman_rubin <- function(par_matrix, chains, samples){
 acf_data <- function(x, lag){
   stats::acf(x, plot = FALSE, lag.max = lag)$acf
 }
+
+#------------------------------------------------
+# check that geweke p-value non-significant at alpha significance level on
+# values x[1:n]
+#' @importFrom coda mcmc
+#' @noRd
+test_convergence <- function(x, n, alpha = 0.01) {
+  
+  # check inputs
+  assert_vector_numeric(x)
+  assert_single_pos_int(n)
+  assert_single_bounded(alpha)
+  
+  # fail if n = 1
+  if (n == 1) {
+    return(FALSE)
+  }
+  
+  # fail if ESS too small
+  ESS <- try(coda::effectiveSize(x[1:n]), silent = TRUE)
+  if (class(ESS) == "try-error") {
+    return(FALSE)
+  }
+  if (ESS < 10) {
+    return(FALSE)
+  }
+  
+  # fail if geweke p-value < threshold
+  g <- geweke_pvalue(mcmc(x[1:n]))
+  ret <- (g > alpha)
+  
+  # return
+  return(ret)
+}
+
+#------------------------------------------------
+# geweke_pvalue
+# return p-value of Geweke's diagnostic convergence statistic, estimated from
+# package coda
+#' @importFrom stats pnorm
+#' @importFrom coda geweke.diag
+#' @noRd
+geweke_pvalue <- function(x) { 
+  ret <- 2*pnorm(abs(coda::geweke.diag(x)$z), lower.tail = FALSE)
+  return(ret)
+}
+

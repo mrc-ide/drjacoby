@@ -12,18 +12,18 @@ plot_par(
   downsample = TRUE,
   phase = "sampling",
   rung = NULL,
-  chain = "all",
+  chain = NULL,
   display = TRUE
 )
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
-\item{show}{optional character (or vector of characters) to filter parameters by.
-Parameters matching show will be included.}
+\item{show}{optional vector of parameter names to plot. Parameters matching
+show will be included.}
 
-\item{hide}{optional character (or vector of characters) to filter parameters by.
-Parameters matching show will be hidden.}
+\item{hide}{optional vector of parameter names to filter out. Parameters
+matching hide will be hidden.}
 
 \item{lag}{maximum lag. Must be an integer between 1 and 500.}
 
@@ -35,8 +35,7 @@ efficient.}
 \item{rung}{which temperature rung to plot. If \code{NULL} then defaults to
 the cold rung.}
 
-\item{chain}{which chain to plot, e.g. \code{"chain1"}. The default
-\code{"all"} plots all chains.}
+\item{chain}{which chain to plot.}
 
 \item{display}{boolean. Whether to show plots, if \code{FALSE} then plotting
 objects are returned without displaying.}
