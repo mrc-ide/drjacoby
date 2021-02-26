@@ -99,22 +99,12 @@ Take a look at the following likelihood function, which takes this approach:
     b. For block 7, calculate likelihood over all `mu` parameters
 
 ```{r, echo = FALSE, comment = ''}
-likelihood_filename <- system.file("extdata/", "blocks_loglike.cpp", package = 'drjacoby', mustWork = TRUE)
-cpp_loglike <- cpp_function_get(likelihood_filename)
-
-cat(readLines(likelihood_filename), sep = '\n')
+Rcpp::sourceCpp(system.file("extdata/", "blocks_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE))
 ```
 
 If we were to run this likelihood for blocks 1 through 7 and sum the values, we would obtain the full model log-likelihood.
 
 For the prior function we don't need to worry about blocks, we just need to apply the appropriate distributions:
-
-```{r, echo = FALSE, comment = ''}
-prior_filename <- system.file("extdata/", "blocks_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
-cpp_logprior <- cpp_function_get(prior_filename)
-
-cat(readLines(prior_filename), sep = '\n')
-```
 
 We can then run the MCMC as normal:
 
@@ -122,8 +112,8 @@ We can then run the MCMC as normal:
 # run MCMC
 mcmc <- run_mcmc(data = data_list,
                  df_params = df_params,
-                 loglike = cpp_loglike,
-                 logprior = cpp_logprior,
+                 loglike = "loglike",
+                 logprior = "logprior",
                  burnin = 1e3,
                  samples = 1e4,
                  chains = 5,
