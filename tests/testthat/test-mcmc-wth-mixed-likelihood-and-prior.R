@@ -14,14 +14,8 @@ test_that("Cpp likelihood and R prior, and vice versa", {
   # define parameters dataframe
   df_params <- define_params(name = "mu", min = -10, max = 10, init = 5,
                              name = "sigma", min = 0, max = 10, init = 1)
-  
-  # C++ likelihood and prior
-  cpp_loglike_null <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
-    return Rcpp::wrap(0.0);
-  }"
-  cpp_logprior_null <- "SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
-    return Rcpp::wrap(0.0);
-  }"
+  # Source Rcpp likehood and prior functions
+  Rcpp::sourceCpp("test_input_files/loglike_logprior.cpp")
   
   # R likelihood and prior
   r_loglike_null <- function(params, data, misc) {
@@ -35,7 +29,7 @@ test_that("Cpp likelihood and R prior, and vice versa", {
   # likelihood
   expect_silent(run_mcmc(data = data_list,
                          df_params = df_params,
-                         loglike = cpp_loglike_null,
+                         loglike = "loglikenull",
                          logprior = r_logprior_null,
                          burnin = 1e2,
                          samples = 1e2,
@@ -45,7 +39,7 @@ test_that("Cpp likelihood and R prior, and vice versa", {
   expect_silent(run_mcmc(data = data_list,
                          df_params = df_params,
                          loglike = r_loglike_null,
-                         logprior = cpp_logprior_null,
+                         logprior = "logpriornull",
                          burnin = 1e2,
                          samples = 1e2,
                          chains = 1,
