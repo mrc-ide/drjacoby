@@ -31,13 +31,7 @@ where $\gamma$ is a parameter that defines the strength of the well (higher $\ga
 Likelihood and prior:
 
 ```{r, echo = FALSE, comment = ''}
-likelihood_filename <- "source/doublewell_loglike.cpp"
-cpp_loglike <- cpp_function_get(likelihood_filename)
-cat(readLines(likelihood_filename), sep = '\n')
-
-prior_filename <- "source/doublewell_logprior.cpp"
-cpp_logprior <- cpp_function_get(prior_filename)
-cat(readLines(prior_filename), sep = '\n')
+Rcpp::sourceCpp("source/doublewell_loglike_logprior.cpp")
 ```
 
 Parameters dataframe:
@@ -55,8 +49,8 @@ df_params <- define_params(name = "mu", min = -L, max = L,
 ```{r}
 mcmc <- run_mcmc(data = list(x = -1),
                  df_params = df_params,
-                 loglike = cpp_loglike,
-                 logprior = cpp_logprior,
+                 loglike = "loglike",
+                 logprior = "logprior",
                  burnin = 1e3,
                  samples = 1e5,
                  chains = 1,
@@ -90,8 +84,8 @@ lines(x, fx, col = 2, lwd = 2)
 ```{r}
 mcmc <- run_mcmc(data = list(x = -1),
                  df_params = df_params,
-                 loglike = cpp_loglike,
-                 logprior = cpp_logprior,
+                 loglike = "loglike",
+                 logprior = "logprior",
                  burnin = 1e3,
                  samples = 1e5,
                  chains = 1,
