@@ -69,6 +69,7 @@ SEXP create_xptr_loglike(std::string fstr) {
   if (fstr == "loglikenull"){
     return(Rcpp::XPtr<funcPtr>(new funcPtr(&loglikenull))) ;
   }
+  return(Rcpp::XPtr<funcPtr>(R_NilValue)) ; 
 }  
 
 // [[Rcpp::export]]  
@@ -80,4 +81,5 @@ SEXP create_xptr_logprior(std::string fstr) {
   if (fstr == "logpriornull"){
     return(Rcpp::XPtr<funcPtr>(new funcPtr(&logpriornull))) ;
   }
+  return(Rcpp::XPtr<funcPtr>(R_NilValue)) ; 
 }  
