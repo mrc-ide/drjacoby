@@ -379,20 +379,22 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
                            hist = p1,
                            acf = p3,
                            combined = pc2)
-  }
-  names(plot_list) <- paste0("Plot_", param_names)
-  
-  # Display plots, asking user for next page if multiple parameters
-  if (display) {
-    for (j in 1:length(param_names)) {
+    
+    # Display plots, asking user for next page if multiple parameters
+    if(display){
       graphics::plot(plot_list[[j]]$combined)
-      if (j == 1) {
-        default_ask <- grDevices::devAskNewPage()
-        on.exit(grDevices::devAskNewPage(default_ask))
-        grDevices::devAskNewPage(ask = TRUE)
+      if (j > 1) {
+        z <- readline("Press n for next plot, f to return the list of all plots or any other key to exit ")
+        if(z == "f"){
+          display <- FALSE
+        } 
+        if(!z %in% c("n", "f")){
+          return(invisible())            
+        }
       }
     }
   }
+  names(plot_list) <- paste0("Plot_", param_names)
   
   return(invisible(plot_list))
 }
