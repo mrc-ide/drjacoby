@@ -117,6 +117,24 @@ block - which likelihood block(s) this parameter belongs to.
     </li>
   </ul>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Checks
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/checks_return_prior.html">Return prior</a>
+    </li>
+    <li>
+      <a href="../articles/checks_normal_model.html">Normal model</a>
+    </li>
+    <li>
+      <a href="../articles/checks_double_well.html">Double well</a>
+    </li>
+  </ul>
+</li>
 <li>
   <a href="../reference/index.html">Functions</a>
 </li>
@@ -165,7 +183,7 @@ block - which likelihood block(s) this parameter belongs to.
 
     </div>
 
-    <pre class="usage"><span class='fu'>define_params</span>(<span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>define_params</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -178,13 +196,15 @@ block - which likelihood block(s) this parameter belongs to.
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>define_params</span>(<span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"mu"</span>, <span class='kw'>min</span> <span class='kw'>=</span> -<span class='fl'>10</span>, <span class='kw'>max</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>init</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-              <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"sigma"</span>, <span class='kw'>min</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>max</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>init</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>2</span>))</div><div class='output co'>#&gt;    name min max init
+    <pre class="examples"><div class='input'><span class='fu'>define_params</span><span class='op'>(</span>name <span class='op'>=</span> <span class='st'>"mu"</span>, min <span class='op'>=</span> <span class='op'>-</span><span class='fl'>10</span>, max <span class='op'>=</span> <span class='fl'>10</span>, init <span class='op'>=</span> <span class='fl'>0</span>,
+              name <span class='op'>=</span> <span class='st'>"sigma"</span>, min <span class='op'>=</span> <span class='fl'>0</span>, max <span class='op'>=</span> <span class='fl'>5</span>, init <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;    name min max init
 #&gt; 1    mu -10  10    0
-#&gt; 2 sigma   0   5 1, 2</div><div class='input'>
-<span class='fu'>define_params</span>(<span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"mu1"</span>, <span class='kw'>min</span> <span class='kw'>=</span> -<span class='fl'>10</span>, <span class='kw'>max</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>init</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>block</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-              <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"mu2"</span>, <span class='kw'>min</span> <span class='kw'>=</span> -<span class='fl'>10</span>, <span class='kw'>max</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>init</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>block</span> <span class='kw'>=</span> <span class='fl'>2</span>,
-              <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"sigma"</span>, <span class='kw'>min</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>max</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>init</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>block</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>2</span>))</div><div class='output co'>#&gt;    name min max init block
+#&gt; 2 sigma   0   5 1, 2</div><div class='input'>              
+<span class='fu'>define_params</span><span class='op'>(</span>name <span class='op'>=</span> <span class='st'>"mu1"</span>, min <span class='op'>=</span> <span class='op'>-</span><span class='fl'>10</span>, max <span class='op'>=</span> <span class='fl'>10</span>, init <span class='op'>=</span> <span class='fl'>0</span>, block <span class='op'>=</span> <span class='fl'>1</span>,
+              name <span class='op'>=</span> <span class='st'>"mu2"</span>, min <span class='op'>=</span> <span class='op'>-</span><span class='fl'>10</span>, max <span class='op'>=</span> <span class='fl'>10</span>, init <span class='op'>=</span> <span class='fl'>0</span>, block <span class='op'>=</span> <span class='fl'>2</span>,
+              name <span class='op'>=</span> <span class='st'>"sigma"</span>, min <span class='op'>=</span> <span class='fl'>0</span>, max <span class='op'>=</span> <span class='fl'>5</span>, init <span class='op'>=</span> <span class='fl'>1</span>, block <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;    name min max init block
 #&gt; 1   mu1 -10  10    0     1
 #&gt; 2   mu2 -10  10    0     2
 #&gt; 3 sigma   0   5    1  1, 2</div></pre>
@@ -203,7 +223,7 @@ block - which likelihood block(s) this parameter belongs to.
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
