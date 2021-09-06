@@ -13,3 +13,4 @@ R_ignore/
 ^index.md
 ^\.github$
 ^README\.Rmd$
+test_scripts/

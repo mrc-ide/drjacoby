@@ -37,13 +37,8 @@ names(data_list) <- sprintf("group%s", 1:g)
 Likelihood and prior:
 
 ```{r, echo = FALSE, comment = ''}
-likelihood_filename <- "source/multilevel_loglike.cpp"
-cpp_loglike <- cpp_function_get(likelihood_filename)
-cat(readLines(likelihood_filename), sep = '\n')
+Rcpp::sourceCpp("source/multilevel_loglike_logprior.cpp")
 
-prior_filename <- "source/multilevel_logprior.cpp"
-cpp_logprior <- cpp_function_get(prior_filename)
-cat(readLines(prior_filename), sep = '\n')
 ```
 
 Parameters dataframe:
@@ -62,8 +57,8 @@ df_params <- define_params(name = "mu_1", min = -L, max = L, block = c(1, 6),
 ```{r cars}
 mcmc <- run_mcmc(data = data_list,
                  df_params = df_params,
-                 loglike = cpp_loglike,
-                 logprior = cpp_logprior,
+                 loglike = "loglike",
+                 logprior = "logprior",
                  burnin = 1e3,
                  samples = 1e5,
                  chains = 10,
