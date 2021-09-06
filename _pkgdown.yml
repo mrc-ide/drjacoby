@@ -19,6 +19,16 @@ navbar:
           href: articles/parallel.html
         - text: "Using Likelihood Blocks"
           href: articles/blocks.html
+    - text: "Checks"
+      menu:
+        - text: "Return prior"
+          href: articles/checks_return_prior.html
+        - text: "Normal model"
+          href: articles/checks_normal_model.html
+        - text: "Double well"
+          href: articles/checks_double_well.html
+        - text: "Multilevel blocks"
+          href: articles/checks_multilevel_blocks.html
     - text: "Functions"
       href: reference/index.html
   right:

@@ -61,6 +61,24 @@
     </li>
   </ul>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Checks
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="../articles/checks_return_prior.html">Return prior</a>
+    </li>
+    <li>
+      <a href="../articles/checks_normal_model.html">Normal model</a>
+    </li>
+    <li>
+      <a href="../articles/checks_double_well.html">Double well</a>
+    </li>
+  </ul>
+</li>
 <li>
   <a href="../reference/index.html">Functions</a>
 </li>
@@ -82,14 +100,13 @@
 
       
 
-      </header><script src="metropolis_coupling_files/accessible-code-block-0.0.1/empty-anchor.js"></script><link href="metropolis_coupling_files/anchor-sections-1.0/anchor-sections.css" rel="stylesheet">
-<script src="metropolis_coupling_files/anchor-sections-1.0/anchor-sections.js"></script><div class="row">
+      </header><script src="metropolis_coupling_files/header-attrs-2.10/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Metropolis Coupling</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2021-01-08</h4>
+            <h4 class="date">2021-09-06</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/metropolis_coupling.Rmd"><code>vignettes/metropolis_coupling.Rmd</code></a></small>
       <div class="hidden name"><code>metropolis_coupling.Rmd</code></div>
@@ -98,18 +115,17 @@
 
     
     
-<pre><code>#&gt; Warning: package 'gridExtra' was built under R version 4.0.2</code></pre>
 <p>MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has Twin Peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonian Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to “roll around” the target distribution allowing it to go round corners, but it still struggles with multimodal distributions as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains.</p>
 <p>This vignette demonstrates how Metropolis coupling can be implemented within <em>drjacoby</em> to solve a deliberately awkward MCMC problem.</p>
 <div id="setup" class="section level2">
 <h2 class="hasAnchor">
 <a href="#setup" class="anchor"></a>Setup</h2>
 <p>For this example we will start by writing the likelihood and prior functions in C++. If this sounds unfamiliar to you, check out the <a href="https://mrc-ide.github.io/drjacoby/articles/example.html">earlier vignette</a> for a simple example. Our basic model will assume that our data are normally distributed with mean <code>alpha^2*beta</code>. The <code>alpha^2</code> term here means that both positive and negative values of <code>alpha</code> map to the same value, thereby creating a multimodal distribution, and the <code>*beta</code> term ensures that <code>alpha</code> and <code>beta</code> are highly correlated. We will also use a third parameter <code>epsilon</code> to represent some random noise that we want to integrate over. While this is a highly contrived example, it does have the advantage of being horrendously awkward!</p>
+<p>For our prior we assume that <code>alpha</code> is uniform [-10,10], <code>beta</code> is uniform [0,10], and <code>epsilon</code> is normally distributed with mean 0 and standard deviation 1.</p>
 <pre><code>#include &lt;Rcpp.h&gt;
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-// drjacoby_function_start
 SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
   
   // unpack data
@@ -130,13 +146,8 @@ SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
   // return as SEXP
   return Rcpp::wrap(ret);
 }
-// drjacoby_function_end</code></pre>
-<p>For our prior we assume that <code>alpha</code> is uniform [-10,10], <code>beta</code> is uniform [0,10], and <code>epsilon</code> is normally distributed with mean 0 and standard deviation 1.</p>
-<pre><code>#include &lt;Rcpp.h&gt;
-using namespace Rcpp;
 
 // [[Rcpp::export]]
-// drjacoby_function_start
 SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
   
   // unpack parameters
@@ -148,72 +159,94 @@ SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
   // return as SEXP
   return Rcpp::wrap(ret);
 }
-// drjacoby_function_end</code></pre>
+
+// [[Rcpp::export]]  
+SEXP create_xptr_loglike(std::string fstr) {  
+  typedef SEXP (*funcPtr)(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) ;  
+  if (fstr == "loglike"){
+    return(Rcpp::XPtr&lt;funcPtr&gt;(new funcPtr(&amp;loglike))) ;
+  } else {
+    return(Rcpp::XPtr&lt;funcPtr&gt;(R_NilValue)) ; 
+  }
+}
+
+// [[Rcpp::export]]  
+SEXP create_xptr_logprior(std::string fstr) {  
+  typedef SEXP (*funcPtr)(Rcpp::NumericVector params, Rcpp::List misc) ;  
+  if (fstr == "logprior"){
+    return(Rcpp::XPtr&lt;funcPtr&gt;(new funcPtr(&amp;logprior))) ;
+  } else {
+    return(Rcpp::XPtr&lt;funcPtr&gt;(R_NilValue)) ; 
+  }
+}  </code></pre>
 <p>As always, we need to define a dataframe of parameters so that <em>drjacoby</em> knows what parameter ranges to expect:</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="co"># define parameters dataframe</span>
-<span class="no">df_params</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/define_params.html">define_params</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="st">"alpha"</span>, <span class="kw">min</span> <span class="kw">=</span> -<span class="fl">10</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">5</span>,
-                           <span class="kw">name</span> <span class="kw">=</span> <span class="st">"beta"</span>, <span class="kw">min</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">5</span>,
-                           <span class="kw">name</span> <span class="kw">=</span> <span class="st">"epsilon"</span>, <span class="kw">min</span> <span class="kw">=</span> -<span class="fl">Inf</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">Inf</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">0</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># define parameters dataframe</span>
+<span class="va">df_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define_params.html">define_params</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"alpha"</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">10</span>, max <span class="op">=</span> <span class="fl">10</span>, init <span class="op">=</span> <span class="fl">5</span>,
+                           name <span class="op">=</span> <span class="st">"beta"</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="fl">10</span>, init <span class="op">=</span> <span class="fl">5</span>,
+                           name <span class="op">=</span> <span class="st">"epsilon"</span>, min <span class="op">=</span> <span class="op">-</span><span class="cn">Inf</span>, max <span class="op">=</span> <span class="cn">Inf</span>, init <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></code></pre></div>
 <p>Finally, we need some data. For simplicity we will use a series of values drawn from a normal distribution with mean 10. These are obviously not drawn from the true model, but will have the advantage of creating a horribly awkward posterior.</p>
-<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="co"># draw example data</span>
-<span class="no">data_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">x</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(<span class="fl">100</span>, <span class="kw">mean</span> <span class="kw">=</span> <span class="fl">10</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># draw example data</span>
+<span class="va">data_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, mean <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="running-the-mcmc" class="section level2">
 <h2 class="hasAnchor">
 <a href="#running-the-mcmc" class="anchor"></a>Running the MCMC</h2>
 <p>First, we will try running the basic MCMC without Metropolis coupling. The following block of code repeats the same MCMC analysis nine times, each time producing a plot of posterior <code>alpha</code> against <code>beta</code>:</p>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="no">plot_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>()
-<span class="kw">for</span> (<span class="no">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq_len</a></span>(<span class="fl">9</span>)) {
-
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">plot_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="op">)</span>
+<span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq_len</a></span><span class="op">(</span><span class="fl">9</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
+  
   <span class="co"># run MCMC</span>
-  <span class="no">mcmc</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>,
-                   <span class="kw">df_params</span> <span class="kw">=</span> <span class="no">df_params</span>,
-                   <span class="kw">loglike</span> <span class="kw">=</span> <span class="no">cpp_loglike</span>,
-                   <span class="kw">logprior</span> <span class="kw">=</span> <span class="no">cpp_logprior</span>,
-                   <span class="kw">burnin</span> <span class="kw">=</span> <span class="fl">1e3</span>,
-                   <span class="kw">samples</span> <span class="kw">=</span> <span class="fl">1e4</span>,
-                   <span class="kw">chains</span> <span class="kw">=</span> <span class="fl">1</span>,
-                   <span class="kw">silent</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
-
+  <span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>,
+                   df_params <span class="op">=</span> <span class="va">df_params</span>,
+                   loglike <span class="op">=</span> <span class="st">"loglike"</span>,
+                   logprior <span class="op">=</span> <span class="st">"logprior"</span>,
+                   burnin <span class="op">=</span> <span class="fl">1e3</span>,
+                   samples <span class="op">=</span> <span class="fl">1e4</span>,
+                   chains <span class="op">=</span> <span class="fl">1</span>,
+                   silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+  
   <span class="co"># create plot of alpha against beta</span>
-  <span class="no">plot_list</span><span class="kw">[[</span><span class="no">i</span>]] <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span>(<span class="no">mcmc</span>, <span class="st">"alpha"</span>, <span class="st">"beta"</span>) +
-    <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span>(<span class="fl">0</span>, <span class="fl">10</span>) + <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span>(-<span class="fl">10</span>, <span class="fl">10</span>) + <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span>(<span class="kw">legend.position</span> <span class="kw">=</span> <span class="st">"none"</span>)
-}
+  <span class="va">plot_list</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span><span class="op">(</span><span class="va">mcmc</span>, <span class="st">"alpha"</span>, <span class="st">"beta"</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span>
+<span class="op">}</span>
 
 <span class="co"># plot grid</span>
-<span class="kw pkg">gridExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/gridExtra/man/arrangeGrob.html">grid.arrange</a></span>(<span class="kw">grobs</span> <span class="kw">=</span> <span class="no">plot_list</span>)</pre></body></html></div>
-<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-6-1.png" width="768"></p>
+<span class="fu">gridExtra</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/gridExtra/man/arrangeGrob.html">grid.arrange</a></span><span class="op">(</span>grobs <span class="op">=</span> <span class="va">plot_list</span><span class="op">)</span></code></pre></div>
+<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-5-1.png" width="768"></p>
 <p>Clearly this MCMC is not mixing well! By looking over all nine plots we can get a rough idea of what the distribution <em>should</em> look like, but no single MCMC run has captured it adequately. You can experiment with increasing the number of samples - you should get better results for more samples, but a <em>very</em> large number of samples are needed before we get good mixing between the left and right sides of the distribution.</p>
 <p>Metropolis coupling is perfectly designed to solve this kind of problem. To activate Metropolis coupling we need to specify an additional argument to the <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> function - the number of <code>rungs</code>. Each rung represents a different MCMC chain arranged in a “temperature ladder”, with the hotter chains being more free to explore the parameter space. Every iteration, chains have the option of swapping parameter values between rungs, thereby allowing the freely-moving hot chains to propose values to the more constrained colder chains. When looking at the output, we tend to focus exclusively on the coldest chain which can be interpreted the same way as a single chain returned from regular MCMC.</p>
 <p>In this example we use 20 rungs:</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"># run MCMC
-mcmc &lt;- run_mcmc(data = data_list,
-                 df_params = df_params,
-                 loglike = cpp_loglike,
-                 logprior = cpp_logprior,
-                 burnin = 1e3,
-                 samples = 1e4,
-                 rungs = 20,
-                 chains = 1,
-                 pb_markdown = TRUE)
-#&gt; MCMC chain 1
-#&gt; burn-in
-#&gt; 
-  |                                                                            
-  |======================================================================| 100%
-#&gt; acceptance rate: 21.6%
-#&gt; sampling phase
-#&gt; 
-  |                                                                            
-  |======================================================================| 100%
-#&gt; acceptance rate: 23.4%
-#&gt; 
-#&gt; chain completed in 1.797385 seconds
-
-# create plot of alpha against beta
-plot_cor(mcmc, "alpha", "beta") +
-    ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position = "none")</pre></body></html></div>
-<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-7-1.png" width="480"></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run MCMC</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>mcmc <span class="ot">&lt;-</span> <span class="fu">run_mcmc</span>(<span class="at">data =</span> data_list,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">df_params =</span> df_params,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">loglike =</span> <span class="st">"loglike"</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">logprior =</span> <span class="st">"logprior"</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">burnin =</span> <span class="fl">1e3</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">samples =</span> <span class="fl">1e4</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">rungs =</span> <span class="dv">20</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">chains =</span> <span class="dv">1</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                 <span class="at">pb_markdown =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; MCMC chain 1</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; burn-in</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 21.6%</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; sampling phase</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 23.4%</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 2.605207 seconds</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># create plot of alpha against beta</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_cor</span>(mcmc, <span class="st">"alpha"</span>, <span class="st">"beta"</span>) <span class="sc">+</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ylim</span>(<span class="dv">0</span>, <span class="dv">10</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">xlim</span>(<span class="sc">-</span><span class="dv">10</span>, <span class="dv">10</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code></pre></div>
+<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-6-1.png" width="480"></p>
 <p>You should see a much better characterisation of the posterior distribution. The run time scales approximately linearly with the number of rungs, so there is a computational cost to using this method, but on the other hand our results are far better than we would obtain by simply increasing the number of samples by a factor of 20.</p>
 </div>
 <div id="how-many-rungs-to-use" class="section level2">
@@ -221,69 +254,75 @@ plot_cor(mcmc, "alpha", "beta") +
 <a href="#how-many-rungs-to-use" class="anchor"></a>How many rungs to use?</h2>
 <p>Metropolis coupling in <em>drjacoby</em> works by proposing swaps betweed adjacent rungs in the temperature ladder, which are accepted or rejected according to the standard Metropolis-Hastings ratio. If, for example, a hot rung happens upon a set of parameter values that have high likelihood then there is a good chance these values will be swapped up to the next rung. In this way, information can effectively bubble-sort its way from the prior (the hottest rung) to the posterior (the coldest rung). The average chance of a swap being accepted depends on the two adjacent rungs being similar enough in distribution that values drawn from one have a high likelihood in the other. This, in turn, means that swaps have a higher chance of being accepted when we have a large number of densely packed rungs.</p>
 <p>To explore this, we start by re-running the above MCMC with a small number of rungs and a small number of samples to highlight the problem. We can use the <code><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance()</a></code> function to plot the acceptance rate between rungs:</p>
-<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="co"># run MCMC</span>
-<span class="no">mcmc</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>,
-                 <span class="kw">df_params</span> <span class="kw">=</span> <span class="no">df_params</span>,
-                 <span class="kw">loglike</span> <span class="kw">=</span> <span class="no">cpp_loglike</span>,
-                 <span class="kw">logprior</span> <span class="kw">=</span> <span class="no">cpp_logprior</span>,
-                 <span class="kw">burnin</span> <span class="kw">=</span> <span class="fl">1e3</span>,
-                 <span class="kw">samples</span> <span class="kw">=</span> <span class="fl">1e3</span>,
-                 <span class="kw">rungs</span> <span class="kw">=</span> <span class="fl">10</span>,
-                 <span class="kw">chains</span> <span class="kw">=</span> <span class="fl">1</span>,
-                 <span class="kw">silent</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># run MCMC</span>
+<span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>,
+                 df_params <span class="op">=</span> <span class="va">df_params</span>,
+                 loglike <span class="op">=</span> <span class="st">"loglike"</span>,
+                 logprior <span class="op">=</span> <span class="st">"logprior"</span>,
+                 burnin <span class="op">=</span> <span class="fl">1e3</span>,
+                 samples <span class="op">=</span> <span class="fl">1e3</span>,
+                 rungs <span class="op">=</span> <span class="fl">10</span>,
+                 chains <span class="op">=</span> <span class="fl">1</span>,
+                 silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 
 <span class="co"># plot coupling acceptance rates</span>
-<span class="fu"><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance</a></span>(<span class="no">mcmc</span>, <span class="kw">x_axis_type</span> <span class="kw">=</span> <span class="fl">2</span>)</pre></body></html></div>
-<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-8-1.png" width="480"></p>
+<span class="fu"><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance</a></span><span class="op">(</span><span class="va">mcmc</span>, x_axis_type <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
+<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-7-1.png" width="480"></p>
 <p>The 10 vertical grey bars in the above plot show the positions of our 10 rungs in the thermodynamic interval [0,1], and the red dots between them show the proportion of swaps that were accepted between rungs (this same information is available in a dataframe via <code>mcmc$diagnostics$mc_accept</code>). Notice that the acceptance rate between the hottest and second-hottest rung is close to zero, meaning very little of the information in the hottest rung made it up the ladder to the colder rungs. We can see the problems this causes when we plot the posterior draws:</p>
-<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span>(<span class="no">mcmc</span>, <span class="st">"alpha"</span>, <span class="st">"beta"</span>) +
-    <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span>(<span class="fl">0</span>, <span class="fl">10</span>) + <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span>(-<span class="fl">10</span>, <span class="fl">10</span>) + <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span>(<span class="kw">legend.position</span> <span class="kw">=</span> <span class="st">"none"</span>)</pre></body></html></div>
-<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-9-1.png" width="480"></p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span><span class="op">(</span><span class="va">mcmc</span>, <span class="st">"alpha"</span>, <span class="st">"beta"</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></code></pre></div>
+<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-8-1.png" width="480"></p>
 <p>Although we have some mixing between the left and right sides of the distribution, overall sampling is still very patchy.</p>
 <p>One way of improving mixing between rungs is simply to increase the number of rungs, so the distance between distributions is smaller:</p>
-<div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="co"># run MCMC</span>
-<span class="no">mcmc</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>,
-                 <span class="kw">df_params</span> <span class="kw">=</span> <span class="no">df_params</span>,
-                 <span class="kw">loglike</span> <span class="kw">=</span> <span class="no">cpp_loglike</span>,
-                 <span class="kw">logprior</span> <span class="kw">=</span> <span class="no">cpp_logprior</span>,
-                 <span class="kw">burnin</span> <span class="kw">=</span> <span class="fl">1e3</span>,
-                 <span class="kw">samples</span> <span class="kw">=</span> <span class="fl">1e3</span>,
-                 <span class="kw">rungs</span> <span class="kw">=</span> <span class="fl">50</span>,
-                 <span class="kw">chains</span> <span class="kw">=</span> <span class="fl">1</span>,
-                 <span class="kw">silent</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># run MCMC</span>
+<span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>,
+                 df_params <span class="op">=</span> <span class="va">df_params</span>,
+                 loglike <span class="op">=</span> <span class="st">"loglike"</span>,
+                 logprior <span class="op">=</span> <span class="st">"logprior"</span>,
+                 burnin <span class="op">=</span> <span class="fl">1e3</span>,
+                 samples <span class="op">=</span> <span class="fl">1e3</span>,
+                 rungs <span class="op">=</span> <span class="fl">50</span>,
+                 chains <span class="op">=</span> <span class="fl">1</span>,
+                 silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 
 <span class="co"># plot coupling acceptance rates</span>
-<span class="fu"><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance</a></span>(<span class="no">mcmc</span>, <span class="kw">x_axis_type</span> <span class="kw">=</span> <span class="fl">2</span>)</pre></body></html></div>
-<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-10-1.png" width="480"></p>
-<div class="sourceCode" id="cb11"><html><body><pre class="r">
+<span class="fu"><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance</a></span><span class="op">(</span><span class="va">mcmc</span>, x_axis_type <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
+<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-9-1.png" width="480"></p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R">
 <span class="co"># create plot of alpha against beta</span>
-<span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span>(<span class="no">mcmc</span>, <span class="st">"alpha"</span>, <span class="st">"beta"</span>) +
-    <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span>(<span class="fl">0</span>, <span class="fl">10</span>) + <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span>(-<span class="fl">10</span>, <span class="fl">10</span>) + <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span>(<span class="kw">legend.position</span> <span class="kw">=</span> <span class="st">"none"</span>)</pre></body></html></div>
-<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-10-2.png" width="480"></p>
+<span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span><span class="op">(</span><span class="va">mcmc</span>, <span class="st">"alpha"</span>, <span class="st">"beta"</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></code></pre></div>
+<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-9-2.png" width="480"></p>
 <p>This mitigates the problem to some extent, as we now have acceptance rates going “deeper” towards the prior, however the hottest rung is still not passing information up the ladder. This strategy also comes at a high computational cost, as we are effectively running the MCMC 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter <code>GTI_pow</code>, which represents a power that the temperature ladder is raised to. Higher values of <code>GTI_pow</code> therefore lead to rungs being more highly concentrated at the prior end of the spectrum. The previous two MCMCs had <code>GTI_pow</code> set to 1.0 by default, leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with just 20 rungs and <code>GTI_pow = 5.0</code>:</p>
-<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="co"># run MCMC</span>
-<span class="no">mcmc</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>,
-                 <span class="kw">df_params</span> <span class="kw">=</span> <span class="no">df_params</span>,
-                 <span class="kw">loglike</span> <span class="kw">=</span> <span class="no">cpp_loglike</span>,
-                 <span class="kw">logprior</span> <span class="kw">=</span> <span class="no">cpp_logprior</span>,
-                 <span class="kw">burnin</span> <span class="kw">=</span> <span class="fl">1e3</span>,
-                 <span class="kw">samples</span> <span class="kw">=</span> <span class="fl">1e3</span>,
-                 <span class="kw">rungs</span> <span class="kw">=</span> <span class="fl">20</span>,
-                 <span class="kw">chains</span> <span class="kw">=</span> <span class="fl">1</span>,
-                 <span class="kw">GTI_pow</span> <span class="kw">=</span> <span class="fl">5.0</span>,
-                 <span class="kw">silent</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># run MCMC</span>
+<span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>,
+                 df_params <span class="op">=</span> <span class="va">df_params</span>,
+                 loglike <span class="op">=</span> <span class="st">"loglike"</span>,
+                 logprior <span class="op">=</span> <span class="st">"logprior"</span>,
+                 burnin <span class="op">=</span> <span class="fl">1e3</span>,
+                 samples <span class="op">=</span> <span class="fl">1e3</span>,
+                 rungs <span class="op">=</span> <span class="fl">20</span>,
+                 chains <span class="op">=</span> <span class="fl">1</span>,
+                 GTI_pow <span class="op">=</span> <span class="fl">5.0</span>,
+                 silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 
 <span class="co"># plot coupling acceptance rates</span>
 <span class="co"># we could also use the option x_axis_type = 1 if we wanted to see these</span>
 <span class="co"># points spread out evenly, rather than at their true position in the</span>
 <span class="co"># thermodynamic interval</span>
-<span class="fu"><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance</a></span>(<span class="no">mcmc</span>, <span class="kw">x_axis_type</span> <span class="kw">=</span> <span class="fl">2</span>)</pre></body></html></div>
-<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-11-1.png" width="480"></p>
-<div class="sourceCode" id="cb13"><html><body><pre class="r">
+<span class="fu"><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance</a></span><span class="op">(</span><span class="va">mcmc</span>, x_axis_type <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
+<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-10-1.png" width="480"></p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R">
 <span class="co"># create plot of alpha against beta</span>
-<span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span>(<span class="no">mcmc</span>, <span class="kw">parameter1</span> <span class="kw">=</span> <span class="st">"alpha"</span>, <span class="st">"beta"</span>) +
-    <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span>(<span class="fl">0</span>, <span class="fl">10</span>) + <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span>(-<span class="fl">10</span>, <span class="fl">10</span>) + <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span>(<span class="kw">legend.position</span> <span class="kw">=</span> <span class="st">"none"</span>)</pre></body></html></div>
-<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-11-2.png" width="480"></p>
+<span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span><span class="op">(</span><span class="va">mcmc</span>, parameter1 <span class="op">=</span> <span class="st">"alpha"</span>, <span class="st">"beta"</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></code></pre></div>
+<p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-10-2.png" width="480"></p>
 <p>We find that with just 20 rungs we now have decent acceptance rates all the way through the temperature ladder. If we really wanted to fine-tune the mixing we could use the <code>beta_manual</code> argument inside <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> to define the temperature ladder exactly as a vector of values between 0 and 1. Note, this ladder is always raised to the power <code>GTI_pow</code>, so we should set this to 1.0 if we don’t want any additional transformation applied.</p>
 <p>In summary, the correct number of rungs to use in Metropolis-coupled MCMC is whatever number provides decent acceptance rates all the way through our temperature ladder. When this is the case we can be condifent that the prior is “talking to” the posterior, making it <em>extremely unlikely</em> (but not impossible) that the MCMC is still missing large parts of the posterior distribution.</p>
 </div>
@@ -304,7 +343,7 @@ plot_cor(mcmc, "alpha", "beta") +
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
