@@ -21,18 +21,18 @@ SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
 
 // [[Rcpp::export]]  
 SEXP create_xptr(std::string function_name) {  
-  typedef SEXP (*funcPtr_likelihood)(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) ;  
-  typedef SEXP (*funcPtr_prior)(Rcpp::NumericVector params, Rcpp::List misc) ;  
+  typedef SEXP (*funcPtr_likelihood)(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc);  
+  typedef SEXP (*funcPtr_prior)(Rcpp::NumericVector params, Rcpp::List misc);  
   
   if (function_name == "loglike"){
-    return(Rcpp::XPtr<funcPtr_likelihood>(new funcPtr_likelihood(&loglike))) ;
+    return(Rcpp::XPtr<funcPtr_likelihood>(new funcPtr_likelihood(&loglike)));
   } 
   
   if (function_name == "logprior"){
-    return(Rcpp::XPtr<funcPtr_prior>(new funcPtr_prior(&logprior))) ;
+    return(Rcpp::XPtr<funcPtr_prior>(new funcPtr_prior(&logprior)));
   } 
 
-  return(Rcpp::XPtr<funcPtr_likelihood>(R_NilValue)) ; 
+  stop("cpp function %i not found", function_name);
 }
 
 

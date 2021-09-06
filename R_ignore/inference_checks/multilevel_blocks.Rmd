@@ -38,7 +38,6 @@ Likelihood and prior:
 
 ```{r, echo = FALSE, comment = ''}
 Rcpp::sourceCpp("source/multilevel_loglike_logprior.cpp")
-
 ```
 
 Parameters dataframe:
@@ -62,7 +61,7 @@ mcmc <- run_mcmc(data = data_list,
                  burnin = 1e3,
                  samples = 1e5,
                  chains = 10,
-                 pb_markdown = TRUE)
+                 silent = TRUE)
 ```
 
 ## Plots

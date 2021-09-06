@@ -45,7 +45,7 @@ mcmc <- run_mcmc(data = list(x = -1),
                  burnin = 1e3,
                  samples = 1e5,
                  chains = 10,
-                 pb_markdown = TRUE)
+                 silent = TRUE)
 ```
 
 ## Plots
