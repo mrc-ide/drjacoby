@@ -20,6 +20,8 @@ Imports:
     parallel,
     ggplot2,
     RcppXPtrUtils,
+    usethis,
+    tools,
     rlang,
     cowplot,
     dplyr,

@@ -2,9 +2,12 @@
 #'
 #' @param save_as of file to create, relative to root of active project.
 #'
-#' @return 
 #' @export
 cpp_template <- function (save_as){
+  ext <- tools::file_ext(save_as)
+  if(ext != ".cpp"){
+    stop("File must be .cpp")
+  }
   usethis::use_template(
     template = "cpp_template.cpp",
     save_as = save_as,

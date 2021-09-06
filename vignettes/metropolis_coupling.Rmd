@@ -39,7 +39,7 @@ For this example we will start by writing the likelihood and prior functions in 
 
 For our prior we assume that `alpha` is uniform [-10,10], `beta` is uniform [0,10], and `epsilon` is normally distributed with mean 0 and standard deviation 1.
 
-```{r, echo = FALSE, comment = ''}
+```{r, echo = FALSE, comment = '', warning=FALSE}
 cpp_funcs <- system.file("extdata/", "coupling_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
 Rcpp::sourceCpp(cpp_funcs)
 cat(readLines(cpp_funcs), sep = '\n')

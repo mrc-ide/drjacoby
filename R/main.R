@@ -535,3 +535,5 @@ update_progress <- function(pb_list, name, i, max_i, close = TRUE) {
   }
 }
 
+# Deal with user input cpp not being defined
+globalVariables(c("create_xptr"))
