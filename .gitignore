@@ -6,3 +6,4 @@ inst/doc
 .RData
 .Ruserdata
 ignore/
+test_scripts/
