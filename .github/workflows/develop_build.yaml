@@ -2,9 +2,13 @@
 # https://community.rstudio.com/new-topic?category=Package%20development&tags=github-actions
 on:
   push:
+    branches:
+      - develop
   pull_request:
+    branches:
+      - develop
 
-name: R-CMD-check
+name: develop_build
 
 jobs:
   R-CMD-check:
