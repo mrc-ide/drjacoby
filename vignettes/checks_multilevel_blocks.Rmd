@@ -42,10 +42,8 @@ names(data_list) <- sprintf("group%s", 1:g)
 
 Likelihood and prior:
 
-```{r}
-cpp_funcs <- system.file("extdata/checks/", "multilevel_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
-Rcpp::sourceCpp(cpp_funcs)
-
+```{r, echo = FALSE, comment = ''}
+Rcpp::sourceCpp(system.file("extdata/checks/", "multilevel_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE))
 ```
 
 Parameters dataframe:
@@ -62,7 +60,6 @@ df_params <- define_params(name = "mu_1", min = -L, max = L, block = c(1, 6),
 ## MCMC
 
 ```{r cars}
-t0 <- Sys.time()
 mcmc <- run_mcmc(data = data_list,
                  df_params = df_params,
                  loglike = "loglike",
@@ -70,8 +67,7 @@ mcmc <- run_mcmc(data = data_list,
                  burnin = 1e3,
                  samples = 1e5,
                  chains = 10,
-                 pb_markdown = TRUE)
-Sys.time() - t0
+                 silent = TRUE)
 ```
 
 ## Plots

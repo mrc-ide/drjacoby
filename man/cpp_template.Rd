@@ -9,9 +9,6 @@ cpp_template(save_as)
 \arguments{
 \item{save_as}{of file to create, relative to root of active project.}
 }
-\value{
-
-}
 \description{
 Create template for cpp
 }

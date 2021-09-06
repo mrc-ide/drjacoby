@@ -36,9 +36,8 @@ where $\gamma$ is a parameter that defines the strength of the well (higher $\ga
 
 Likelihood and prior:
 
-```{r}
-cpp_funcs <- system.file("extdata/checks/", "doublewell_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
-Rcpp::sourceCpp(cpp_funcs)
+```{r, echo = FALSE, comment = ''}
+Rcpp::sourceCpp(system.file("extdata/checks/", "doublewell_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE))
 ```
 
 Parameters dataframe:
@@ -54,7 +53,6 @@ df_params <- define_params(name = "mu", min = -L, max = L,
 ## Single temperature rung (no Metropolis coupling)
 
 ```{r}
-t0 <- Sys.time()
 mcmc <- run_mcmc(data = list(x = -1),
                  df_params = df_params,
                  loglike = "loglike",
@@ -63,16 +61,15 @@ mcmc <- run_mcmc(data = list(x = -1),
                  samples = 1e5,
                  chains = 1,
                  rungs = 1,
-                 pb_markdown = TRUE)
-Sys.time() - t0
+                 silent = TRUE)
 ```
 
-```{r, fig.width=6, fig.height=5}
+```{r}
 # trace plot
 plot_par(mcmc, show = "mu")
 ```
 
-```{r, fig.width=6, fig.height=5}
+```{r}
 # extract posterior draws
 output_sub <- subset(mcmc$output, phase == "sampling")
 mu_draws <- output_sub$mu
@@ -91,7 +88,6 @@ lines(x, fx, col = 2, lwd = 2)
 ## Multiple temperature rungs
 
 ```{r}
-t0 <- Sys.time()
 mcmc <- run_mcmc(data = list(x = -1),
                  df_params = df_params,
                  loglike = "loglike",
@@ -102,7 +98,6 @@ mcmc <- run_mcmc(data = list(x = -1),
                  rungs = 11,
                  GTI_pow = 2,
                  pb_markdown = TRUE)
-Sys.time() - t0
 ```
 
 ```{r, fig.width=6, fig.height=5}
@@ -122,5 +117,3 @@ mu_draws <- output_sub$mu
 hist(mu_draws, breaks = seq(-L, L, l = 201), probability = TRUE, main = "", col = "black")
 lines(x, fx, col = 2, lwd = 2)
 ```
-
-
