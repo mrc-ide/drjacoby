@@ -494,10 +494,10 @@ deploy_chain <- function(args) {
   
   # convert C++ functions to pointers
   if (args$args_params$loglike_use_cpp) {
-    args$args_functions$loglike <- create_xptr_loglike(args$args_functions$loglike)
+    args$args_functions$loglike <- create_xptr(args$args_functions$loglike)
   }
   if (args$args_params$logprior_use_cpp) {
-    args$args_functions$logprior <- create_xptr_logprior(args$args_functions$logprior)
+    args$args_functions$logprior <- create_xptr(args$args_functions$logprior)
   }
   
   # get parameters
