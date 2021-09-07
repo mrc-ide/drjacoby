@@ -4,8 +4,6 @@
 ^docs$
 ^_pkgdown\.yml$
 ^codecov\.yml$
-^appveyor\.yml$
-^\.travis\.yml$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ignore/

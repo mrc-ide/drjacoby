@@ -82,14 +82,13 @@
 
       
 
-      </header><script src="blocks_files/accessible-code-block-0.0.1/empty-anchor.js"></script><link href="blocks_files/anchor-sections-1.0/anchor-sections.css" rel="stylesheet">
-<script src="blocks_files/anchor-sections-1.0/anchor-sections.js"></script><div class="row">
+      </header><script src="blocks_files/header-attrs-2.10/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Using Likelihood Blocks</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2021-01-08</h4>
+            <h4 class="date">2021-09-07</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/blocks.Rmd"><code>vignettes/blocks.Rmd</code></a></small>
       <div class="hidden name"><code>blocks.Rmd</code></div>
@@ -104,7 +103,8 @@
 <h2 class="hasAnchor">
 <a href="#problem-motivation" class="anchor"></a>Problem motivation</h2>
 <p>For this example we will work with the <code>chickwts</code> dataset (one of the datasets that comes with R), which lists the weights of various chicks broken down by the feed they were given.</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">chickwts</span>, <span class="fl">12</span>)
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">chickwts</span>, <span class="fl">12</span><span class="op">)</span>
 <span class="co">#&gt;    weight      feed</span>
 <span class="co">#&gt; 1     179 horsebean</span>
 <span class="co">#&gt; 2     160 horsebean</span>
@@ -117,10 +117,11 @@
 <span class="co">#&gt; 9     143 horsebean</span>
 <span class="co">#&gt; 10    140 horsebean</span>
 <span class="co">#&gt; 11    309   linseed</span>
-<span class="co">#&gt; 12    229   linseed</span></pre></body></html></div>
+<span class="co">#&gt; 12    229   linseed</span></code></pre></div>
 <p>We will pass this into <em>drjacoby</em> as a list over groups:</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">data_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html">split</a></span>(<span class="no">chickwts</span>$<span class="no">weight</span>, <span class="kw">f</span> <span class="kw">=</span> <span class="no">chickwts</span>$<span class="no">feed</span>)
-<span class="no">data_list</span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">data_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html">split</a></span><span class="op">(</span><span class="va">chickwts</span><span class="op">$</span><span class="va">weight</span>, f <span class="op">=</span> <span class="va">chickwts</span><span class="op">$</span><span class="va">feed</span><span class="op">)</span>
+<span class="va">data_list</span>
 <span class="co">#&gt; $casein</span>
 <span class="co">#&gt;  [1] 368 390 379 260 404 318 352 359 216 222 283 332</span>
 <span class="co">#&gt; </span>
@@ -137,7 +138,7 @@
 <span class="co">#&gt;  [1] 243 230 248 327 329 250 193 271 316 267 199 171 158 248</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $sunflower</span>
-<span class="co">#&gt;  [1] 423 340 392 339 341 226 320 295 334 322 297 318</span></pre></body></html></div>
+<span class="co">#&gt;  [1] 423 340 392 339 341 226 320 295 334 322 297 318</span></code></pre></div>
 <p>There are 6 feed groups in total, and we will assume that values within a group are normally distributed each with a distinct unknown mean, leading to 6 parameters <span class="math inline">\(\mu_1\)</span> to <span class="math inline">\(\mu_6\)</span>. For simplicity we will assume the same standard deviation <span class="math inline">\(\sigma\)</span> in all groups. To make this a random effects framework, we will assume that <span class="math inline">\(\mu_1\)</span> to <span class="math inline">\(\mu_6\)</span> are themselves random draws from a normal distribution with mean <span class="math inline">\(\phi\)</span> and standard deviation <span class="math inline">\(\tau\)</span>. Finally, we will put diffuse priors on <span class="math inline">\(\sigma\)</span>, <span class="math inline">\(\phi\)</span> and <span class="math inline">\(\tau\)</span> so that the data can “speak for itself”. For the more mathematically minded, the complete model can be written as follows:</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -156,18 +157,19 @@
 <p><img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/dependence_table.png" width="400px"></p>
 <p>In the first column we list all the data and free parameters of our model, and in the second column we list every parameter on which the first column depends (“depends” in this context means we need to know this parameter value in order to write down the probability). Don’t put data or fixed values in the second column, only free parameters, i.e. those we are trying to infer. We need <strong>one block for every unique combination of parameters in the second column</strong>. For example, <span class="math inline">\(\mu_1\)</span> and <span class="math inline">\(\mu_2\)</span> depend on the same combination of parameters (<span class="math inline">\(\phi\)</span> and <span class="math inline">\(\tau\)</span>) therefore they belong in the same block. We find that we need seven blocks in this example.</p>
 <p>We define blocks in <em>drjacoby</em> using the optional “block” column of the parameters dataframe. For each parameter you should list all the blocks in which it can be found - for example <span class="math inline">\(\mu_1\)</span> can be found in blocks 1 and 7 in the table above:</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="co"># define parameters dataframe</span>
-<span class="no">df_params</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/define_params.html">define_params</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="st">"mu1"</span>, <span class="kw">min</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">Inf</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">block</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">1</span>, <span class="fl">7</span>),
-                           <span class="kw">name</span> <span class="kw">=</span> <span class="st">"mu2"</span>, <span class="kw">min</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">Inf</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">block</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">2</span>, <span class="fl">7</span>),
-                           <span class="kw">name</span> <span class="kw">=</span> <span class="st">"mu3"</span>, <span class="kw">min</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">Inf</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">block</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">3</span>, <span class="fl">7</span>),
-                           <span class="kw">name</span> <span class="kw">=</span> <span class="st">"mu4"</span>, <span class="kw">min</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">Inf</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">block</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">4</span>, <span class="fl">7</span>),
-                           <span class="kw">name</span> <span class="kw">=</span> <span class="st">"mu5"</span>, <span class="kw">min</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">Inf</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">block</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">5</span>, <span class="fl">7</span>),
-                           <span class="kw">name</span> <span class="kw">=</span> <span class="st">"mu6"</span>, <span class="kw">min</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">Inf</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">block</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">6</span>, <span class="fl">7</span>),
-                           <span class="kw">name</span> <span class="kw">=</span> <span class="st">"sigma"</span>, <span class="kw">min</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">Inf</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">block</span> <span class="kw">=</span> <span class="fl">1</span>:<span class="fl">6</span>,
-                           <span class="kw">name</span> <span class="kw">=</span> <span class="st">"phi"</span>, <span class="kw">min</span> <span class="kw">=</span> -<span class="fl">Inf</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">Inf</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">block</span> <span class="kw">=</span> <span class="fl">7</span>,
-                           <span class="kw">name</span> <span class="kw">=</span> <span class="st">"tau"</span>, <span class="kw">min</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">max</span> <span class="kw">=</span> <span class="fl">Inf</span>, <span class="kw">init</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">block</span> <span class="kw">=</span> <span class="fl">7</span>)
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># define parameters dataframe</span>
+<span class="va">df_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define_params.html">define_params</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"mu1"</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="cn">Inf</span>, init <span class="op">=</span> <span class="fl">1</span>, block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">7</span><span class="op">)</span>,
+                           name <span class="op">=</span> <span class="st">"mu2"</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="cn">Inf</span>, init <span class="op">=</span> <span class="fl">1</span>, block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">7</span><span class="op">)</span>,
+                           name <span class="op">=</span> <span class="st">"mu3"</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="cn">Inf</span>, init <span class="op">=</span> <span class="fl">1</span>, block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">7</span><span class="op">)</span>,
+                           name <span class="op">=</span> <span class="st">"mu4"</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="cn">Inf</span>, init <span class="op">=</span> <span class="fl">1</span>, block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">7</span><span class="op">)</span>,
+                           name <span class="op">=</span> <span class="st">"mu5"</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="cn">Inf</span>, init <span class="op">=</span> <span class="fl">1</span>, block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">7</span><span class="op">)</span>,
+                           name <span class="op">=</span> <span class="st">"mu6"</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="cn">Inf</span>, init <span class="op">=</span> <span class="fl">1</span>, block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">6</span>, <span class="fl">7</span><span class="op">)</span>,
+                           name <span class="op">=</span> <span class="st">"sigma"</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="cn">Inf</span>, init <span class="op">=</span> <span class="fl">1</span>, block <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">6</span>,
+                           name <span class="op">=</span> <span class="st">"phi"</span>, min <span class="op">=</span> <span class="op">-</span><span class="cn">Inf</span>, max <span class="op">=</span> <span class="cn">Inf</span>, init <span class="op">=</span> <span class="fl">0</span>, block <span class="op">=</span> <span class="fl">7</span>,
+                           name <span class="op">=</span> <span class="st">"tau"</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="cn">Inf</span>, init <span class="op">=</span> <span class="fl">1</span>, block <span class="op">=</span> <span class="fl">7</span><span class="op">)</span>
 
-<span class="no">df_params</span>
+<span class="va">df_params</span>
 <span class="co">#&gt;    name  min max init            block</span>
 <span class="co">#&gt; 1   mu1    0 Inf    1             1, 7</span>
 <span class="co">#&gt; 2   mu2    0 Inf    1             2, 7</span>
@@ -177,7 +179,7 @@
 <span class="co">#&gt; 6   mu6    0 Inf    1             6, 7</span>
 <span class="co">#&gt; 7 sigma    0 Inf    1 1, 2, 3, 4, 5, 6</span>
 <span class="co">#&gt; 8   phi -Inf Inf    0                7</span>
-<span class="co">#&gt; 9   tau    0 Inf    1                7</span></pre></body></html></div>
+<span class="co">#&gt; 9   tau    0 Inf    1                7</span></code></pre></div>
 </div>
 <div id="the-likelihood" class="section level2">
 <h2 class="hasAnchor">
@@ -195,85 +197,23 @@
 </ol>
 </li>
 </ol>
-<pre><code>#include &lt;Rcpp.h&gt;
-using namespace Rcpp;
-
-// [[Rcpp::export]]
-// drjacoby_function_start
-SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
-  
-  // unpack parameters
-  int pi = 0;
-  std::vector&lt;double&gt; mu(6);
-  for (int i = 0; i &lt; 6; ++i) {
-    mu[i] = params[pi++];
-  }
-  double sigma = params["sigma"];
-  double phi = params["phi"];
-  double tau = params["tau"];
-  
-  // get current update block
-  int block = misc["block"];
-  
-  // distinct method for first 6 blocks, vs 7th
-  double ret = 0.0;
-  if (block == 7) {  // likelihood for the global parameters
-    
-    // calculate likelihood component
-    for (int i = 0; i &lt; 6; ++i) {
-      ret += R::dnorm(mu[i], phi, tau, true);
-    }
-    
-  } else {  // likelihood for each of the 6 data groups
-    
-    // get data for this group
-    NumericVector x = data[block - 1];
-    
-    // calculate likelihood component
-    for (int i = 0; i &lt; x.size(); ++i) {
-      ret += R::dnorm(x[i], mu[block - 1], sigma, true);
-    }
-    
-  }
-  
-  return Rcpp::wrap(ret);
-}
-// drjacoby_function_end</code></pre>
 <p>If we were to run this likelihood for blocks 1 through 7 and sum the values, we would obtain the full model log-likelihood.</p>
 <p>For the prior function we don’t need to worry about blocks, we just need to apply the appropriate distributions:</p>
-<pre><code>#include &lt;Rcpp.h&gt;
-using namespace Rcpp;
-
-// [[Rcpp::export]]
-// drjacoby_function_start
-SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
-  
-  // unpack parameters
-  double sigma = params["sigma"];
-  double phi = params["phi"];
-  double tau = params["tau"];
-  
-  // apply priors
-  double ret = R::dgamma(sigma, 0.01, 100.0, true) +
-    R::dnorm(phi, 0, 1000, true) +
-    R::dgamma(tau, 0.01, 100.0, true);
-  
-  return Rcpp::wrap(ret);
-}
-// drjacoby_function_end</code></pre>
 <p>We can then run the MCMC as normal:</p>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="co"># run MCMC</span>
-<span class="no">mcmc</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>,
-                 <span class="kw">df_params</span> <span class="kw">=</span> <span class="no">df_params</span>,
-                 <span class="kw">loglike</span> <span class="kw">=</span> <span class="no">cpp_loglike</span>,
-                 <span class="kw">logprior</span> <span class="kw">=</span> <span class="no">cpp_logprior</span>,
-                 <span class="kw">burnin</span> <span class="kw">=</span> <span class="fl">1e3</span>,
-                 <span class="kw">samples</span> <span class="kw">=</span> <span class="fl">1e4</span>,
-                 <span class="kw">chains</span> <span class="kw">=</span> <span class="fl">5</span>,
-                 <span class="kw">silent</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># run MCMC</span>
+<span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>,
+                 df_params <span class="op">=</span> <span class="va">df_params</span>,
+                 loglike <span class="op">=</span> <span class="st">"loglike"</span>,
+                 logprior <span class="op">=</span> <span class="st">"logprior"</span>,
+                 burnin <span class="op">=</span> <span class="fl">1e3</span>,
+                 samples <span class="op">=</span> <span class="fl">1e4</span>,
+                 chains <span class="op">=</span> <span class="fl">5</span>,
+                 silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <p>Assuming we are happy with MCMC performance (convergence, ESS etc.), we can explore the posterior credible intervals of all parameters:</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_credible.html">plot_credible</a></span>(<span class="no">mcmc</span>)</pre></body></html></div>
-<p><img src="blocks_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_credible.html">plot_credible</a></span><span class="op">(</span><span class="va">mcmc</span><span class="op">)</span></code></pre></div>
+<p><img src="blocks_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
 <p>Here we obtain a different mean estimate for each group, with the global mean (<code>phi</code>) being somewhere near the centre. If you compare the <code>mu</code> estimates to the raw mean of the data in each group you will find that they are “shrunk” towards the global mean. This is the impact of the random effects model - by sharing information between groups we end up pulling everything towards the centre.</p>
 <p>Likelihood blocks take some getting used to, but for complex models they can make life much easier and be much more efficient. In reality <em>drjacoby</em> always uses blocks internally, it just places all parameters into block 1 if not specified by the user. There are no checks performed on the blocks that you define, so make sure your blocks are independent and cover the complete likelihood of the model.</p>
 </div>
@@ -294,7 +234,7 @@ SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
