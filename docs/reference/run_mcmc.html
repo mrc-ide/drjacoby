@@ -119,6 +119,9 @@
     <li>
       <a href="../articles/checks_double_well.html">Double well</a>
     </li>
+    <li>
+      <a href="../articles/checks_multilevel_blocks.html">Multilevel blocks</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -181,12 +184,12 @@
       <th>data</th>
       <td><p>a named list of numeric data values. When using C++ versions of
 the likelihood and/or prior these values are treated internally as doubles,
-so while integer and boolean values can be used, keep in mind that these
+so while integer and Boolean values can be used, keep in mind that these
 will be recast as doubles in the likelihood (i.e. <code>TRUE = 1.0</code>).</p></td>
     </tr>
     <tr>
       <th>df_params</th>
-      <td><p>a dataframe of parameters (see <code><a href='define_params.html'>?define_params</a></code>).</p></td>
+      <td><p>a data.frame of parameters (see <code><a href='define_params.html'>?define_params</a></code>).</p></td>
     </tr>
     <tr>
       <th>misc</th>
@@ -196,7 +199,7 @@ will be recast as doubles in the likelihood (i.e. <code>TRUE = 1.0</code>).</p><
       <th>loglike, logprior</th>
       <td><p>the log-likelihood and log-prior functions used in
 the MCMC. Can either be passed in as R functions, or as character strings
-which are compiled in C++ functions.</p></td>
+naming compiled in C++ functions.</p></td>
     </tr>
     <tr>
       <th>burnin</th>
