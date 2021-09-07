@@ -1,6 +1,12 @@
 ---
-title: "Check basic model"
-output: html_document
+title: "Normal model"
+author: "Bob Verity and Pete Winskill"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Normal model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
@@ -29,7 +35,7 @@ data_list <- list(x = rnorm(n))
 Likelihood and prior:
 
 ```{r, echo = FALSE, comment = ''}
-Rcpp::sourceCpp("source/basic_loglike_logprior.cpp")
+Rcpp::sourceCpp(system.file("extdata/checks/", "normal_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE))
 ```
 
 Parameters dataframe:
@@ -53,7 +59,7 @@ mcmc <- run_mcmc(data = data_list,
 
 ## Posterior plots
 
-```{r}
+```{r, fig.width=6, fig.height=5}
 # extract sampling draws
 mu_draws <- subset(mcmc$output, phase = "sampling")$mu
 
@@ -65,4 +71,3 @@ fx <- dnorm(x, mean = mean(data_list$x), sd = sqrt(1/n))
 hist(mu_draws, breaks = seq(-1, 1, 0.01), probability = TRUE, col = "black")
 lines(x, fx, col = 2, lwd = 4)
 ```
-

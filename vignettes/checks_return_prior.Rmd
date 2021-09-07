@@ -1,6 +1,12 @@
 ---
 title: "Return prior"
-output: html_document
+author: "Bob Verity and Pete Winskill"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Return prior}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
@@ -32,7 +38,7 @@ df_params <- define_params(name = "real_line", min = -Inf, max = Inf,
 Likelihood and prior:
 
 ```{r, echo = FALSE, comment = ''}
-Rcpp::sourceCpp("source/returnprior_loglike_logprior.cpp")
+Rcpp::sourceCpp(system.file("extdata/checks/", "returnprior_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE))
 ```
 
 ## Run MCMC
@@ -50,7 +56,7 @@ mcmc <- run_mcmc(data = list(x = -1),
 
 ## Plots
 
-```{r}
+```{r, fig.width=6, fig.height=5}
 output_sub <- subset(mcmc$output, phase == "sampling")
 
 # real_line

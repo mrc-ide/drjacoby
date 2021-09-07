@@ -61,6 +61,24 @@
     </li>
   </ul>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Checks
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="../articles/checks_return_prior.html">Return prior</a>
+    </li>
+    <li>
+      <a href="../articles/checks_normal_model.html">Normal model</a>
+    </li>
+    <li>
+      <a href="../articles/checks_double_well.html">Double well</a>
+    </li>
+  </ul>
+</li>
 <li>
   <a href="../reference/index.html">Functions</a>
 </li>
@@ -351,6 +369,7 @@ SEXP create_xptr(std::string function_name) {
   stop("cpp function %i not found", function_name);
 }</code></pre>
 <p>The logic of this function is identical to the R version above, just written in the language of c++. To allow drjacoby to talk to your c++ function(s) we need to have a linking function in this c++ file, in this case called <code>create_xptr()</code>. With this set up all we need to do is source our c++ file with <code>Rccp::sourcecpp()</code> then simply pass the function names as character strings to <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code>. We define the prior in this file in the same way. To make life easy when setting up a new c++ model, you can create a template for your cpp file with the <code><a href="../reference/cpp_template.html">cpp_template()</a></code> function - then all you need to do is fill in the internals of the loglikehood and logprior.</p>
+
 <p>As before, there are some constraints on what this function must look like. It <strong>must</strong> take the same three input arguments described in the previous section, defined in the following formats:</p>
 <ol style="list-style-type: decimal">
 <li>
@@ -365,6 +384,7 @@ SEXP create_xptr(std::string function_name) {
 </ol>
 <p>All parameter values will be coerced to <code>double</code> within the code, hence parameters consisting of integer or boolean values should be dealt with as though they are continuous (for example <code>TRUE = 1.0</code>, <code>FALSE = 0.0</code>). Second, the function <strong>must</strong> return an object of class <code>SEXP</code>. The easiest way to achieve this is to calculate the raw return value as a double, and to use the <code>Rcpp::wrap()</code> function to transform to <code>SEXP</code>. As before, the value returned should be the likelihood evaluated in <strong>log space</strong>.</p>
 <p>Even though we are working in C++, we still have access to most of R’s nice distribution functions through the <code>R::</code> namespace. For example, the <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm()</a></code> function can be accessed within C++ using <code>R::dnorm()</code>. A list of probability distributions available within Rcpp can be found <a href="https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution">here</a>.</p>
+
 <p>With these two functions in hand we can run the MCMC exactly the same as before, passing in the new functions:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run MCMC</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>mcmc <span class="ot">&lt;-</span> <span class="fu">run_mcmc</span>(<span class="at">data =</span> data_list,</span>
@@ -439,6 +459,7 @@ SEXP create_xptr(std::string function_name) {
 <span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 23.6%</span></span>
 <span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 0.010177 seconds</span></span></code></pre></div>
+
 <p>You should see that this MCMC runs considerably faster than the previous version that used R functions. There is a short delay initially while the strings are compiled into functions, but this only occurs the first time a function is compiled. On the other hand, writing C++ functions in this way is more error-prone and difficult to debug than simple R functions. Hence, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R functions might be a better choice.</p>
 <p>This was a very easy problem, and so required no fancy MCMC tricks. The <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">next vignette</a> demonstrates how <em>drjacoby</em> can be applied to a more challenging problem.</p>
 </div>

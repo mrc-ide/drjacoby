@@ -1,6 +1,12 @@
 ---
 title: "Double well"
-output: html_document
+author: "Bob Verity and Pete Winskill"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Double well}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
@@ -31,7 +37,7 @@ where $\gamma$ is a parameter that defines the strength of the well (higher $\ga
 Likelihood and prior:
 
 ```{r, echo = FALSE, comment = ''}
-Rcpp::sourceCpp("source/doublewell_loglike_logprior.cpp")
+Rcpp::sourceCpp(system.file("extdata/checks/", "doublewell_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE))
 ```
 
 Parameters dataframe:
@@ -94,7 +100,7 @@ mcmc <- run_mcmc(data = list(x = -1),
                  pb_markdown = TRUE)
 ```
 
-```{r}
+```{r, fig.width=6, fig.height=5}
 # trace plot
 plot_par(mcmc, show = "mu")
 
@@ -102,7 +108,7 @@ plot_par(mcmc, show = "mu")
 plot_mc_acceptance(mcmc)
 ```
 
-```{r}
+```{r, fig.width=6, fig.height=5}
 # extract posterior draws
 output_sub <- subset(mcmc$output, phase == "sampling" & rung == 11)
 mu_draws <- output_sub$mu
@@ -111,5 +117,3 @@ mu_draws <- output_sub$mu
 hist(mu_draws, breaks = seq(-L, L, l = 201), probability = TRUE, main = "", col = "black")
 lines(x, fx, col = 2, lwd = 2)
 ```
-
-

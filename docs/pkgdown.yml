@@ -3,6 +3,9 @@ pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
   blocks: blocks.html
+  checks_double_well: checks_double_well.html
+  checks_normal_model: checks_normal_model.html
+  checks_return_prior: checks_return_prior.html
   example: example.html
   installation: installation.html
   metropolis_coupling: metropolis_coupling.html
