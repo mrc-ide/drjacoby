@@ -4,8 +4,9 @@
 #'
 #' @export
 cpp_template <- function (save_as){
+  assert_single_string(save_as)
   ext <- tools::file_ext(save_as)
-  if(ext != ".cpp"){
+  if(ext != "cpp"){
     stop("File must be .cpp")
   }
   usethis::use_template(

@@ -106,7 +106,7 @@
       <h1 data-toc-skip>Metropolis Coupling</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2021-09-06</h4>
+            <h4 class="date">2021-09-07</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/metropolis_coupling.Rmd"><code>vignettes/metropolis_coupling.Rmd</code></a></small>
       <div class="hidden name"><code>metropolis_coupling.Rmd</code></div>
@@ -161,24 +161,20 @@ SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
 }
 
 // [[Rcpp::export]]  
-SEXP create_xptr_loglike(std::string fstr) {  
-  typedef SEXP (*funcPtr)(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) ;  
-  if (fstr == "loglike"){
-    return(Rcpp::XPtr&lt;funcPtr&gt;(new funcPtr(&amp;loglike))) ;
-  } else {
-    return(Rcpp::XPtr&lt;funcPtr&gt;(R_NilValue)) ; 
-  }
-}
+SEXP create_xptr(std::string function_name) {  
+  typedef SEXP (*funcPtr_likelihood)(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc);  
+  typedef SEXP (*funcPtr_prior)(Rcpp::NumericVector params, Rcpp::List misc);  
+  
+  if (function_name == "loglike"){
+    return(Rcpp::XPtr&lt;funcPtr_likelihood&gt;(new funcPtr_likelihood(&amp;loglike)));
+  } 
+  if (function_name == "logprior"){
+    return(Rcpp::XPtr&lt;funcPtr_prior&gt;(new funcPtr_prior(&amp;logprior)));
+  } 
+  
+  stop("cpp function %i not found", function_name);
+}</code></pre>
 
-// [[Rcpp::export]]  
-SEXP create_xptr_logprior(std::string fstr) {  
-  typedef SEXP (*funcPtr)(Rcpp::NumericVector params, Rcpp::List misc) ;  
-  if (fstr == "logprior"){
-    return(Rcpp::XPtr&lt;funcPtr&gt;(new funcPtr(&amp;logprior))) ;
-  } else {
-    return(Rcpp::XPtr&lt;funcPtr&gt;(R_NilValue)) ; 
-  }
-}  </code></pre>
 <p>As always, we need to define a dataframe of parameters so that <em>drjacoby</em> knows what parameter ranges to expect:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># define parameters dataframe</span>
@@ -241,7 +237,7 @@ SEXP create_xptr_logprior(std::string fstr) {
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 23.4%</span></span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 2.605207 seconds</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 2.638930 seconds</span></span>
 <span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># create plot of alpha against beta</span></span>
 <span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_cor</span>(mcmc, <span class="st">"alpha"</span>, <span class="st">"beta"</span>) <span class="sc">+</span></span>
