@@ -1,6 +1,8 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+# DrJacoby <img src="R_ignore/images/logo3.png" width="120" align="right" />
+
 <!-- badges: start -->
 
 [![master
@@ -10,10 +12,6 @@ build](https://github.com/mrc-ide/drjacoby/workflows/develop_build/badge.svg)](h
 [![Coverage
 status](https://codecov.io/gh/mrc-ide/drjacoby/branch/master/graph/badge.svg)](https://codecov.io/github/mrc-ide/drjacoby?branch=master)
 <!-- badges: end -->
-
-<br/> <br/>
-<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo2.png" height="93px" width="300px" />
-<br/>
 
 *drjacoby* is an R package for performing Bayesian inference via Markov
 chain monte carlo (MCMC). In addition to being highly flexible it

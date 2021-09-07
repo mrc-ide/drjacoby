@@ -37,15 +37,13 @@ df_params <- define_params(name = "real_line", min = -Inf, max = Inf,
 
 Likelihood and prior:
 
-```{r}
-cpp_funcs <- system.file("extdata/checks/", "returnprior_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
-Rcpp::sourceCpp(cpp_funcs)
+```{r, echo = FALSE, comment = ''}
+Rcpp::sourceCpp(system.file("extdata/checks/", "returnprior_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE))
 ```
 
 ## Run MCMC
 
 ```{r}
-t0 <- Sys.time()
 mcmc <- run_mcmc(data = list(x = -1),
                  df_params = df_params,
                  loglike = "loglike",
@@ -53,8 +51,7 @@ mcmc <- run_mcmc(data = list(x = -1),
                  burnin = 1e3,
                  samples = 1e5,
                  chains = 10,
-                 pb_markdown = TRUE)
-Sys.time() - t0
+                 silent = TRUE)
 ```
 
 ## Plots

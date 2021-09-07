@@ -119,9 +119,7 @@ test_that("R likelihood and prior", {
   expect_equal(ncol(sampled), 3)
   expect_error(sample_chains(r_mcmc_data, 1000000))
   expect_error(sample_chains(r_mcmc_data, -1))
-  expect_error(sample_chains(r_mcmc_data, "Q"))
   expect_error(sample_chains(1, 100))
-  
   expect_type(r_mcmc_data, "list")
   expect_message(print(r_mcmc_data))
   expect_message(summary(r_mcmc_data))

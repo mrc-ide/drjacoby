@@ -25,7 +25,7 @@ test_that("Cpp likelihood and prior", {
                             burnin = 1e3,
                             samples = 1e3,
                             chains = 1,
-                            silent = FALSE)
+                            silent = TRUE)
   
   # subset output
   pe <- dplyr::filter(cpp_mcmc_null$output, phase == "sampling") %>%

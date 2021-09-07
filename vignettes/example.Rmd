@@ -176,11 +176,13 @@ Although *drjacoby* is an R package, under the hood it is running C++ through th
 To use C++ a function within *drjacoby* we first write it out as stand-alone file. The example used here can be found inside the *inst/extdata* folder of the package, and reads as follows:
 
 ```{r, echo = FALSE, comment = ''}
-likelihood_filename <- system.file("extdata/", "example_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
+likelihood_filename <- system.file("extdata", "example_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
 cat(readLines(likelihood_filename), sep = '\n')
 ```
 
-The logic of this function is identical to the R version above, just written in the language of C++. To allow drjacoby to talk to your c++ function(s) we need to have a linking function in this c++ file, in this case called `create_xptr_loglike()`. With this et up all wee need to do is source our c++ file with `Rccp::sourcecpp()` then simply pass the function names as character strings to `run_mcmc()`. We define the prior in thisa file in the same way.
+The logic of this function is identical to the R version above, just written in the language of c++. To allow drjacoby to talk to your c++ function(s) we need to have a linking function in this c++ file, in this case called `create_xptr()`. With this set up all we need to do is source our c++ file with `Rccp::sourcecpp()` then simply pass the function names as character strings to `run_mcmc()`. We define the prior in this file in the same way. To make
+life easy when setting up a new c++ model, you can create a template for your cpp file with the `cpp_template()` function - then all you need to do is 
+fill in the internals of the loglikehood and logprior.
 
 As before, there are some constraints on what this function must look like. It **must** take the same three input arguments described in the previous section, defined in the following formats:
 
@@ -192,10 +194,8 @@ All parameter values will be coerced to `double` within the code, hence paramete
 
 Even though we are working in C++, we still have access to most of R's nice distribution functions through the `R::` namespace. For example, the `dnorm()` function can be accessed within C++ using `R::dnorm()`. A list of probability distributions available within Rcpp can be found [here](https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution).
 
-```{r, echo = FALSE, comment = ''}
-cpp_funcs <- system.file("extdata/", "example_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
-Rcpp::sourceCpp(cpp_funcs)
-cat(readLines(cpp_funcs), sep = '\n')
+```{r, echo = FALSE, comment = '', warning=FALSE}
+Rcpp::sourceCpp(likelihood_filename)
 ```
 
 With these two functions in hand we can run the MCMC exactly the same as before, passing in the new functions:

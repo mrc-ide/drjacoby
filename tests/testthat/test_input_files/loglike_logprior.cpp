@@ -60,26 +60,24 @@ SEXP logpriornull(Rcpp::NumericVector params, Rcpp::List misc) {
   return Rcpp::wrap(0.0);
 }
 
-// [[Rcpp::export]]  
-SEXP create_xptr_loglike(std::string fstr) {  
-  typedef SEXP (*funcPtr)(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) ;  
-  if (fstr == "loglike"){
-    return(Rcpp::XPtr<funcPtr>(new funcPtr(&loglike))) ;
-  }
-  if (fstr == "loglikenull"){
-    return(Rcpp::XPtr<funcPtr>(new funcPtr(&loglikenull))) ;
-  }
-  return(Rcpp::XPtr<funcPtr>(R_NilValue)) ; 
-}  
 
 // [[Rcpp::export]]  
-SEXP create_xptr_logprior(std::string fstr) {  
-  typedef SEXP (*funcPtr)(Rcpp::NumericVector params, Rcpp::List misc) ;  
-  if (fstr == "logprior"){
-    return(Rcpp::XPtr<funcPtr>(new funcPtr(&logprior))) ;
+SEXP create_xptr(std::string function_name) {  
+  typedef SEXP (*funcPtr_likelihood)(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc);  
+  typedef SEXP (*funcPtr_prior)(Rcpp::NumericVector params, Rcpp::List misc);  
+  
+  if (function_name == "loglike"){
+    return(Rcpp::XPtr<funcPtr_likelihood>(new funcPtr_likelihood(&loglike)));
+  } 
+  if (function_name == "loglikenull"){
+    return(Rcpp::XPtr<funcPtr_likelihood>(new funcPtr_likelihood(&loglikenull))) ;
   }
-  if (fstr == "logpriornull"){
-    return(Rcpp::XPtr<funcPtr>(new funcPtr(&logpriornull))) ;
+  if (function_name == "logprior"){
+    return(Rcpp::XPtr<funcPtr_prior>(new funcPtr_prior(&logprior)));
+  } 
+  if (function_name == "logpriornull"){
+    return(Rcpp::XPtr<funcPtr_prior>(new funcPtr_prior(&logpriornull))) ;
   }
-  return(Rcpp::XPtr<funcPtr>(R_NilValue)) ; 
-}  
+  
+  stop("cpp function %i not found", function_name);
+}

@@ -3,6 +3,7 @@
 S3method(print,drjacoby_output)
 S3method(summary,drjacoby_output)
 export(check_drjacoby_loaded)
+export(cpp_template)
 export(define_params)
 export(plot_autocorrelation)
 export(plot_cor)
