@@ -12,7 +12,7 @@ quantile_95 <- function(x) {
 #' @param x an object of class \code{drjacoby_output}
 #' @param sample_n An integer number of samples
 #'
-#' @return A dataframe of posterior samples
+#' @return A data.frame of posterior samples
 #' @export
 sample_chains <- function(x, sample_n) {
   

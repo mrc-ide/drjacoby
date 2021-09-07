@@ -86,7 +86,7 @@ define_params <- function(...) {
 }
 
 #------------------------------------------------
-# Check that params dataframe formatted correctly, and return in standardised
+# Check that params dataframe is formatted correctly, and return in standardised
 # format (init and block coerced to list)
 #' @noRd
 check_params <- function(x) {
@@ -146,13 +146,13 @@ check_params <- function(x) {
 #'
 #' @param data a named list of numeric data values. When using C++ versions of
 #'   the likelihood and/or prior these values are treated internally as doubles,
-#'   so while integer and boolean values can be used, keep in mind that these
+#'   so while integer and Boolean values can be used, keep in mind that these
 #'   will be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).
-#' @param df_params a dataframe of parameters (see \code{?define_params}).
+#' @param df_params a data.frame of parameters (see \code{?define_params}).
 #' @param misc optional list object passed to likelihood and prior.
 #' @param loglike,logprior the log-likelihood and log-prior functions used in
 #'   the MCMC. Can either be passed in as R functions, or as character strings
-#'   which are compiled in C++ functions.
+#'   naming compiled in C++ functions.
 #' @param burnin the number of burn-in iterations.
 #' @param samples the number of sampling iterations.
 #' @param rungs the number of temperature rungs used in Metropolis coupling (see
@@ -211,8 +211,6 @@ run_mcmc <- function(data,
   # check data
   assert_list_named(data)
   assert_numeric(unlist(data))
-  
-  # (check df_params below)
   
   # check misc
   assert_list(misc)
@@ -492,7 +490,7 @@ run_mcmc <- function(data,
 #' @noRd
 deploy_chain <- function(args) {
   
-  # convert C++ functions to pointers
+  # Specify pointers to cpp functions
   if (args$args_params$loglike_use_cpp) {
     args$args_functions$loglike <- create_xptr(args$args_functions$loglike)
   }

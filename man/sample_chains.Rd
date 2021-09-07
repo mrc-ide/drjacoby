@@ -12,7 +12,7 @@ sample_chains(x, sample_n)
 \item{sample_n}{An integer number of samples}
 }
 \value{
-A dataframe of posterior samples
+A data.frame of posterior samples
 }
 \description{
 Sample N draws from all available chains
