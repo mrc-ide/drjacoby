@@ -77,6 +77,9 @@
     <li>
       <a href="../articles/checks_double_well.html">Double well</a>
     </li>
+    <li>
+      <a href="../articles/checks_multilevel_blocks.html">Multilevel blocks</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -100,13 +103,13 @@
 
       
 
-      </header><script src="checks_double_well_files/header-attrs-2.10/header-attrs.js"></script><div class="row">
+      </header><script src="checks_double_well_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Double well</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2021-09-06</h4>
+            <h4 class="date">2021-09-07</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/checks_double_well.Rmd"><code>vignettes/checks_double_well.Rmd</code></a></small>
       <div class="hidden name"><code>checks_double_well.Rmd</code></div>
@@ -126,11 +129,8 @@
 \end{aligned}
 \]</span> where <span class="math inline">\(\gamma\)</span> is a parameter that defines the strength of the well (higher <span class="math inline">\(\gamma\)</span> leads to a deeper valley and hence more challenging problem). NB, there is no data in this example, as the likelihood is defined exactly by these parameters.</p>
 <p>Likelihood and prior:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">cpp_funcs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata/checks/"</span>, <span class="st">"doublewell_loglike_logprior.cpp"</span>, package <span class="op">=</span> <span class="st">'drjacoby'</span>, mustWork <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu">Rcpp</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rcpp/man/sourceCpp.html">sourceCpp</a></span><span class="op">(</span><span class="va">cpp_funcs</span><span class="op">)</span></code></pre></div>
 <p>Parameters dataframe:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">L</span> <span class="op">&lt;-</span> <span class="fl">2</span>
 <span class="va">gamma</span> <span class="op">&lt;-</span> <span class="fl">30</span>
 <span class="va">df_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define_params.html">define_params</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"mu"</span>, min <span class="op">=</span> <span class="op">-</span><span class="va">L</span>, max <span class="op">=</span> <span class="va">L</span>,
@@ -139,9 +139,8 @@
 <div id="single-temperature-rung-no-metropolis-coupling" class="section level2">
 <h2 class="hasAnchor">
 <a href="#single-temperature-rung-no-metropolis-coupling" class="anchor"></a>Single temperature rung (no Metropolis coupling)</h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html">Sys.time</a></span><span class="op">(</span><span class="op">)</span>
-<span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span>,
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span>,
                  df_params <span class="op">=</span> <span class="va">df_params</span>,
                  loglike <span class="op">=</span> <span class="st">"loglike"</span>,
                  logprior <span class="op">=</span> <span class="st">"logprior"</span>,
@@ -149,28 +148,12 @@
                  samples <span class="op">=</span> <span class="fl">1e5</span>,
                  chains <span class="op">=</span> <span class="fl">1</span>,
                  rungs <span class="op">=</span> <span class="fl">1</span>,
-                 pb_markdown <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
-<pre><code>## MCMC chain 1
-## burn-in
-## 
-  |                                                                            
-  |======================================================================| 100%
-## acceptance rate: 11.5%
-## sampling phase
-## 
-  |                                                                            
-  |======================================================================| 100%
-## acceptance rate: 11.7%
-## 
-## chain completed in 0.378906 seconds</code></pre>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html">Sys.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span></code></pre></div>
-<pre><code>## Time difference of 1.506336 secs</code></pre>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+                 silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># trace plot</span>
 <span class="fu"><a href="../reference/plot_par.html">plot_par</a></span><span class="op">(</span><span class="va">mcmc</span>, show <span class="op">=</span> <span class="st">"mu"</span><span class="op">)</span></code></pre></div>
-<p><img src="checks_double_well_files/figure-html/unnamed-chunk-5-1.png" width="576"></p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p><img src="checks_double_well_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># extract posterior draws</span>
 <span class="va">output_sub</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html">subset</a></span><span class="op">(</span><span class="va">mcmc</span><span class="op">$</span><span class="va">output</span>, <span class="va">phase</span> <span class="op">==</span> <span class="st">"sampling"</span><span class="op">)</span>
 <span class="va">mu_draws</span> <span class="op">&lt;-</span> <span class="va">output_sub</span><span class="op">$</span><span class="va">mu</span>
@@ -183,14 +166,13 @@
 <span class="co"># overlay plots</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html">hist</a></span><span class="op">(</span><span class="va">mu_draws</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="va">L</span>, <span class="va">L</span>, l <span class="op">=</span> <span class="fl">201</span><span class="op">)</span>, probability <span class="op">=</span> <span class="cn">TRUE</span>, main <span class="op">=</span> <span class="st">""</span>, col <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/lines.html">lines</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">fx</span>, col <span class="op">=</span> <span class="fl">2</span>, lwd <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
-<p><img src="checks_double_well_files/figure-html/unnamed-chunk-6-1.png" width="576"></p>
+<p><img src="checks_double_well_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 </div>
 <div id="multiple-temperature-rungs" class="section level2">
 <h2 class="hasAnchor">
 <a href="#multiple-temperature-rungs" class="anchor"></a>Multiple temperature rungs</h2>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html">Sys.time</a></span><span class="op">(</span><span class="op">)</span>
-<span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span>,
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span>,
                  df_params <span class="op">=</span> <span class="va">df_params</span>,
                  loglike <span class="op">=</span> <span class="st">"loglike"</span>,
                  logprior <span class="op">=</span> <span class="st">"logprior"</span>,
@@ -212,19 +194,16 @@
   |======================================================================| 100%
 ## acceptance rate: 11.7%
 ## 
-## chain completed in 6.558911 seconds</code></pre>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html">Sys.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span></code></pre></div>
-<pre><code>## Time difference of 9.782593 secs</code></pre>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+## chain completed in 5.328601 seconds</code></pre>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># trace plot</span>
 <span class="fu"><a href="../reference/plot_par.html">plot_par</a></span><span class="op">(</span><span class="va">mcmc</span>, show <span class="op">=</span> <span class="st">"mu"</span><span class="op">)</span></code></pre></div>
 <p><img src="checks_double_well_files/figure-html/unnamed-chunk-8-1.png" width="576"></p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># coupling acceptance plot</span>
 <span class="fu"><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance</a></span><span class="op">(</span><span class="va">mcmc</span><span class="op">)</span></code></pre></div>
 <p><img src="checks_double_well_files/figure-html/unnamed-chunk-8-2.png" width="576"></p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># extract posterior draws</span>
 <span class="va">output_sub</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html">subset</a></span><span class="op">(</span><span class="va">mcmc</span><span class="op">$</span><span class="va">output</span>, <span class="va">phase</span> <span class="op">==</span> <span class="st">"sampling"</span> <span class="op">&amp;</span> <span class="va">rung</span> <span class="op">==</span> <span class="fl">11</span><span class="op">)</span>
 <span class="va">mu_draws</span> <span class="op">&lt;-</span> <span class="va">output_sub</span><span class="op">$</span><span class="va">mu</span>

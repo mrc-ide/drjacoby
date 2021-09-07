@@ -77,6 +77,9 @@
     <li>
       <a href="../articles/checks_double_well.html">Double well</a>
     </li>
+    <li>
+      <a href="../articles/checks_multilevel_blocks.html">Multilevel blocks</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -100,7 +103,7 @@
 
       
 
-      </header><script src="metropolis_coupling_files/header-attrs-2.10/header-attrs.js"></script><div class="row">
+      </header><script src="metropolis_coupling_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Metropolis Coupling</h1>
@@ -174,7 +177,6 @@ SEXP create_xptr(std::string function_name) {
   
   stop("cpp function %i not found", function_name);
 }</code></pre>
-
 <p>As always, we need to define a dataframe of parameters so that <em>drjacoby</em> knows what parameter ranges to expect:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># define parameters dataframe</span>
@@ -237,7 +239,7 @@ SEXP create_xptr(std::string function_name) {
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 23.4%</span></span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 2.638930 seconds</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 4.724218 seconds</span></span>
 <span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># create plot of alpha against beta</span></span>
 <span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_cor</span>(mcmc, <span class="st">"alpha"</span>, <span class="st">"beta"</span>) <span class="sc">+</span></span>

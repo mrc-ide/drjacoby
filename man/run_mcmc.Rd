@@ -26,16 +26,16 @@ run_mcmc(
 \arguments{
 \item{data}{a named list of numeric data values. When using C++ versions of
 the likelihood and/or prior these values are treated internally as doubles,
-so while integer and boolean values can be used, keep in mind that these
+so while integer and Boolean values can be used, keep in mind that these
 will be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).}
 
-\item{df_params}{a dataframe of parameters (see \code{?define_params}).}
+\item{df_params}{a data.frame of parameters (see \code{?define_params}).}
 
 \item{misc}{optional list object passed to likelihood and prior.}
 
 \item{loglike, logprior}{the log-likelihood and log-prior functions used in
 the MCMC. Can either be passed in as R functions, or as character strings
-which are compiled in C++ functions.}
+naming compiled in C++ functions.}
 
 \item{burnin}{the number of burn-in iterations.}
 

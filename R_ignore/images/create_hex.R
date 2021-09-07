@@ -1,3 +1,4 @@
+# Create package hex image.
 path_image <- "R_ignore/images/Sunglasses.png"
 s <- hexSticker::sticker(subplot = path_image,
                          package = "Dr Jacoby", p_size = 80, p_color = "darkred",

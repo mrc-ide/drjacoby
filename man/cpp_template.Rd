@@ -7,7 +7,7 @@
 cpp_template(save_as)
 }
 \arguments{
-\item{save_as}{of file to create, relative to root of active project.}
+\item{save_as}{Path of (.cpp) file to create, relative to root of active project.}
 }
 \description{
 Create template for cpp
