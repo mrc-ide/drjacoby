@@ -21,20 +21,17 @@ sample_chains <- function(x, sample_n) {
   assert_int(sample_n, "sample_n")
   assert_gr(sample_n, 0)
   
-  # declare variables to avoid "no visible binding" issues
-  phase <- chain <- rung <- iteration <- logprior <- loglikelihood <- NULL
-  
   # Join chains
-  all_chains <- dplyr::filter(x$output, phase == "sampling") %>%
-    dplyr::select(-chain, -rung, -iteration, -phase, -logprior, -loglikelihood)
+  all_chains <- dplyr::filter(x$output, .data$phase == "sampling") %>%
+    dplyr::select(-.data$chain, -.data$rung, -.data$iteration, -.data$phase, -.data$logprior, -.data$loglikelihood)
   assert_leq(sample_n, nrow(all_chains))
   
   # Sample chains
-  sampled_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = sample_n),]
+  sampled_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = sample_n),, drop = FALSE]
   sampled_chains$sample <- 1:nrow(sampled_chains)
   
   # ESS
-  ess_est_sampled <- round(apply(sampled_chains[,1:(ncol(sampled_chains) - 1)], 2, coda::effectiveSize))
+  ess_est_sampled <- round(apply(sampled_chains[,1:(ncol(sampled_chains) - 1), drop = FALSE], 2, coda::effectiveSize))
   message("Effective sample size of sample has range: ", min(ess_est_sampled),
           " to ", max(ess_est_sampled), ". See function ess to estimate.")
   

@@ -1,6 +1,6 @@
 #' Create template for cpp
 #'
-#' @param save_as of file to create, relative to root of active project.
+#' @param save_as Path of (.cpp) file to create, relative to root of active project.
 #'
 #' @export
 cpp_template <- function (save_as){
