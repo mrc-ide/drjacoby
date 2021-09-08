@@ -15,76 +15,17 @@ test_that("Cpp likelihood and prior", {
   df_params <- define_params(name = "mu", min = -10, max = 10, init = 5,
                              name = "sigma", min = 0, max = 10, init = 1)
   
-  # Null log likelihood
-  cpp_loglike_null <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
-    return Rcpp::wrap(0.0);
-  }"
-  
-  # Log likelihood
-  cpp_loglike <- "SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
-    
-    // unpack data
-    std::vector<double> x = Rcpp::as< std::vector<double> >(data[\"x\"]);
-    
-    // unpack params
-    double mu = params[\"mu\"];
-    double sigma = params[\"sigma\"];
-    
-    // calculate log-likelihood
-    double ret = 0.0;
-    for (unsigned int i = 0; i < x.size(); ++i) {
-      ret += R::dnorm(x[i], mu, sigma, 1);
-    }
-    
-    // catch underflow
-    if (!std::isfinite(ret)) {
-      const double OVERFLO_DOUBLE = DBL_MAX/100.0;
-      ret = -OVERFLO_DOUBLE;
-    }
-    
-    return Rcpp::wrap(ret);
-  }"
-  
-  # Log prior
-  cpp_logprior_strong <- "SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
-    
-    // unpack params
-    double mu = params[\"mu\"];
-    double sigma = params[\"sigma\"];
-    
-    // calculate logprior
-    double ret = R::dnorm(mu, 6, 0.1, 1) + R::dnorm(sigma, 1, 0.1, 1);
-    
-    // catch underflow
-    if (!std::isfinite(ret)) {
-      const double OVERFLO_DOUBLE = DBL_MAX/100.0;
-      ret = -OVERFLO_DOUBLE;
-    }
-    
-    // return as SEXP
-    return Rcpp::wrap(ret);
-  }"
-
-  # Null log prior
-  cpp_logprior_null <- "SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
-    return Rcpp::wrap(0.0);
-  }"
-  
-  # Compilation checks
-  expect_null(check_likelihood_compilation(cpp_loglike))
-  expect_null(check_prior_compilation(cpp_logprior_strong))
-  expect_error(check_likelihood_compilation(1:2))
-  expect_error(check_prior_compilation(1:2))
-  
+  # Source Rcpp likehood and prior functions
+  Rcpp::sourceCpp("test_input_files/loglike_logprior.cpp")
   # run MCMC
   cpp_mcmc_null <- run_mcmc(data = data_list,
                             df_params = df_params,
-                            loglike = cpp_loglike_null,
-                            logprior = cpp_logprior_strong,
+                            loglike = "loglikenull",
+                            logprior = "logprior",
                             burnin = 1e3,
                             samples = 1e3,
                             chains = 1,
-                            silent = FALSE)
+                            silent = TRUE)
   
   # subset output
   pe <- dplyr::filter(cpp_mcmc_null$output, phase == "sampling") %>%
@@ -98,8 +39,8 @@ test_that("Cpp likelihood and prior", {
   # run MCMC with null prior
   cpp_mcmc_data <- run_mcmc(data = data_list,
                             df_params = df_params,
-                            loglike = cpp_loglike,
-                            logprior = cpp_logprior_null,
+                            loglike = "loglike",
+                            logprior = "logpriornull",
                             burnin = 1e3,
                             samples = 1e4,
                             silent = TRUE)
@@ -116,8 +57,8 @@ test_that("Cpp likelihood and prior", {
   ## Multiple chains
   cpp_mcmc_chains <- run_mcmc(data = data_list,
                               df_params = df_params,
-                              loglike = cpp_loglike,
-                              logprior = cpp_logprior_null,
+                              loglike = "loglike",
+                              logprior = "logpriornull",
                               chains = 2,
                               burnin = 1e3,
                               samples = 1e4,
@@ -141,8 +82,8 @@ test_that("Cpp likelihood and prior", {
   ## Metropolis coupling
   mcmc_out_MC <- run_mcmc(data = data_list,
                           df_params = df_params,
-                          loglike = cpp_loglike,
-                          logprior = cpp_logprior_null,
+                          loglike = "loglike",
+                          logprior = "logpriornull",
                           burnin = 1e3,
                           samples = 1e4,
                           rungs = 4,

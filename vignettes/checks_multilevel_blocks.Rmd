@@ -1,0 +1,103 @@
+---
+title: "Multilevel example with blocks"
+author: "Bob Verity and Pete Winskill"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Multilevel example with blocks}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE}
+# set random seed
+set.seed(1)
+
+# load the drjacoby package
+library(drjacoby)
+```
+
+**Purpose:** to compare *drjacoby* infered posterior distribution against the exact analytical solution in a multi-level model implemented via likelihood blocks.
+
+## Model
+
+There are `g` groups with means `mu_1` to `mu_g`. These component means are drawn from a normal distribution with mean 0 and sd 1.0. Within each group there are `n` observations drawn around each component mean from normal disribution with sd 1.0.
+
+
+```{r}
+g <- 5
+mu <- rnorm(g)
+
+n <- 5
+data_list <- list()
+for (i in 1:g) {
+  data_list[[i]] <- rnorm(n, mean = mu[i])
+}
+names(data_list) <- sprintf("group%s", 1:g)
+```
+
+Likelihood and prior:
+
+```{r, echo = FALSE, comment = ''}
+Rcpp::sourceCpp(system.file("extdata/checks/", "multilevel_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE))
+```
+
+Parameters dataframe:
+
+```{r}
+L <- 5
+df_params <- define_params(name = "mu_1", min = -L, max = L, block = c(1, 6),
+                           name = "mu_2", min = -L, max = L, block = c(2, 6),
+                           name = "mu_3", min = -L, max = L, block = c(3, 6),
+                           name = "mu_4", min = -L, max = L, block = c(4, 6),
+                           name = "mu_5", min = -L, max = L, block = c(5, 6))
+```
+
+## MCMC
+
+```{r cars}
+mcmc <- run_mcmc(data = data_list,
+                 df_params = df_params,
+                 loglike = "loglike",
+                 logprior = "logprior",
+                 burnin = 1e3,
+                 samples = 1e5,
+                 chains = 10,
+                 silent = TRUE)
+```
+
+## Plots
+
+Black = posterior draws
+
+Red = analytical solution to multi-level model
+
+Green = analytical solution assuming independent groups (no second level)
+
+```{r, fig.width=6, fig.height=5}
+# extract sampling draws
+output_sub <- subset(mcmc$output, phase == "sampling")
+
+for (i in 1:5) {
+  # get posterior draws
+  mu_draws <- output_sub[[sprintf("mu_%s", i)]]
+  
+  # get analytical solution for this group
+  x <- seq(-L, L, l = 1001)
+  m <- mean(data_list[[i]])
+  fx <- dnorm(x, mean = m * n/(n + 1), sd = sqrt(1/(n + 1)))
+  
+  # get analytical solution if no multi-level model
+  fx2 <- dnorm(x, mean = m, sd = sqrt(1/n))
+  
+  # overlay plots
+  hist(mu_draws, breaks = seq(-L, L, l = 1001), probability = TRUE, col = "black",
+       main = sprintf("mu_%s", i))
+  lines(x, fx, col = 2, lwd = 4)
+  lines(x, fx2, col = 3, lwd = 4)
+}
+```

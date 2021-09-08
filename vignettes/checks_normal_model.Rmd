@@ -1,0 +1,73 @@
+---
+title: "Normal model"
+author: "Bob Verity and Pete Winskill"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Normal model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE}
+# set random seed
+set.seed(1)
+
+# load the drjacoby package
+library(drjacoby)
+```
+
+**Purpose:** to compare *drjacoby* infered posterior distribution against the exact analytical solution for a very simple model.
+
+## Model
+
+A vector of data `x` drawn from a normal distribution with unknown mean `mu` and known variance of 1.0.
+
+```{r}
+n <- 1e2
+data_list <- list(x = rnorm(n))
+```
+
+Likelihood and prior:
+
+```{r, echo = FALSE, comment = ''}
+Rcpp::sourceCpp(system.file("extdata/checks/", "normal_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE))
+```
+
+Parameters dataframe:
+
+```{r}
+df_params <- define_params(name = "mu", min = -1, max = 1)
+```
+
+## MCMC
+
+```{r cars}
+mcmc <- run_mcmc(data = data_list,
+                 df_params = df_params,
+                 loglike = "loglike",
+                 logprior = "logprior",
+                 burnin = 1e3,
+                 samples = 1e5,
+                 chains = 10,
+                 silent = TRUE)
+```
+
+## Posterior plots
+
+```{r, fig.width=6, fig.height=5}
+# extract sampling draws
+mu_draws <- subset(mcmc$output, phase = "sampling")$mu
+
+# calculate analytical solution
+x <- seq(-1, 1, l = 1001)
+fx <- dnorm(x, mean = mean(data_list$x), sd = sqrt(1/n))
+
+# histogram and overlay analytical
+hist(mu_draws, breaks = seq(-1, 1, 0.01), probability = TRUE, col = "black")
+lines(x, fx, col = 2, lwd = 4)
+```

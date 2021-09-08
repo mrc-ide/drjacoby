@@ -176,22 +176,13 @@ Although *drjacoby* is an R package, under the hood it is running C++ through th
 To use C++ a function within *drjacoby* we first write it out as stand-alone file. The example used here can be found inside the *inst/extdata* folder of the package, and reads as follows:
 
 ```{r, echo = FALSE, comment = ''}
-likelihood_filename <- system.file("extdata/", "example_loglike.cpp", package = 'drjacoby', mustWork = TRUE)
+likelihood_filename <- system.file("extdata", "example_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
 cat(readLines(likelihood_filename), sep = '\n')
 ```
 
-The logic of this function is identical to the R version above, just written in the language of C++. Notice that immediately before the function we have the line `// drjacoby_function_start`, and immediately after we have the line `// drjacoby_function_end`. These are tags that are read and interpreted by `cpp_function_get()` and used to convert the .cpp file into a character string. We can see this in action here:
-
-```{r, eval = FALSE}
-likelihood_filename <- "your_filename_here.cpp"
-```
-```{r}
-cpp_loglike <- cpp_function_get(likelihood_filename)
-
-print(cpp_loglike)
-```
-
-The object `cpp_loglike` ends up containing the body of the function in one long (and rather ugly) character string. We then simply pass this character string to `run_mcmc()` as our likelihood function where it will be compiled and used within the MCMC.
+The logic of this function is identical to the R version above, just written in the language of c++. To allow drjacoby to talk to your c++ function(s) we need to have a linking function in this c++ file, in this case called `create_xptr()`. With this set up all we need to do is source our c++ file with `Rccp::sourcecpp()` then simply pass the function names as character strings to `run_mcmc()`. We define the prior in this file in the same way. To make
+life easy when setting up a new c++ model, you can create a template for your cpp file with the `cpp_template()` function - then all you need to do is 
+fill in the internals of the loglikehood and logprior.
 
 As before, there are some constraints on what this function must look like. It **must** take the same three input arguments described in the previous section, defined in the following formats:
 
@@ -203,20 +194,8 @@ All parameter values will be coerced to `double` within the code, hence paramete
 
 Even though we are working in C++, we still have access to most of R's nice distribution functions through the `R::` namespace. For example, the `dnorm()` function can be accessed within C++ using `R::dnorm()`. A list of probability distributions available within Rcpp can be found [here](https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution).
 
-We define the prior in the same way, as a stand-alone .cpp file. The prior used in this example reads as follows:
-
-```{r, echo = FALSE, comment = ''}
-prior_filename <- system.file("extdata/", "example_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
-cat(readLines(prior_filename), sep = '\n')
-```
-
-which we can source with:
-
-```{r, eval = FALSE}
-cpp_logprior <- cpp_function_get("your_filename_here.cpp")
-```
-```{r, echo = FALSE}
-cpp_logprior <- cpp_function_get(prior_filename)
+```{r, echo = FALSE, comment = '', warning=FALSE}
+Rcpp::sourceCpp(likelihood_filename)
 ```
 
 With these two functions in hand we can run the MCMC exactly the same as before, passing in the new functions:
@@ -225,8 +204,8 @@ With these two functions in hand we can run the MCMC exactly the same as before,
 # run MCMC
 mcmc <- run_mcmc(data = data_list,
                  df_params = df_params,
-                 loglike = cpp_loglike,
-                 logprior = cpp_logprior,
+                 loglike = "loglike",
+                 logprior = "logprior",
                  burnin = 1e3,
                  samples = 1e3,
                  pb_markdown = TRUE)

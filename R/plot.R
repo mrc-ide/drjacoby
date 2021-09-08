@@ -15,10 +15,7 @@
 #' @export
 
 plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1, y_axis_type = 1) {
-  
-  # declare variables to avoid "no visible binding" issues
-  rung <- value <- loglikelihood <- NULL
-  
+
   # check inputs
   assert_class(x, "drjacoby_output")
   assert_single_pos_int(chain)
@@ -45,7 +42,7 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   # get plotting values (loglikelihoods)
   phase_get <- phase
   chain_get <- chain
-  data <- dplyr::filter(x$output, chain == chain_get, phase == phase_get)
+  data <- dplyr::filter(x$output, .data$chain == chain_get, .data$phase == phase_get)
   y_lab <- "log-likelihood"
   
   # move to plotting deviance if specified
@@ -69,10 +66,10 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   
   # get 95% credible intervals over plotting values
   y_intervals <- data %>%
-    dplyr::group_by(rung) %>%
-    dplyr::summarise(Q2.5 = quantile(loglikelihood, 0.025),
-                     Q50 =  quantile(loglikelihood, 0.5),
-                     Q97.5 = quantile(loglikelihood, 0.975))
+    dplyr::group_by(.data$rung) %>%
+    dplyr::summarise(Q2.5 = quantile(.data$loglikelihood, 0.025),
+                     Q50 =  quantile(.data$loglikelihood, 0.5),
+                     Q97.5 = quantile(.data$loglikelihood, 0.975))
   
   # get data into ggplot format and define temperature colours
   df <- y_intervals
@@ -118,9 +115,6 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
 
 plot_mc_acceptance <- function(x, chain = NULL, phase = "sampling", x_axis_type = 1) {
   
-  # declare variables to avoid "no visible binding" issues
-  value <- link <- NULL
-  
   # check inputs
   assert_class(x, "drjacoby_output")
   if (!is.null(chain)) {
@@ -155,12 +149,12 @@ plot_mc_acceptance <- function(x, chain = NULL, phase = "sampling", x_axis_type 
   # get chain properties
   phase_get <- phase
   if (is.null(chain)) {
-    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, phase == phase_get) %>%
-      dplyr::pull(value)
+    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, .data$phase == phase_get) %>%
+      dplyr::pull(.data$value)
   } else {
     chain_get <- chain
-    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, phase == phase_get, chain == chain_get) %>%
-      dplyr::pull(value)
+    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, .data$phase == phase_get, .data$chain == chain_get) %>%
+      dplyr::pull(.data$value)
   }
   
   # get data into ggplot format and define temperature colours
@@ -195,10 +189,7 @@ plot_mc_acceptance <- function(x, chain = NULL, phase = "sampling", x_axis_type 
 #' @export
 
 plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling", rung = NULL) {
-  
-  # declare variables to avoid "no visible binding" issues
-  iteration <- logprior <- loglikelihood <- NULL
-  
+
   # check inputs
   assert_class(x, "drjacoby_output")
   assert_single_bounded(lag, 1, 500)
@@ -222,8 +213,8 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   chain_get <- chain
   rung_get <- rung
   phase_get <- phase
-  data <- dplyr::filter(x$output, chain == chain_get, rung == rung_get, phase == phase_get) %>%
-    dplyr::select(-chain, -rung, -iteration, -phase, -logprior, -loglikelihood) %>%
+  data <- dplyr::filter(x$output, .data$chain == chain_get, .data$rung == rung_get, .data$phase == phase_get) %>%
+    dplyr::select(-.data$chain, -.data$rung, -.data$iteration, -.data$phase, -.data$logprior, -.data$loglikelihood) %>%
     as.data.frame()
   
   # select parameters
@@ -249,7 +240,7 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
     ggplot2::ylab("Autocorrelation") +
     ggplot2::xlab("Lag") +
     ggplot2::ylim(min(0, min(out$autocorrelation)), 1) +
-    ggplot2::facet_wrap(~ parameter)
+    ggplot2::facet_wrap(~ .data$parameter)
 }
 
 #------------------------------------------------
@@ -379,20 +370,22 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
                            hist = p1,
                            acf = p3,
                            combined = pc2)
-  }
-  names(plot_list) <- paste0("Plot_", param_names)
-  
-  # Display plots, asking user for next page if multiple parameters
-  if (display) {
-    for (j in 1:length(param_names)) {
+    
+    # Display plots, asking user for next page if multiple parameters
+    if(display){
       graphics::plot(plot_list[[j]]$combined)
-      if (j == 1) {
-        default_ask <- grDevices::devAskNewPage()
-        on.exit(grDevices::devAskNewPage(default_ask))
-        grDevices::devAskNewPage(ask = TRUE)
+      if (j < length(param_names)) {
+        z <- readline("Press n for next plot, f to return the list of all plots or any other key to exit ")
+        if(z == "f"){
+          display <- FALSE
+        } 
+        if(!z %in% c("n", "f")){
+          return(invisible())            
+        }
       }
     }
   }
+  names(plot_list) <- paste0("Plot_", param_names)
   
   return(invisible(plot_list))
 }
@@ -413,10 +406,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 plot_cor <- function(x, parameter1, parameter2,
                      downsample = TRUE, phase = "sampling",
                      chain = NULL, rung = NULL) {
-  
-  # declare variables to avoid "no visible binding" issues
-  #stage <- NULL
-  
+
   # check inputs
   assert_class(x, "drjacoby_output")
   assert_single_string(parameter1)
@@ -543,10 +533,7 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
 #' @export
 
 plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_names = NULL) {
-  
-  # declare variables to avoid "no visible binding" issues
-  xi <- yi <- NULL
-  
+
   # check inputs
   assert_class(x, "drjacoby_output")
   if (!is.null(show)) {
@@ -589,7 +576,7 @@ plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_
                         y = names(data),
                         yi = 1:n,
                         z = as.vector(m))
-  df_plot <- subset(df_plot, xi < yi)
+  df_plot <- subset(df_plot, df_plot$xi < df_plot$yi)
   df_plot$x <- factor(df_plot$x, levels = names(data))
   df_plot$y <- factor(df_plot$y, levels = names(data))
   

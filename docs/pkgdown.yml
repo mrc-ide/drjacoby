@@ -1,11 +1,15 @@
-pandoc: 2.7.3
-pkgdown: 1.5.1
+pandoc: 2.11.4
+pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
   blocks: blocks.html
+  checks_double_well: checks_double_well.html
+  checks_multilevel_blocks: checks_multilevel_blocks.html
+  checks_normal_model: checks_normal_model.html
+  checks_return_prior: checks_return_prior.html
   example: example.html
   installation: installation.html
   metropolis_coupling: metropolis_coupling.html
   parallel: parallel.html
-last_built: 2021-01-08T16:00Z
+last_built: 2021-09-08T11:36Z
 
