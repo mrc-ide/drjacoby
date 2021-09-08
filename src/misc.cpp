@@ -14,7 +14,7 @@ using namespace std;
 
 //------------------------------------------------
 // update timer and optionally print time difference
-void chrono_timer(chrono::high_resolution_clock::time_point &t0, string message_before, bool print_diff) {
+double chrono_timer(chrono::high_resolution_clock::time_point &t0, string message_before, bool print_diff) {
   
   // calculate elapsed time
   chrono::high_resolution_clock::time_point t1 = chrono::high_resolution_clock::now();
@@ -29,6 +29,9 @@ void chrono_timer(chrono::high_resolution_clock::time_point &t0, string message_
   
   // update timer to current time
   t0 = t1;
+  
+  // return time diff
+  return time_double;
 }
 
 //------------------------------------------------

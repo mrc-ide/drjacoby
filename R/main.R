@@ -417,6 +417,11 @@ run_mcmc <- function(data,
   output_processed$diagnostics <- list()
   
   ## Diagnostics
+  # run-times
+  run_time <- data.frame(chain = chain_names,
+                         seconds = mapply(function(x) x$t_diff, output_raw))
+  output_processed$diagnostics$run_time <- run_time
+  
   # Rhat (Gelman-Rubin diagnostic)
   if (chains > 1) {
     rhat_est <- c()

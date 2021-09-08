@@ -28,9 +28,9 @@ TYPE sum(const std::vector<TYPE> &x_vec) {
 
 //------------------------------------------------
 // update timer and optionally print time difference
-void chrono_timer(std::chrono::high_resolution_clock::time_point &t0,
-                  std::string message_before = "completed in ",
-                  bool print_diff = true);
+double chrono_timer(std::chrono::high_resolution_clock::time_point &t0,
+                    std::string message_before = "completed in ",
+                    bool print_diff = true);
 
 //------------------------------------------------
 // helper function for printing a single value or series of values

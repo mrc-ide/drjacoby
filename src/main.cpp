@@ -85,7 +85,7 @@ template<class TYPE1, class TYPE2>
 Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   
   // start timer
-  chrono::high_resolution_clock::time_point t1 = chrono::high_resolution_clock::now();
+  chrono::high_resolution_clock::time_point t0 = chrono::high_resolution_clock::now();
   
   // create sytem object and load args
   System s;
@@ -243,11 +243,10 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   
   // ---------- return ----------
   
+  
+  
   // end timer
-  if (!s.silent) {
-    print("");
-    chrono_timer(t1, "chain completed in ");
-  }
+  double t_diff = chrono_timer(t0, "chain completed in ", !s.silent);
   
   // return as Rcpp list
   Rcpp::List ret = Rcpp::List::create(Rcpp::Named("loglike_burnin") = loglike_burnin,
@@ -257,7 +256,8 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
                                       Rcpp::Named("logprior_sampling") = logprior_sampling,
                                       Rcpp::Named("theta_sampling") = theta_sampling,
                                       Rcpp::Named("mc_accept_burnin") = mc_accept_burnin,
-                                      Rcpp::Named("mc_accept_sampling") = mc_accept_sampling);
+                                      Rcpp::Named("mc_accept_sampling") = mc_accept_sampling,
+                                      Rcpp::Named("t_diff") = t_diff);
   return ret;
 }
 

@@ -374,7 +374,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
     # Display plots, asking user for next page if multiple parameters
     if(display){
       graphics::plot(plot_list[[j]]$combined)
-      if (j > 1) {
+      if (j < length(param_names)) {
         z <- readline("Press n for next plot, f to return the list of all plots or any other key to exit ")
         if(z == "f"){
           display <- FALSE
