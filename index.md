@@ -1,5 +1,6 @@
 
 DrJacoby
+Foo
 <img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo3.png" height="120px" width="100px"/>
 ===================================================
 
