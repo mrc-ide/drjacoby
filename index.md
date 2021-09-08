@@ -1,5 +1,6 @@
 
-DrJacoby <img src="R_ignore/images/logo3.png" width="120" align="right" />
+DrJacoby
+<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo3.png" height="120px" width="100px"/>
 ===================================================
 
 [![master build](https://github.com/mrc-ide/drjacoby/workflows/master_build/badge.svg)](https://github.com/mrc-ide/drjacoby/actions)
