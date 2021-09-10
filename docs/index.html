@@ -107,9 +107,15 @@
       </header><div class="row">
   <div class="contents col-md-9">
 
-<p>DrJacoby Foo <img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo3.png" height="120px" width="100px"> ===================================================</p>
+<p style="font-size:50px">
+Dr. Jacoby <img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo3.png" height="120px" width="100px" align="right"></p>
 <p><a href="https://github.com/mrc-ide/drjacoby/actions"><img src="https://github.com/mrc-ide/drjacoby/workflows/master_build/badge.svg" alt="master build"></a> <a href="https://github.com/mrc-ide/drjacoby/actions"><img src="https://github.com/mrc-ide/drjacoby/workflows/develop_build/badge.svg" alt="develop build"></a> <a href="https://codecov.io/github/mrc-ide/drjacoby?branch=master"><img src="https://codecov.io/gh/mrc-ide/drjacoby/branch/master/graph/badge.svg" alt="Coverage status"></a></p>
 <p><em>drjacoby</em> is a package for running flexible Markov chain Monte Carlo (MCMC) with minimal fiddling required by the user. The likelihood and the priors that go into the model can be written as either R or C++ functions, with the latter typically being much faster to run. Outputs are produced in a standardised format, and can be explored using a range of built in diagnostic plots and statistics.</p>
+<p style="text-align:center;">
+<img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/infographic_coupling.png" height="335px" width="503px"></p>
+<p style="text-align:center;">
+<em>drjacoby</em> uses parallel tempering to “melt” the target distribution, <br>thereby allowing information to pass between well-separated peaks.
+</p>
 <p>There are many MCMC programs out there, including more far-reaching programs such as <a href="https://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/">WinBUGS</a>, <a href="http://mcmc-jags.sourceforge.net/">JAGS</a>, <a href="https://cran.r-project.org/web/packages/greta/vignettes/get_started.html">greta</a>, <a href="https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html">STAN</a>, and many more. These programs contain a wide variety of options for specifying complex models, and often run different flavours of MCMC such as Hamiltonian Monte Carlo (HMC). In contrast, <em>drjacoby</em> is tailored to a specific type of MCMC problem: those that <strong>mix poorly due to highly correlated and/or multi-modal posteriors</strong>, which can occur in both simple and complex models. If the posterior is particularly peaky then even methods like HMC may fail, meaning (unfortunately) no amount of STAN iterations will get us to the right answer. There are techniques available for dealing with this sort of problem, but they tend to be fairly advanced and tricky to implement. The aim of <em>drjacoby</em> is to bring these methods within reach of a “casual” MCMC user, so that reliable results can be obtained without the need to code a custom MCMC program from scratch.</p>
 <p>After <a href="https://mrc-ide.github.io/drjacoby/articles/installation.html">installing</a> <em>drjacoby</em>, please take at look at the first <a href="https://mrc-ide.github.io/drjacoby/articles/example.html">example application</a>.</p>
 
