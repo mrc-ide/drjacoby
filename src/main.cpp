@@ -284,7 +284,12 @@ void coupling(vector<Particle> &particle_vec, vector<int> &mc_accept) {
     double beta_raised2 = particle_vec[rung2].beta_raised;
     
     // calculate acceptance ratio (still in log space)
-    double acceptance = (loglike2*beta_raised1 + loglike1*beta_raised2) - (loglike1*beta_raised1 + loglike2*beta_raised2);
+    double acceptance;
+    if(beta_raised1 == 0.0){
+      acceptance = (loglike1*beta_raised2) - (loglike2*beta_raised2);
+    } else {
+      acceptance = (loglike2*beta_raised1 + loglike1*beta_raised2) - (loglike1*beta_raised1 + loglike2*beta_raised2);
+    }
     
     // accept or reject move
     bool accept_move = (log(R::runif(0,1)) < acceptance);

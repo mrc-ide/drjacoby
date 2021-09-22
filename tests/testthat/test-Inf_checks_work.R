@@ -91,3 +91,62 @@ test_that("Checks on likelihood and prior errors work", {
                         chains = 1))
   
 })
+
+
+test_that("Negative Inf initialisation checks", {
+  # define true parameter values
+  mu_true <- 3
+  sigma_true <- 2
+  
+  # draw example data
+  data_list <- list(x = 1)
+  
+  # define parameters dataframe
+  df_params <- define_params(name = "mu", min = -10, max = 10, init = 1)
+  
+  
+  # Initialisation fails with initial params
+  r_loglike <- function(params, data, misc) {
+    if(params[[1]] == 1){
+      -Inf
+    } else {
+      -1
+    }
+  }
+  
+  # define log-prior function
+  r_logprior <- function(params, misc) {
+    0
+  }
+  
+  expect_error(run_mcmc(data = data_list,
+                        df_params = df_params,
+                        loglike = r_loglike,
+                        logprior = r_logprior,
+                        burnin = 1e3,
+                        samples = 1e3,
+                        chains = 1))
+  
+  # Define log likelihood
+  r_loglike <- function(params, data, misc) {
+    0
+  }
+  
+  # Initialisation fails with initial params
+  r_logprior <- function(params, misc) {
+    if(params[[1]] == 1){
+      -Inf
+    } else {
+      -1
+    }
+  }
+  
+  expect_error(run_mcmc(data = data_list,
+                        df_params = df_params,
+                        loglike = r_loglike,
+                        logprior = r_logprior,
+                        burnin = 1e3,
+                        samples = 1e3,
+                        chains = 1))
+  
+})
