@@ -84,7 +84,6 @@ public:
     
     // loop through parameters
     for (int i = 0; i < d; ++i) {
-      //Rcpp::Rcout << "beta_raised " << beta_raised << "\n";
       if (s_ptr->skip_param[i]) {
         continue;
       }
@@ -129,20 +128,12 @@ public:
       } else {
         MH = beta_raised*(loglike_prop - loglike) + (logprior_prop - logprior) + adj;
       }
-      //Rcpp::Rcout << "logprior " << logprior << "\n";
-      //Rcpp::Rcout << "logprior_prop " << logprior_prop << "\n";
-      //Rcpp::Rcout << "loglike " << loglike << "\n";
-      //Rcpp::Rcout << "loglike_prop " << loglike_prop << "\n";
-      //Rcpp::Rcout << "adj " << adj << "\n";
-      //Rcpp::Rcout << "MH " << MH << "\n";
-      
-      
+
       // accept or reject move
       bool MH_accept = (log(R::runif(0,1)) < MH);
       
       // implement changes
       if (MH_accept) {
-        //Rcpp::Rcout << "MH accepted \n";
         // update theta and phi
         theta[i] = theta_prop[i];
         phi[i] = phi_prop[i];
@@ -160,7 +151,6 @@ public:
         accept_count++;
         
       } else {
-        //Rcpp::Rcout << "MH rejected \n";
         // reset theta_prop and phi_prop
         theta_prop[i] = theta[i];
         phi_prop[i] = phi[i];
@@ -170,7 +160,6 @@ public:
         bw_index[i]++;
         
       } // end MH step
-      //Rcpp::Rcout << " \n";
     }  // end loop over parameters
     
   }  // end update_univar function
