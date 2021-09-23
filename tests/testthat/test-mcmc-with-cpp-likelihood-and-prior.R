@@ -63,7 +63,7 @@ test_that("Cpp likelihood and prior", {
                               burnin = 1e3,
                               samples = 1e4,
                               silent = TRUE)
-  expect_length(cpp_mcmc_chains, 3)
+  expect_length(cpp_mcmc_chains, 4)
   
   # subset output to chain1 and check posterior estimates
   pe <- dplyr::filter(cpp_mcmc_chains$output, phase == "sampling", chain == 1) %>%

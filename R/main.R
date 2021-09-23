@@ -413,7 +413,15 @@ run_mcmc <- function(data,
   }
   
   # append to output list
-  output_processed <- list(output = df_output)
+  df_output_cold <- df_output %>%
+    dplyr::filter(.data$rung == max(rungs)) %>%
+    dplyr::select(-.data$rung)
+  
+  df_output_rung <- df_output %>%
+    dplyr::select(.data$chain, .data$rung, .data$iteration, .data$phase, .data$logprior, .data$loglikelihood)
+  
+  output_processed <- list(output = df_output_cold,
+                           rung = df_output_rung)
   output_processed$diagnostics <- list()
   
   ## Diagnostics
@@ -435,7 +443,7 @@ run_mcmc <- function(data,
   }
   
   # ESS
-  output_sub <- subset(output_processed$output, phase == "sampling" & rung == rungs,
+  output_sub <- subset(df_output, phase == "sampling" & rung == rungs,
                        select = as.character(param_names))
   ess_est <- apply(output_sub, 2, coda::effectiveSize)
   ess_est[skip_param] <- NA
@@ -461,7 +469,7 @@ run_mcmc <- function(data,
   output_processed$diagnostics$mc_accept <- mc_accept
   
   # DIC
-  output_sub <- subset(output_processed$output, phase == "sampling" & rung == rungs)
+  output_sub <- subset(df_output, phase == "sampling" & rung == rungs)
   deviance <- -2*output_sub$loglikelihood
   DIC <- mean(deviance) + 0.5*var(deviance)
   output_processed$diagnostics$DIC_Gelman <- DIC

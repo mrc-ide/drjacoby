@@ -110,7 +110,7 @@ plot_mc_acceptance(mcmc)
 
 ```{r, fig.width=6, fig.height=5}
 # extract posterior draws
-output_sub <- subset(mcmc$output, phase == "sampling" & rung == 11)
+output_sub <- subset(mcmc$output, phase == "sampling")
 mu_draws <- output_sub$mu
 
 # overlay plots
