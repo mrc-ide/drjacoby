@@ -451,7 +451,7 @@ run_mcmc <- function(data,
   # if save_hot_draws = TRUE then merge theta values back into pt output
   if (save_hot_draws) {
     df_pt <- df_pt %>%
-      dplyr::left_join(df_theta, by = c("chain", "rung", "phase", "iteration"))
+      dplyr::left_join(dplyr::select(df_theta, -loglikelihood, -logprior), by = c("chain", "rung", "phase", "iteration"))
   }
   
   # drop rungs field from main output
