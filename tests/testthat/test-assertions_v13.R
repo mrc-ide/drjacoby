@@ -1,4 +1,3 @@
-context("assertions_v11")
 
 #------------------------------------------------
 test_that("nice_format working correctly", {
@@ -20,6 +19,26 @@ test_that("assert_non_null working correctly", {
   expect_true(assert_non_null(5))
 
   expect_error(assert_non_null(NULL))
+})
+
+#------------------------------------------------
+test_that("assert_NA working correctly", {
+  expect_true(assert_NA(NA))
+  expect_true(assert_NA(rep(NA, 5)))
+  
+  expect_error(assert_NA(NULL))
+  expect_error(assert_NA(Inf))
+  expect_error(assert_NA(1:5))
+})
+
+#------------------------------------------------
+test_that("assert_non_NA working correctly", {
+  expect_true(assert_non_NA(NULL))
+  expect_true(assert_non_NA(Inf))
+  expect_true(assert_non_NA(1:5))
+  
+  expect_error(assert_non_NA(NA))
+  expect_error(assert_non_NA(rep(NA, 5)))
 })
 
 #------------------------------------------------
@@ -625,8 +644,8 @@ test_that("assert_noduplicates working correctly", {
 
 #------------------------------------------------
 test_that("assert_file_exists working correctly", {
-  name_full <- system.file("extdata/", "example_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
-  expect_true(assert_file_exists(name_full))
+  DESCRIPTION_location <- system.file("DESCRIPTION", package = 'drjacoby', mustWork = TRUE)
+  expect_true(assert_file_exists(DESCRIPTION_location))
   
   expect_error(assert_file_exists(NULL))
   expect_error(assert_file_exists(4))

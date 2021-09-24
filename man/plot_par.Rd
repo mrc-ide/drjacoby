@@ -11,7 +11,6 @@ plot_par(
   lag = 20,
   downsample = TRUE,
   phase = "sampling",
-  rung = NULL,
   chain = NULL,
   display = TRUE
 )
@@ -31,9 +30,6 @@ matching hide will be hidden.}
 efficient.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
-
-\item{rung}{which temperature rung to plot. If \code{NULL} then defaults to
-the cold rung.}
 
 \item{chain}{which chain to plot.}
 

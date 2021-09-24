@@ -10,24 +10,21 @@ plot_cor(
   parameter2,
   downsample = TRUE,
   phase = "sampling",
-  chain = NULL,
-  rung = NULL
+  chain = NULL
 )
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
-\item{parameter1}{Name of parameter first parameter.}
+\item{parameter1}{name of parameter first parameter.}
 
-\item{parameter2}{Name of parameter second parameter.}
+\item{parameter2}{name of parameter second parameter.}
 
-\item{downsample}{Downsample chain for efficiency}
+\item{downsample}{whether to downsample output to speed up plotting.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
 \item{chain}{which chain to plot.}
-
-\item{rung}{Rung}
 }
 \description{
 Plots correlation between two parameters

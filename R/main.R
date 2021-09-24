@@ -177,6 +177,9 @@ check_params <- function(x) {
 #' @param save_data if \code{TRUE} (the default) the raw input data is stored
 #'   for reference in the project output. This allows complete reproducibility
 #'   from a project, but may be undesirable when datasets are very large.
+#' @param save_hot_draws if \code{TRUE} the parameter draws relating to the hot
+#'   chains are also stored inside the \code{pt} output. If \code{FALSE} (the
+#'   default) only log-likelihoods and log-priors are stored from heated chains.
 #' @param silent whether to suppress all console output.
 #'
 #' @importFrom utils txtProgressBar
@@ -198,6 +201,7 @@ run_mcmc <- function(data,
                      cluster = NULL,
                      pb_markdown = FALSE,
                      save_data = TRUE,
+                     save_hot_draws = FALSE,
                      silent = FALSE) {
   
   # declare variables to avoid "no visible binding" issues
@@ -255,6 +259,7 @@ run_mcmc <- function(data,
   }
   assert_single_logical(pb_markdown)
   assert_single_logical(save_data)
+  assert_single_logical(save_hot_draws)
   assert_single_logical(silent)
   
   
@@ -335,6 +340,7 @@ run_mcmc <- function(data,
                       rungs = rungs,
                       coupling_on = coupling_on,
                       beta_raised = beta_raised,
+                      save_hot_draws = save_hot_draws,
                       pb_markdown = pb_markdown,
                       silent = silent)
   
@@ -382,49 +388,89 @@ run_mcmc <- function(data,
   rung_names <- 1:rungs
   param_names <- df_params$name
   
-  # get raw output into dataframe
-  df_output <- do.call(rbind, mapply(function(j) {
+  # get parameter draws into dataframe. This will be over all rungs if
+  # save_hot_draws is TRUE, otherwise it will only be over the cold chain
+  df_theta <- do.call(rbind, mapply(function(j) {
     do.call(rbind, mapply(function(i) {
       
-      # concatenate burn-in and sampling logprior and loglikelihood
-      logprior <- c(output_raw[[j]]$logprior_burnin[[i]], output_raw[[j]]$logprior_sampling[[i]])
-      loglike <- c(output_raw[[j]]$loglike_burnin[[i]], output_raw[[j]]$loglike_sampling[[i]])
+      theta_burnin <- do.call(rbind, output_raw[[j]]$theta_burnin[[i]]) %>%
+        as.data.frame() %>%
+        magrittr::set_colnames(param_names) %>%
+        dplyr::mutate(chain = chain_names[j],
+                      rung = rung_names[i],
+                      phase = "burnin", .before = 1)
       
-      # create dataframe of loglike and logprior
-      ret <- data.frame(chain = chain_names[j],
-                        rung = rung_names[i],
-                        iteration = seq_along(loglike),
-                        phase = rep(c("burnin", "sampling"), times = c(burnin, samples)),
-                        logprior = logprior,
-                        loglikelihood = loglike)
+      theta_sampling <- do.call(rbind, output_raw[[j]]$theta_sampling[[i]]) %>%
+        as.data.frame() %>%
+        magrittr::set_colnames(param_names) %>%
+        dplyr::mutate(chain = chain_names[j],
+                      rung = rung_names[i],
+                      phase = "sampling", .before = 1)
       
-      # concatenate theta into dataframe and append
-      theta <- as.data.frame(do.call(rbind, c(output_raw[[j]]$theta_burnin[[i]], output_raw[[j]]$theta_sampling[[i]])))
-      names(theta) <- param_names
-      ret <- cbind(ret, theta)
+      ret <- theta_burnin %>%
+        dplyr::bind_rows(theta_sampling) %>%
+        dplyr::mutate(iteration = seq_along(phase), .after = "phase")
       
       return(ret)
-    }, seq_len(rungs), SIMPLIFY = FALSE))
-  }, seq_len(chains), SIMPLIFY = FALSE))
+    }, seq_along(output_raw[[j]]$theta_burnin), SIMPLIFY = FALSE))
+  }, seq_along(output_raw), SIMPLIFY = FALSE))
   
-  # check for bad values in output
-  if (!all(is.finite(unlist(df_output[, param_names])))) {
-    stop("output contains non-finite values. Check that all parameters are constrained to a finite range")
+  # fix rungs field if save_hot_draws is FALSE
+  if (!save_hot_draws) {
+    df_theta$rung <- rungs
   }
   
-  # append to output list
-  df_output_cold <- df_output %>%
+  # get likelihoods and priors over all rungs
+  df_pt <- do.call(rbind, mapply(function(j) {
+    do.call(rbind, mapply(function(i) {
+      
+      pt_burnin <- data.frame(chain = chain_names[j],
+                              rung = rung_names[i],
+                              phase = "burnin",
+                              logprior = output_raw[[j]]$logprior_burnin[[i]],
+                              loglikelihood = output_raw[[j]]$loglike_burnin[[i]])
+      
+      pt_sampling <- data.frame(chain = chain_names[j],
+                                rung = rung_names[i],
+                                phase = "sampling",
+                                logprior = output_raw[[j]]$logprior_sampling[[i]],
+                                loglikelihood = output_raw[[j]]$loglike_sampling[[i]])
+      
+      ret <- pt_burnin %>%
+        dplyr::bind_rows(pt_sampling) %>%
+        dplyr::mutate(iteration = seq_along(phase), .after = "phase")
+      
+      return(ret)
+    }, seq_along(output_raw[[j]]$logprior_burnin), SIMPLIFY = FALSE))
+  }, seq_along(output_raw), SIMPLIFY = FALSE))
+  
+  # merge loglike and logprior for cold chain into main output
+  df_theta <- df_theta %>%
+    dplyr::left_join(df_pt, by = c("chain", "rung", "phase", "iteration"))
+  
+  # if save_hot_draws = TRUE then merge theta values back into pt output
+  if (save_hot_draws) {
+    df_pt <- df_pt %>%
+      dplyr::left_join(df_theta, by = c("chain", "rung", "phase", "iteration"))
+  }
+  
+  # drop rungs field from main output
+  df_output <- df_theta %>%
     dplyr::filter(.data$rung == max(rungs)) %>%
     dplyr::select(-.data$rung)
   
-  df_output_rung <- df_output %>%
-    dplyr::select(.data$chain, .data$rung, .data$iteration, .data$phase, .data$logprior, .data$loglikelihood)
+  # check for bad values in output
+  if (!all(is.finite(unlist(df_output[, param_names])))) {
+    stop("output contains non-finite values")
+  }
   
-  output_processed <- list(output = df_output_cold,
-                           rung = df_output_rung)
-  output_processed$diagnostics <- list()
+  # append to output list
+  output_processed <- list(output = df_output,
+                           pt = df_pt)
   
   ## Diagnostics
+  output_processed$diagnostics <- list()
+  
   # run-times
   run_time <- data.frame(chain = chain_names,
                          seconds = mapply(function(x) x$t_diff, output_raw))
@@ -434,8 +480,10 @@ run_mcmc <- function(data,
   if (chains > 1) {
     rhat_est <- c()
     for (p in seq_along(param_names)) {
-      pm <- subset(output_processed$output, phase == "sampling", select = c("chain", param_names[p]))
-      rhat_est[p] <- gelman_rubin(pm, chains, samples)
+      rhat_est[p] <- df_output %>%
+        dplyr::filter(phase == "sampling") %>%
+        dplyr::select(chain, param_names[p]) %>%
+        gelman_rubin(chains = chains, samples = samples)
     }
     rhat_est[skip_param] <- NA
     names(rhat_est) <- param_names
@@ -443,9 +491,10 @@ run_mcmc <- function(data,
   }
   
   # ESS
-  output_sub <- subset(df_output, phase == "sampling" & rung == rungs,
-                       select = as.character(param_names))
-  ess_est <- apply(output_sub, 2, coda::effectiveSize)
+  ess_est <- df_output %>%
+    dplyr::filter(phase == "sampling") %>%
+    dplyr::select(param_names) %>%
+    apply(2, coda::effectiveSize)
   ess_est[skip_param] <- NA
   output_processed$diagnostics$ess <- ess_est
   
@@ -469,9 +518,12 @@ run_mcmc <- function(data,
   output_processed$diagnostics$mc_accept <- mc_accept
   
   # DIC
-  output_sub <- subset(df_output, phase == "sampling" & rung == rungs)
-  deviance <- -2*output_sub$loglikelihood
-  DIC <- mean(deviance) + 0.5*var(deviance)
+  DIC <- df_pt %>%
+    dplyr::filter(.data$phase == "sampling" & .data$rung == rungs) %>%
+    dplyr::select(.data$loglikelihood) %>%
+    dplyr::mutate(deviance = -2*.data$loglikelihood) %>%
+    dplyr::summarise(DIC = mean(.data$deviance) + 0.5*var(.data$deviance)) %>%
+    dplyr::pull(.data$DIC)
   output_processed$diagnostics$DIC_Gelman <- DIC
   
   ## Parameters
