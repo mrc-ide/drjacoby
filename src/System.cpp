@@ -37,6 +37,7 @@ void System::load(Rcpp::List args) {
   chain = rcpp_to_int(args_params["chain"]);
   
   // misc parameters
+  save_hot_draws = rcpp_to_bool(args_params["save_hot_draws"]);
   pb_markdown = rcpp_to_bool(args_params["pb_markdown"]);
   silent = rcpp_to_bool(args_params["silent"]);
   

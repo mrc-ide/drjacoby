@@ -37,6 +37,7 @@ public:
   int chain;
   
   // misc parameters
+  bool save_hot_draws;
   bool pb_markdown;
   bool silent;
   
