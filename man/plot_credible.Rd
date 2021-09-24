@@ -4,24 +4,16 @@
 \alias{plot_credible}
 \title{Plot 95\% credible intervals}
 \usage{
-plot_credible(
-  x,
-  show = NULL,
-  phase = "sampling",
-  rung = NULL,
-  param_names = NULL
-)
+plot_credible(x, show = NULL, phase = "sampling", param_names = NULL)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
 
-\item{show}{Vector of parameter names to plot.}
+\item{show}{vector of parameter names to plot.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
-\item{rung}{Which rung to plot.}
-
-\item{param_names}{Optional vector of names to replace the default parameter names.}
+\item{param_names}{optional vector of names to replace the default parameter names.}
 }
 \description{
 Plots posterior 95\% credible intervals over specified set of

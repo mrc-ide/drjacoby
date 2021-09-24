@@ -20,6 +20,7 @@ run_mcmc(
   cluster = NULL,
   pb_markdown = FALSE,
   save_data = TRUE,
+  save_hot_draws = FALSE,
   silent = FALSE
 )
 }
@@ -70,6 +71,10 @@ being printed to markdown files.}
 \item{save_data}{if \code{TRUE} (the default) the raw input data is stored
 for reference in the project output. This allows complete reproducibility
 from a project, but may be undesirable when datasets are very large.}
+
+\item{save_hot_draws}{if \code{TRUE} the parameter draws relating to the hot
+chains are also stored inside the \code{pt} output. If \code{FALSE} (the
+default) only log-likelihoods and log-priors are stored from heated chains.}
 
 \item{silent}{whether to suppress all console output.}
 }
