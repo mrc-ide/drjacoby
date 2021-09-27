@@ -114,5 +114,34 @@ parallel::stopCluster(cl)
 
 Running chains in parallel tends to be faster than running in serial, although remember that you will see a delay the first time you run a new set of functions as the likelihood and prior must compile on every node.
 
+## Running multiple chains using c++ log likelihood or log prior functions
 
+To run the mcmc in parallel with c++ log likelihood or log prior functions there is on additional step to take when setting up
+the cluster. Each node must be able to access a version of the compiled c++ functions, so after initialising the cluster with:
+
+```{r, eval = FALSE}
+cl <- parallel::makeCluster(cores)
+```
+
+we must also make the c++ functions accessible, by running the Rcpp::sourceCPP command for our c++ file for each node:
+
+```{r, eval = FALSE}
+cl_cpp <- parallel::clusterEvalQ(cl, Rcpp::sourceCpp("my_cpp.cpp"))
+```
+
+After which we can run the mcmc in the same way:
+
+```{r, eval = FALSE}
+# run MCMC in parallel
+mcmc <- run_mcmc(data = data_list,
+                 df_params = df_params,
+                 loglike = "loglike",
+                 logprior = "logprior",
+                 burnin = 1e3,
+                 samples = 1e3,
+                 chains = 2,
+                 cluster = cl,
+                 pb_markdown = TRUE)
+parallel::stopCluster(cl)
+```
 
