@@ -4,13 +4,7 @@
 \alias{plot_cor_mat}
 \title{Plot posterior correlation matrix}
 \usage{
-plot_cor_mat(
-  x,
-  show = NULL,
-  phase = "sampling",
-  rung = NULL,
-  param_names = NULL
-)
+plot_cor_mat(x, show = NULL, phase = "sampling", param_names = NULL)
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
@@ -18,8 +12,6 @@ plot_cor_mat(
 \item{show}{Vector of parameter names to plot.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
-
-\item{rung}{Which rung to plot.}
 
 \item{param_names}{Optional vector of names to replace the default parameter names.}
 }

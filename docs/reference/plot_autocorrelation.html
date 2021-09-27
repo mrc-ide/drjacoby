@@ -156,14 +156,7 @@
     <p>Plot autocorrelation for specified parameters</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_autocorrelation</span><span class='op'>(</span>
-  <span class='va'>x</span>,
-  lag <span class='op'>=</span> <span class='fl'>20</span>,
-  par <span class='op'>=</span> <span class='cn'>NULL</span>,
-  chain <span class='op'>=</span> <span class='fl'>1</span>,
-  phase <span class='op'>=</span> <span class='st'>"sampling"</span>,
-  rung <span class='op'>=</span> <span class='cn'>NULL</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>plot_autocorrelation</span><span class='op'>(</span><span class='va'>x</span>, lag <span class='op'>=</span> <span class='fl'>20</span>, par <span class='op'>=</span> <span class='cn'>NULL</span>, chain <span class='op'>=</span> <span class='fl'>1</span>, phase <span class='op'>=</span> <span class='st'>"sampling"</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -188,11 +181,6 @@ plotted.</p></td>
     <tr>
       <th>phase</th>
       <td><p>which phase to plot. Must be either "burnin" or "sampling".</p></td>
-    </tr>
-    <tr>
-      <th>rung</th>
-      <td><p>which temperature rung to plot. If <code>NULL</code> then defaults to
-the cold rung.</p></td>
     </tr>
     </table>
 

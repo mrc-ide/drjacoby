@@ -117,17 +117,23 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
   // objects for storing loglikelihood and theta values over iterations
   vector<vector<double>> loglike_burnin(rungs, vector<double>(s.burnin));
   vector<vector<double>> logprior_burnin(rungs, vector<double>(s.burnin));
-  vector<vector<vector<double>>> theta_burnin(rungs, vector<vector<double>>(s.burnin, vector<double>(d)));
+  int theta_rungs = s.save_hot_draws ? rungs : 1;
+  vector<vector<vector<double>>> theta_burnin(theta_rungs, vector<vector<double>>(s.burnin, vector<double>(d)));
   vector<vector<double>> loglike_sampling(rungs, vector<double>(s.samples));
   vector<vector<double>> logprior_sampling(rungs, vector<double>(s.samples));
-  vector<vector<vector<double>>> theta_sampling(rungs, vector<vector<double>>(s.samples, vector<double>(d)));
+  vector<vector<vector<double>>> theta_sampling(theta_rungs, vector<vector<double>>(s.samples, vector<double>(d)));
   
   // specify stored values at first iteration. Ensures that user-defined initial
   // values are the first stored values
   for (int r = 0; r < rungs; ++r) {
     loglike_burnin[r][0] = particle_vec[r].loglike;
     logprior_burnin[r][0] = particle_vec[r].logprior;
-    theta_burnin[r][0] = Rcpp::as< vector<double> >(particle_vec[r].theta);
+    if (s.save_hot_draws) {
+      theta_burnin[r][0] = Rcpp::as< vector<double> >(particle_vec[r].theta);
+    }
+  }
+  if (!s.save_hot_draws) {
+    theta_burnin[0][0] = Rcpp::as< vector<double> >(particle_vec[rungs - 1].theta);
   }
   
   // store Metropolis coupling acceptance rates
@@ -158,7 +164,12 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       // store results
       loglike_burnin[r][rep] = particle_vec[r].loglike;
       logprior_burnin[r][rep] = particle_vec[r].logprior;
-      theta_burnin[r][rep] = Rcpp::as< vector<double> >(particle_vec[r].theta);
+      if (s.save_hot_draws) {
+        theta_burnin[r][rep] = Rcpp::as< vector<double> >(particle_vec[r].theta);
+      }
+    }
+    if (!s.save_hot_draws) {
+      theta_burnin[0][rep] = Rcpp::as< vector<double> >(particle_vec[rungs - 1].theta);
     }
     
     // perform Metropolis coupling
@@ -213,7 +224,12 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       // store results
       loglike_sampling[r][rep] = particle_vec[r].loglike;
       logprior_sampling[r][rep] = particle_vec[r].logprior;
-      theta_sampling[r][rep] = Rcpp::as< vector<double> >(particle_vec[r].theta);
+      if (s.save_hot_draws) {
+        theta_sampling[r][rep] = Rcpp::as< vector<double> >(particle_vec[r].theta);
+      }
+    }
+    if (!s.save_hot_draws) {
+      theta_sampling[0][rep] = Rcpp::as< vector<double> >(particle_vec[rungs - 1].theta);
     }
     
     // perform Metropolis coupling
@@ -284,7 +300,12 @@ void coupling(vector<Particle> &particle_vec, vector<int> &mc_accept) {
     double beta_raised2 = particle_vec[rung2].beta_raised;
     
     // calculate acceptance ratio (still in log space)
-    double acceptance = (loglike2*beta_raised1 + loglike1*beta_raised2) - (loglike1*beta_raised1 + loglike2*beta_raised2);
+    double acceptance;
+    if(beta_raised1 == 0.0){
+      acceptance = (loglike1*beta_raised2) - (loglike2*beta_raised2);
+    } else {
+      acceptance = (loglike2*beta_raised1 + loglike1*beta_raised2) - (loglike1*beta_raised1 + loglike2*beta_raised2);
+    }
     
     // accept or reject move
     bool accept_move = (log(R::runif(0,1)) < acceptance);

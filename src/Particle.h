@@ -62,11 +62,16 @@ public:
       for (unsigned int j = 0; j < s_ptr->block[i].size(); ++j) {
         int this_block = s_ptr->block[i][j];
         s_ptr->misc["block"] = this_block;
-        loglike_block[this_block - 1] = Rcpp::as<double>(get_loglike(theta_prop, s_ptr->x, s_ptr->misc));
+        loglike_block[this_block - 1] = Rcpp::as<double>(get_loglike(theta, s_ptr->x, s_ptr->misc));
       }
     }
     loglike = sum(loglike_block);
     logprior = Rcpp::as<double>(get_logprior(theta, s_ptr->misc));
+    // Catch for -Inf in likelihood or prior given init theta
+    if(loglike == R_NegInf || logprior == R_NegInf){
+      Rcpp::Rcerr << "\n Current theta " << theta << std::endl;
+      Rcpp::stop("Starting values result in -Inf in likelihood or prior. Consider setting inital values in the parameters data.frame.");
+    }
   }
   
   // update theta[i] via univariate Metropolis-Hastings
@@ -103,27 +108,32 @@ public:
       
       // calculate overall likelihood and prior of proposed theta
       loglike_prop = sum(loglike_prop_block);
+      
       logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, s_ptr->misc));
       
       // Check for NA/NaN/Inf in likelihood or prior
-      if(R_IsNaN(loglike_prop) || loglike_prop == R_PosInf || loglike_prop == R_NegInf || R_IsNA(loglike_prop)){
+      if(R_IsNaN(loglike_prop) || loglike_prop == R_PosInf || R_IsNA(loglike_prop)){
         Rcpp::Rcerr << "\n Current theta " << theta_prop << std::endl;
         Rcpp::stop("NA, NaN or Inf in likelihood");
       }
-      if(R_IsNaN(logprior_prop) || logprior_prop == R_PosInf || logprior_prop == R_NegInf || R_IsNA(logprior_prop)){
+      if(R_IsNaN(logprior_prop) || logprior_prop == R_PosInf || R_IsNA(logprior_prop)){
         Rcpp::Rcerr << "\n Current theta " << theta_prop << std::endl;
         Rcpp::stop("NA, NaN or Inf in prior");
       }
       
       // calculate Metropolis-Hastings ratio
-      double MH = beta_raised*(loglike_prop - loglike) + (logprior_prop - logprior) + adj;
-      
+      double MH;
+      if(beta_raised == 0.0){
+        MH = (logprior_prop - logprior) + adj;
+      } else {
+        MH = beta_raised*(loglike_prop - loglike) + (logprior_prop - logprior) + adj;
+      }
+
       // accept or reject move
       bool MH_accept = (log(R::runif(0,1)) < MH);
       
       // implement changes
       if (MH_accept) {
-        
         // update theta and phi
         theta[i] = theta_prop[i];
         phi[i] = phi_prop[i];
@@ -141,7 +151,6 @@ public:
         accept_count++;
         
       } else {
-        
         // reset theta_prop and phi_prop
         theta_prop[i] = theta[i];
         phi_prop[i] = phi[i];
@@ -151,7 +160,6 @@ public:
         bw_index[i]++;
         
       } // end MH step
-      
     }  // end loop over parameters
     
   }  // end update_univar function
