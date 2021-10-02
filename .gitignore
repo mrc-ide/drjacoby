@@ -7,3 +7,5 @@ inst/doc
 .Ruserdata
 ignore/
 test_scripts/
+/doc/
+/Meta/
