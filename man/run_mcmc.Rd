@@ -14,10 +14,10 @@ run_mcmc(
   samples = 10000,
   rungs = 1,
   chains = 5,
-  coupling_on = TRUE,
-  GTI_pow = 1,
   beta_manual = NULL,
+  alpha = 1,
   cluster = NULL,
+  coupling_on = TRUE,
   pb_markdown = FALSE,
   save_data = TRUE,
   save_hot_draws = FALSE,
@@ -25,47 +25,59 @@ run_mcmc(
 )
 }
 \arguments{
-\item{data}{a named list of numeric data values. When using C++ versions of
-the likelihood and/or prior these values are treated internally as doubles,
-so while integer and Boolean values can be used, keep in mind that these
-will be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).}
+\item{data}{a named list of numeric data values. When using C++ likelihood
+and/or prior these values are treated internally as doubles, so while
+integer and Boolean values can be used, keep in mind that these will be
+recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).}
 
 \item{df_params}{a data.frame of parameters (see \code{?define_params}).}
 
-\item{misc}{optional list object passed to likelihood and prior.}
+\item{misc}{optional list object passed to likelihood and prior. This can be
+useful for passing values that are not strictly data, for example passing a
+lookup table to the prior function.}
 
 \item{loglike, logprior}{the log-likelihood and log-prior functions used in
-the MCMC. Can either be passed in as R functions, or as character strings
-naming compiled in C++ functions.}
+the MCMC. Can either be passed in as R functions (not in quotes), or as
+character strings naming compiled C++ functions (in quotes).}
 
-\item{burnin}{the number of burn-in iterations.}
+\item{burnin}{the number of burn-in iterations. Automatic tuning of proposal
+standard deviations is only active during the burn-in period.}
 
 \item{samples}{the number of sampling iterations.}
 
-\item{rungs}{the number of temperature rungs used in Metropolis coupling (see
-\code{coupling_on}).}
+\item{rungs}{the number of temperature rungs used in the parallel tempering
+method. By default, \eqn{\beta} values are equally spaced between 0 and 1,
+i.e. \eqn{\beta[i]=}\code{(i-1)/(rungs-1)} for \code{i} in \code{1:rungs}.
+The likelihood for the \out{i<sup>th</sup>} heated chain is raised to the
+power \eqn{\beta[i]^\alpha}, meaning we can use the \eqn{\alpha} parameter
+to concentrate rungs towards the start or the end of the interval (see the
+\code{alpha} argument).}
 
-\item{chains}{the number of independent replicates of the MCMC chain to run.
-If a \code{cluster} object is defined then these chains are run in
-parallel, otherwise they are run in serial.}
+\item{chains}{the number of independent replicates of the MCMC to run. If a
+\code{cluster} object is defined then these chains are run in parallel,
+otherwise they are run in serial.}
 
-\item{coupling_on}{whether to implement Metropolis-coupling over temperature 
-rungs.}
+\item{beta_manual}{vector of manually defined \eqn{\beta} values used in the
+parallel tempering approach. If defined, this overrides the spacing defined
+by \code{rungs}. Note that even manually defined \eqn{\beta} values are
+raised to the power \eqn{\alpha} internally, hence you should set
+\code{alpha = 1} if you want to fix \eqn{\beta} values exactly.}
 
-\item{GTI_pow}{values in the temperature ladder are raised to this power.
-Provides a convenient way of concentrating rungs towards one end of the
-temperature scale.}
-
-\item{beta_manual}{option to manually define temperature ladder. These values
-are raised to the power \code{GTI_pow}, hence you should use \code{GTI_pow
-= 1} if you want to fix powers exactly. If \code{NULL} then an equal
-spacing of length \code{rungs} is used between 0 and 1.}
+\item{alpha}{the likelihood for the \out{i<sup>th</sup>} heated chain is
+raised to the power \eqn{\beta[i]^\alpha}, meaning we can use the
+\eqn{\alpha} parameter to concentrate rungs towards the start or the end of
+the temperature scale.}
 
 \item{cluster}{option to pass in a cluster environment, allowing chains to be
 run in parallel (see package "parallel").}
 
+\item{coupling_on}{whether to implement Metropolis-coupling over temperature
+rungs. The option of deactivating coupling has been retained for general
+interest and debugging purposes only. If this parameter is \code{FALSE}
+then parallel tempering will have no impact on MCMC mixing.}
+
 \item{pb_markdown}{whether to run progress bars in markdown mode, meaning
-they are only updated when they reach 100% to avoid large amounts of output
+they are only updated when they reach 100\% to avoid large amounts of output
 being printed to markdown files.}
 
 \item{save_data}{if \code{TRUE} (the default) the raw input data is stored
@@ -73,12 +85,21 @@ for reference in the project output. This allows complete reproducibility
 from a project, but may be undesirable when datasets are very large.}
 
 \item{save_hot_draws}{if \code{TRUE} the parameter draws relating to the hot
-chains are also stored inside the \code{pt} output. If \code{FALSE} (the
-default) only log-likelihoods and log-priors are stored from heated chains.}
+chains are also stored inside the \code{pt} element of the project output.
+If \code{FALSE} (the default) only log-likelihoods and log-priors are
+stored from heated chains.}
 
 \item{silent}{whether to suppress all console output.}
 }
 \description{
-Run MCMC using defined data object, likelihood function, prior
-  function and parameters.
+Run MCMC either with or without parallel tempering turned on.
+  Minimum inputs include a data object, a data.frame of parameters, a
+  log-likelihood function and a log-prior function. Produces an object of
+  class \code{drjacoby_output}, which contains all MCMC output along with
+  some diagnostics and a record of inputs.
+}
+\details{
+Note that both \code{data} and \code{misc} are passed into
+  log-likelihood/log-prior functions *by reference*. This means if you modify
+  these objects inside the functions then any changes will persist.
 }

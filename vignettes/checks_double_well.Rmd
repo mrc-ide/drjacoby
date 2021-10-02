@@ -96,7 +96,7 @@ mcmc <- run_mcmc(data = list(x = -1),
                  samples = 1e5,
                  chains = 1,
                  rungs = 11,
-                 GTI_pow = 2,
+                 alpha = 2,
                  pb_markdown = TRUE)
 ```
 

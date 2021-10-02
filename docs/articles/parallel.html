@@ -51,7 +51,7 @@
       <a href="../articles/example.html">Basic Example</a>
     </li>
     <li>
-      <a href="../articles/metropolis_coupling.html">Metropolis Coupling</a>
+      <a href="../articles/metropolis_coupling.html">Parallel Tempering</a>
     </li>
     <li>
       <a href="../articles/parallel.html">Running Parallel Chains</a>
@@ -109,7 +109,7 @@
       <h1 data-toc-skip>Running in Parallel</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2021-09-27</h4>
+            <h4 class="date">2021-10-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/parallel.Rmd"><code>vignettes/parallel.Rmd</code></a></small>
       <div class="hidden name"><code>parallel.Rmd</code></div>
@@ -165,7 +165,7 @@
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 23.4%</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 0.075474 seconds</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 0.085175 seconds</span></span>
 <span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; MCMC chain 2</span></span>
 <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; burn-in</span></span>
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
@@ -177,8 +177,8 @@
 <span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
 <span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 23.5%</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 0.068668 seconds</span></span></code></pre></div>
-<p>When we look at our MCMC output (using the <code><a href="../reference/plot_par.html">plot_par()</a></code> function) we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">temperature rungs</a> then these would also be duplicated over chains.</p>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 0.082061 seconds</span></span></code></pre></div>
+<p>When we look at our MCMC output (using the <code><a href="../reference/plot_par.html">plot_par()</a></code> function) we can see that there are 2 chains, each of which contains a series of draws from the posterior. If we used multiple <a href="https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html">temperature rungs</a> then these would also be duplicated over chains.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># summarise output</span>
 <span class="va">mcmc</span>
@@ -214,15 +214,14 @@
 <p>Finally, it is good practice to shut down the workers once we are finished:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/makeCluster.html">stopCluster</a></span><span class="op">(</span><span class="va">cl</span><span class="op">)</span></code></pre></div>
-<p>Running chains in parallel tends to be faster than running in serial, although remember that you will see a delay the first time you run a new set of functions as the likelihood and prior must compile on every node.</p>
 </div>
 <div id="running-multiple-chains-using-c-log-likelihood-or-log-prior-functions" class="section level2">
 <h2 class="hasAnchor">
-<a href="#running-multiple-chains-using-c-log-likelihood-or-log-prior-functions" class="anchor"></a>Running multiple chains using c++ log likelihood or log prior functions</h2>
-<p>To run the mcmc in parallel with c++ log likelihood or log prior functions there is on additional step to take when setting up the cluster. Each node must be able to access a version of the compiled c++ functions, so after initialising the cluster with:</p>
+<a href="#running-multiple-chains-using-c-log-likelihood-or-log-prior-functions" class="anchor"></a>Running multiple chains using C++ log likelihood or log prior functions</h2>
+<p>To run the MCMC in parallel with C++ log-likelihood or log-prior functions there is on additional step to take when setting up the cluster. Each node must be able to access a version of the compiled C++ functions, so after initialising the cluster with:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">cl</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/makeCluster.html">makeCluster</a></span><span class="op">(</span><span class="va">cores</span><span class="op">)</span></code></pre></div>
-<p>we must also make the c++ functions accessible, by running the Rcpp::sourceCPP command for our c++ file for each node:</p>
+<p>we must also make the C++ functions accessible, by running the Rcpp::sourceCPP command for our C++ file for each node:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">cl_cpp</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/clusterApply.html">clusterEvalQ</a></span><span class="op">(</span><span class="va">cl</span>, <span class="fu">Rcpp</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rcpp/man/sourceCpp.html">sourceCpp</a></span><span class="op">(</span><span class="st">"my_cpp.cpp"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>After which we can run the mcmc in the same way:</p>
