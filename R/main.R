@@ -400,6 +400,12 @@ run_mcmc <- function(data,
     output_raw <- lapply(parallel_args, deploy_chain)
   }
   
+  # print total runtime
+  chain_runtimes <- mapply(function(x) x$t_diff, output_raw)
+  if (!silent) {
+    message(sprintf("total MCMC run-time: %s seconds", signif(sum(chain_runtimes), 3)))
+  }
+  
   
   # ---------- process output ----------
   
@@ -493,7 +499,7 @@ run_mcmc <- function(data,
   
   # run-times
   run_time <- data.frame(chain = chain_names,
-                         seconds = mapply(function(x) x$t_diff, output_raw))
+                         seconds = chain_runtimes)
   output_processed$diagnostics$run_time <- run_time
   
   # Rhat (Gelman-Rubin diagnostic)

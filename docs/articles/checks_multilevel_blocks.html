@@ -155,6 +155,7 @@
                  samples <span class="op">=</span> <span class="fl">1e5</span>,
                  chains <span class="op">=</span> <span class="fl">10</span>,
                  silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<pre><code>## total MCMC run-time: 16.5 seconds</code></pre>
 </div>
 <div id="plots" class="section level2">
 <h2 class="hasAnchor">
@@ -162,7 +163,7 @@
 <p>Black = posterior draws</p>
 <p>Red = analytical solution to multi-level model</p>
 <p>Green = analytical solution assuming independent groups (no second level)</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># extract sampling draws</span>
 <span class="va">output_sub</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html">subset</a></span><span class="op">(</span><span class="va">mcmc</span><span class="op">$</span><span class="va">output</span>, <span class="va">phase</span> <span class="op">==</span> <span class="st">"sampling"</span><span class="op">)</span>
 

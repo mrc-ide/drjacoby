@@ -210,6 +210,15 @@ SEXP create_xptr(std::string function_name) {
   <span class="va">plot_list</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span><span class="op">(</span><span class="va">mcmc</span>, <span class="st">"alpha"</span>, <span class="st">"beta"</span><span class="op">)</span> <span class="op">+</span>
     <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span>
 <span class="op">}</span>
+<span class="co">#&gt; total MCMC run-time: 0.105 seconds</span>
+<span class="co">#&gt; total MCMC run-time: 0.105 seconds</span>
+<span class="co">#&gt; total MCMC run-time: 0.106 seconds</span>
+<span class="co">#&gt; total MCMC run-time: 0.107 seconds</span>
+<span class="co">#&gt; total MCMC run-time: 0.107 seconds</span>
+<span class="co">#&gt; total MCMC run-time: 0.107 seconds</span>
+<span class="co">#&gt; total MCMC run-time: 0.1 seconds</span>
+<span class="co">#&gt; total MCMC run-time: 0.105 seconds</span>
+<span class="co">#&gt; total MCMC run-time: 0.111 seconds</span>
 
 <span class="co"># plot grid</span>
 <span class="fu">gridExtra</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/gridExtra/man/arrangeGrob.html">grid.arrange</a></span><span class="op">(</span>grobs <span class="op">=</span> <span class="va">plot_list</span><span class="op">)</span></code></pre></div>
@@ -238,11 +247,12 @@ SEXP create_xptr(std::string function_name) {
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 23.4%</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 2.487439 seconds</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co"># create plot of alpha against beta</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_cor</span>(mcmc, <span class="st">"alpha"</span>, <span class="st">"beta"</span>) <span class="sc">+</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ylim</span>(<span class="dv">0</span>, <span class="dv">10</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">xlim</span>(<span class="sc">-</span><span class="dv">10</span>, <span class="dv">10</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code></pre></div>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 2.405151 seconds</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; total MCMC run-time: 2.41 seconds</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># create plot of alpha against beta</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_cor</span>(mcmc, <span class="st">"alpha"</span>, <span class="st">"beta"</span>) <span class="sc">+</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ylim</span>(<span class="dv">0</span>, <span class="dv">10</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">xlim</span>(<span class="sc">-</span><span class="dv">10</span>, <span class="dv">10</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-6-1.png" width="480"></p>
 <p>You should see a much better characterisation of the posterior distribution. The run time scales approximately linearly with the number of rungs, so there is a computational cost to using this method, but on the other hand our results are far better than we would obtain by simply increasing the number of samples by a factor of 20.</p>
 </div>
@@ -262,6 +272,7 @@ SEXP create_xptr(std::string function_name) {
                  rungs <span class="op">=</span> <span class="fl">10</span>,
                  chains <span class="op">=</span> <span class="fl">1</span>,
                  silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="co">#&gt; total MCMC run-time: 0.213 seconds</span>
 
 <span class="co"># plot coupling acceptance rates</span>
 <span class="fu"><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance</a></span><span class="op">(</span><span class="va">mcmc</span>, x_axis_type <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
@@ -284,6 +295,7 @@ SEXP create_xptr(std::string function_name) {
                  rungs <span class="op">=</span> <span class="fl">50</span>,
                  chains <span class="op">=</span> <span class="fl">1</span>,
                  silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="co">#&gt; total MCMC run-time: 1.05 seconds</span>
 
 <span class="co"># plot coupling acceptance rates</span>
 <span class="fu"><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance</a></span><span class="op">(</span><span class="va">mcmc</span>, x_axis_type <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
@@ -307,6 +319,7 @@ SEXP create_xptr(std::string function_name) {
                  chains <span class="op">=</span> <span class="fl">1</span>,
                  alpha <span class="op">=</span> <span class="fl">5.0</span>,
                  silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="co">#&gt; total MCMC run-time: 0.415 seconds</span>
 
 <span class="co"># plot coupling acceptance rates</span>
 <span class="co"># we could also use the option x_axis_type = 1 if we wanted to see these</span>
@@ -321,7 +334,7 @@ SEXP create_xptr(std::string function_name) {
     <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-10-2.png" width="480"></p>
 <p>We find that with just 20 rungs we now have decent acceptance rates all the way through the temperature ladder. If we really wanted to fine-tune the mixing we could use the <code>beta_manual</code> argument inside <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> to define the temperature ladder exactly as a vector of values between 0 and 1. Note, this ladder is always raised to the power <code>alpha</code>, so we should set <code>alpha=1.0</code> if we don’t want any additional transformation applied.</p>
-<p>In summary, the correct number of rungs to use in Metropolis-coupled MCMC is whatever number provides decent acceptance rates all the way through our temperature ladder. When this is the case we can be condifent that the prior is “talking to” the posterior, making it <em>extremely unlikely</em> (but not impossible) that the MCMC is still missing large parts of the posterior distribution.</p>
+<p>In summary, the correct number of rungs to use in parallel tempered MCMC is whatever number provides decent acceptance rates all the way through our temperature ladder. When this is the case we can be condifent that the prior is “talking to” the posterior, making it <em>extremely unlikely</em> (but not impossible) that the MCMC is still missing large parts of the posterior distribution.</p>
 </div>
   </div>
 
