@@ -67,7 +67,7 @@ mcmc <- run_mcmc(data = data_list,
                  pb_markdown = TRUE)
 ```
 
-When we look at our MCMC output (using the `plot_par()` function) we can see that there are 2 chains, each of which contains independent draws from the posterior. If we used multiple [temperature rungs](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) then these would also be duplicated over chains.
+When we look at our MCMC output (using the `plot_par()` function) we can see that there are 2 chains, each of which contains a series of draws from the posterior. If we used multiple [temperature rungs](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) then these would also be duplicated over chains.
 
 ```{r, fig.width=10, fig.height=4}
 # summarise output
@@ -112,7 +112,35 @@ Finally, it is good practice to shut down the workers once we are finished:
 parallel::stopCluster(cl)
 ```
 
-Running chains in parallel tends to be faster than running in serial, although remember that you will see a delay the first time you run a new set of functions as the likelihood and prior must compile on every node.
 
+## Running multiple chains using C++ log likelihood or log prior functions
 
+To run the MCMC in parallel with C++ log-likelihood or log-prior functions there is on additional step to take when setting up
+the cluster. Each node must be able to access a version of the compiled C++ functions, so after initialising the cluster with:
+
+```{r, eval = FALSE}
+cl <- parallel::makeCluster(cores)
+```
+
+we must also make the C++ functions accessible, by running the Rcpp::sourceCPP command for our C++ file for each node:
+
+```{r, eval = FALSE}
+cl_cpp <- parallel::clusterEvalQ(cl, Rcpp::sourceCpp("my_cpp.cpp"))
+```
+
+After which we can run the mcmc in the same way:
+
+```{r, eval = FALSE}
+# run MCMC in parallel
+mcmc <- run_mcmc(data = data_list,
+                 df_params = df_params,
+                 loglike = "loglike",
+                 logprior = "logprior",
+                 burnin = 1e3,
+                 samples = 1e3,
+                 chains = 2,
+                 cluster = cl,
+                 pb_markdown = TRUE)
+parallel::stopCluster(cl)
+```
 

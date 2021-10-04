@@ -13,7 +13,7 @@ navbar:
           href: articles/installation.html
         - text: "Basic Example"
           href: articles/example.html
-        - text: "Metropolis Coupling"
+        - text: "Parallel Tempering"
           href: articles/metropolis_coupling.html
         - text: "Running Parallel Chains"
           href: articles/parallel.html

@@ -93,7 +93,7 @@
       <a href="../articles/example.html">Basic Example</a>
     </li>
     <li>
-      <a href="../articles/metropolis_coupling.html">Metropolis Coupling</a>
+      <a href="../articles/metropolis_coupling.html">Parallel Tempering</a>
     </li>
     <li>
       <a href="../articles/parallel.html">Running Parallel Chains</a>
@@ -158,13 +158,7 @@
   parameters (defauls to all parameters).</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_credible</span><span class='op'>(</span>
-  <span class='va'>x</span>,
-  show <span class='op'>=</span> <span class='cn'>NULL</span>,
-  phase <span class='op'>=</span> <span class='st'>"sampling"</span>,
-  rung <span class='op'>=</span> <span class='cn'>NULL</span>,
-  param_names <span class='op'>=</span> <span class='cn'>NULL</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>plot_credible</span><span class='op'>(</span><span class='va'>x</span>, show <span class='op'>=</span> <span class='cn'>NULL</span>, phase <span class='op'>=</span> <span class='st'>"sampling"</span>, param_names <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -175,19 +169,15 @@
     </tr>
     <tr>
       <th>show</th>
-      <td><p>Vector of parameter names to plot.</p></td>
+      <td><p>vector of parameter names to plot.</p></td>
     </tr>
     <tr>
       <th>phase</th>
       <td><p>which phase to plot. Must be either "burnin" or "sampling".</p></td>
     </tr>
     <tr>
-      <th>rung</th>
-      <td><p>Which rung to plot.</p></td>
-    </tr>
-    <tr>
       <th>param_names</th>
-      <td><p>Optional vector of names to replace the default parameter names.</p></td>
+      <td><p>optional vector of names to replace the default parameter names.</p></td>
     </tr>
     </table>
 

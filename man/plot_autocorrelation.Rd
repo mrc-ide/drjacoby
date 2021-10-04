@@ -4,14 +4,7 @@
 \alias{plot_autocorrelation}
 \title{Plot autocorrelation}
 \usage{
-plot_autocorrelation(
-  x,
-  lag = 20,
-  par = NULL,
-  chain = 1,
-  phase = "sampling",
-  rung = NULL
-)
+plot_autocorrelation(x, lag = 20, par = NULL, chain = 1, phase = "sampling")
 }
 \arguments{
 \item{x}{an object of class \code{drjacoby_output}}
@@ -24,9 +17,6 @@ plotted.}
 \item{chain}{which chain to plot.}
 
 \item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
-
-\item{rung}{which temperature rung to plot. If \code{NULL} then defaults to
-the cold rung.}
 }
 \description{
 Plot autocorrelation for specified parameters

@@ -95,7 +95,7 @@
       <a href="../articles/example.html">Basic Example</a>
     </li>
     <li>
-      <a href="../articles/metropolis_coupling.html">Metropolis Coupling</a>
+      <a href="../articles/metropolis_coupling.html">Parallel Tempering</a>
     </li>
     <li>
       <a href="../articles/parallel.html">Running Parallel Chains</a>
@@ -169,7 +169,6 @@
   lag <span class='op'>=</span> <span class='fl'>20</span>,
   downsample <span class='op'>=</span> <span class='cn'>TRUE</span>,
   phase <span class='op'>=</span> <span class='st'>"sampling"</span>,
-  rung <span class='op'>=</span> <span class='cn'>NULL</span>,
   chain <span class='op'>=</span> <span class='cn'>NULL</span>,
   display <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span></pre>
@@ -203,11 +202,6 @@ efficient.</p></td>
     <tr>
       <th>phase</th>
       <td><p>which phase to plot. Must be either "burnin" or "sampling".</p></td>
-    </tr>
-    <tr>
-      <th>rung</th>
-      <td><p>which temperature rung to plot. If <code>NULL</code> then defaults to
-the cold rung.</p></td>
     </tr>
     <tr>
       <th>chain</th>

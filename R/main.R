@@ -141,42 +141,65 @@ check_params <- function(x) {
 #------------------------------------------------
 #' @title Run drjacoby MCMC
 #'
-#' @description Run MCMC using defined data object, likelihood function, prior
-#'   function and parameters.
+#' @description Run MCMC either with or without parallel tempering turned on.
+#'   Minimum inputs include a data object, a data.frame of parameters, a
+#'   log-likelihood function and a log-prior function. Produces an object of
+#'   class \code{drjacoby_output}, which contains all MCMC output along with
+#'   some diagnostics and a record of inputs.
+#'   
+#' @details Note that both \code{data} and \code{misc} are passed into
+#'   log-likelihood/log-prior functions *by reference*. This means if you modify
+#'   these objects inside the functions then any changes will persist.
 #'
-#' @param data a named list of numeric data values. When using C++ versions of
-#'   the likelihood and/or prior these values are treated internally as doubles,
-#'   so while integer and Boolean values can be used, keep in mind that these
-#'   will be recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).
+#' @param data a named list of numeric data values. When using C++ likelihood
+#'   and/or prior these values are treated internally as doubles, so while
+#'   integer and Boolean values can be used, keep in mind that these will be
+#'   recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).
 #' @param df_params a data.frame of parameters (see \code{?define_params}).
-#' @param misc optional list object passed to likelihood and prior.
+#' @param misc optional list object passed to likelihood and prior. This can be
+#'   useful for passing values that are not strictly data, for example passing a
+#'   lookup table to the prior function.
 #' @param loglike,logprior the log-likelihood and log-prior functions used in
-#'   the MCMC. Can either be passed in as R functions, or as character strings
-#'   naming compiled in C++ functions.
-#' @param burnin the number of burn-in iterations.
+#'   the MCMC. Can either be passed in as R functions (not in quotes), or as
+#'   character strings naming compiled C++ functions (in quotes).
+#' @param burnin the number of burn-in iterations. Automatic tuning of proposal
+#'   standard deviations is only active during the burn-in period.
 #' @param samples the number of sampling iterations.
-#' @param rungs the number of temperature rungs used in Metropolis coupling (see
-#'   \code{coupling_on}).
-#' @param chains the number of independent replicates of the MCMC chain to run.
-#'   If a \code{cluster} object is defined then these chains are run in
-#'   parallel, otherwise they are run in serial.
-#' @param coupling_on whether to implement Metropolis-coupling over temperature 
-#'   rungs.
-#' @param GTI_pow values in the temperature ladder are raised to this power.
-#'   Provides a convenient way of concentrating rungs towards one end of the
-#'   temperature scale.
-#' @param beta_manual option to manually define temperature ladder. These values
-#'   are raised to the power \code{GTI_pow}, hence you should use \code{GTI_pow
-#'   = 1} if you want to fix powers exactly. If \code{NULL} then an equal
-#'   spacing of length \code{rungs} is used between 0 and 1.
+#' @param rungs the number of temperature rungs used in the parallel tempering
+#'   method. By default, \eqn{\beta} values are equally spaced between 0 and 1,
+#'   i.e. \eqn{\beta[i]=}\code{(i-1)/(rungs-1)} for \code{i} in \code{1:rungs}.
+#'   The likelihood for the \out{i<sup>th</sup>} heated chain is raised to the
+#'   power \eqn{\beta[i]^\alpha}, meaning we can use the \eqn{\alpha} parameter
+#'   to concentrate rungs towards the start or the end of the interval (see the
+#'   \code{alpha} argument).
+#' @param chains the number of independent replicates of the MCMC to run. If a
+#'   \code{cluster} object is defined then these chains are run in parallel,
+#'   otherwise they are run in serial.
+#' @param beta_manual vector of manually defined \eqn{\beta} values used in the
+#'   parallel tempering approach. If defined, this overrides the spacing defined
+#'   by \code{rungs}. Note that even manually defined \eqn{\beta} values are
+#'   raised to the power \eqn{\alpha} internally, hence you should set
+#'   \code{alpha = 1} if you want to fix \eqn{\beta} values exactly.
+#' @param alpha the likelihood for the \out{i<sup>th</sup>} heated chain is
+#'   raised to the power \eqn{\beta[i]^\alpha}, meaning we can use the
+#'   \eqn{\alpha} parameter to concentrate rungs towards the start or the end of
+#'   the temperature scale.
 #' @param cluster option to pass in a cluster environment, allowing chains to be
 #'   run in parallel (see package "parallel").
+#' @param coupling_on whether to implement Metropolis-coupling over temperature
+#'   rungs. The option of deactivating coupling has been retained for general
+#'   interest and debugging purposes only. If this parameter is \code{FALSE}
+#'   then parallel tempering will have no impact on MCMC mixing.
 #' @param pb_markdown whether to run progress bars in markdown mode, meaning
-#'   they are only updated when they reach 100% to avoid large amounts of output
+#'   they are only updated when they reach 100\% to avoid large amounts of output
 #'   being printed to markdown files.
 #' @param save_data if \code{TRUE} (the default) the raw input data is stored
 #'   for reference in the project output. This allows complete reproducibility
 #'   from a project, but may be undesirable when datasets are very large.
+#' @param save_hot_draws if \code{TRUE} the parameter draws relating to the hot
+#'   chains are also stored inside the \code{pt} element of the project output.
+#'   If \code{FALSE} (the default) only log-likelihoods and log-priors are
+#'   stored from heated chains.
 #' @param silent whether to suppress all console output.
 #'
 #' @importFrom utils txtProgressBar
@@ -192,12 +215,13 @@ run_mcmc <- function(data,
                      samples = 1e4,
                      rungs = 1,
                      chains = 5,
-                     coupling_on = TRUE,
-                     GTI_pow = 1.0,
                      beta_manual = NULL,
+                     alpha = 1.0,
                      cluster = NULL,
+                     coupling_on = TRUE,
                      pb_markdown = FALSE,
                      save_data = TRUE,
+                     save_hot_draws = FALSE,
                      silent = FALSE) {
   
   # declare variables to avoid "no visible binding" issues
@@ -225,7 +249,7 @@ run_mcmc <- function(data,
   assert_single_pos_int(rungs, zero_allowed = FALSE)
   assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_logical(coupling_on)
-  assert_single_pos(GTI_pow)
+  assert_single_pos(alpha)
   
   # check df_params
   df_params <- check_params(df_params)
@@ -255,6 +279,7 @@ run_mcmc <- function(data,
   }
   assert_single_logical(pb_markdown)
   assert_single_logical(save_data)
+  assert_single_logical(save_hot_draws)
   assert_single_logical(silent)
   
   
@@ -307,7 +332,7 @@ run_mcmc <- function(data,
   logprior_use_cpp <- inherits(logprior, "character")
   
   # raise temperature vector to power
-  beta_raised <- beta_manual^GTI_pow
+  beta_raised <- beta_manual^alpha
   
   # make sure "block" is not an element of misc already being used, and if not
   # create dummy element for storing current block
@@ -335,6 +360,7 @@ run_mcmc <- function(data,
                       rungs = rungs,
                       coupling_on = coupling_on,
                       beta_raised = beta_raised,
+                      save_hot_draws = save_hot_draws,
                       pb_markdown = pb_markdown,
                       silent = silent)
   
@@ -374,6 +400,12 @@ run_mcmc <- function(data,
     output_raw <- lapply(parallel_args, deploy_chain)
   }
   
+  # print total runtime
+  chain_runtimes <- mapply(function(x) x$t_diff, output_raw)
+  if (!silent) {
+    message(sprintf("total MCMC run-time: %s seconds", signif(sum(chain_runtimes), 3)))
+  }
+  
   
   # ---------- process output ----------
   
@@ -382,52 +414,102 @@ run_mcmc <- function(data,
   rung_names <- 1:rungs
   param_names <- df_params$name
   
-  # get raw output into dataframe
-  df_output <- do.call(rbind, mapply(function(j) {
+  # get parameter draws into dataframe. This will be over all rungs if
+  # save_hot_draws is TRUE, otherwise it will only be over the cold chain
+  df_theta <- do.call(rbind, mapply(function(j) {
     do.call(rbind, mapply(function(i) {
       
-      # concatenate burn-in and sampling logprior and loglikelihood
-      logprior <- c(output_raw[[j]]$logprior_burnin[[i]], output_raw[[j]]$logprior_sampling[[i]])
-      loglike <- c(output_raw[[j]]$loglike_burnin[[i]], output_raw[[j]]$loglike_sampling[[i]])
+      theta_burnin <- do.call(rbind, output_raw[[j]]$theta_burnin[[i]]) %>%
+        as.data.frame() %>%
+        magrittr::set_colnames(param_names) %>%
+        dplyr::mutate(chain = chain_names[j],
+                      rung = rung_names[i],
+                      phase = "burnin", .before = 1)
       
-      # create dataframe of loglike and logprior
-      ret <- data.frame(chain = chain_names[j],
-                        rung = rung_names[i],
-                        iteration = seq_along(loglike),
-                        phase = rep(c("burnin", "sampling"), times = c(burnin, samples)),
-                        logprior = logprior,
-                        loglikelihood = loglike)
+      theta_sampling <- do.call(rbind, output_raw[[j]]$theta_sampling[[i]]) %>%
+        as.data.frame() %>%
+        magrittr::set_colnames(param_names) %>%
+        dplyr::mutate(chain = chain_names[j],
+                      rung = rung_names[i],
+                      phase = "sampling", .before = 1)
       
-      # concatenate theta into dataframe and append
-      theta <- as.data.frame(do.call(rbind, c(output_raw[[j]]$theta_burnin[[i]], output_raw[[j]]$theta_sampling[[i]])))
-      names(theta) <- param_names
-      ret <- cbind(ret, theta)
+      ret <- theta_burnin %>%
+        dplyr::bind_rows(theta_sampling) %>%
+        dplyr::mutate(iteration = seq_along(phase), .after = "phase")
       
       return(ret)
-    }, seq_len(rungs), SIMPLIFY = FALSE))
-  }, seq_len(chains), SIMPLIFY = FALSE))
+    }, seq_along(output_raw[[j]]$theta_burnin), SIMPLIFY = FALSE))
+  }, seq_along(output_raw), SIMPLIFY = FALSE))
+  
+  # fix rungs field if save_hot_draws is FALSE
+  if (!save_hot_draws) {
+    df_theta$rung <- rungs
+  }
+  
+  # get likelihoods and priors over all rungs
+  df_pt <- do.call(rbind, mapply(function(j) {
+    do.call(rbind, mapply(function(i) {
+      
+      pt_burnin <- data.frame(chain = chain_names[j],
+                              rung = rung_names[i],
+                              phase = "burnin",
+                              logprior = output_raw[[j]]$logprior_burnin[[i]],
+                              loglikelihood = output_raw[[j]]$loglike_burnin[[i]])
+      
+      pt_sampling <- data.frame(chain = chain_names[j],
+                                rung = rung_names[i],
+                                phase = "sampling",
+                                logprior = output_raw[[j]]$logprior_sampling[[i]],
+                                loglikelihood = output_raw[[j]]$loglike_sampling[[i]])
+      
+      ret <- pt_burnin %>%
+        dplyr::bind_rows(pt_sampling) %>%
+        dplyr::mutate(iteration = seq_along(phase), .after = "phase")
+      
+      return(ret)
+    }, seq_along(output_raw[[j]]$logprior_burnin), SIMPLIFY = FALSE))
+  }, seq_along(output_raw), SIMPLIFY = FALSE))
+  
+  # merge loglike and logprior for cold chain into main output
+  df_theta <- df_theta %>%
+    dplyr::left_join(df_pt, by = c("chain", "rung", "phase", "iteration"))
+  
+  # if save_hot_draws = TRUE then merge theta values back into pt output
+  if (save_hot_draws) {
+    df_pt <- df_pt %>%
+      dplyr::left_join(dplyr::select(df_theta, -.data$loglikelihood, -.data$logprior), by = c("chain", "rung", "phase", "iteration"))
+  }
+  
+  # drop rungs field from main output
+  df_output <- df_theta %>%
+    dplyr::filter(.data$rung == max(rungs)) %>%
+    dplyr::select(-.data$rung)
   
   # check for bad values in output
   if (!all(is.finite(unlist(df_output[, param_names])))) {
-    stop("output contains non-finite values. Check that all parameters are constrained to a finite range")
+    stop("output contains non-finite values")
   }
   
   # append to output list
-  output_processed <- list(output = df_output)
-  output_processed$diagnostics <- list()
+  output_processed <- list(output = df_output,
+                           pt = df_pt)
   
   ## Diagnostics
+  output_processed$diagnostics <- list()
+  
   # run-times
   run_time <- data.frame(chain = chain_names,
-                         seconds = mapply(function(x) x$t_diff, output_raw))
+                         seconds = chain_runtimes)
   output_processed$diagnostics$run_time <- run_time
   
   # Rhat (Gelman-Rubin diagnostic)
   if (chains > 1) {
     rhat_est <- c()
     for (p in seq_along(param_names)) {
-      pm <- subset(output_processed$output, phase == "sampling", select = c("chain", param_names[p]))
-      rhat_est[p] <- gelman_rubin(pm, chains, samples)
+      rhat_est[p] <- df_output %>%
+        dplyr::filter(phase == "sampling") %>%
+        dplyr::select(chain, param_names[p]) %>%
+        gelman_rubin(chains = chains, samples = samples)
     }
     rhat_est[skip_param] <- NA
     names(rhat_est) <- param_names
@@ -435,9 +517,10 @@ run_mcmc <- function(data,
   }
   
   # ESS
-  output_sub <- subset(output_processed$output, phase == "sampling" & rung == rungs,
-                       select = as.character(param_names))
-  ess_est <- apply(output_sub, 2, coda::effectiveSize)
+  ess_est <- df_output %>%
+    dplyr::filter(phase == "sampling") %>%
+    dplyr::select(param_names) %>%
+    apply(2, coda::effectiveSize)
   ess_est[skip_param] <- NA
   output_processed$diagnostics$ess <- ess_est
   
@@ -461,9 +544,12 @@ run_mcmc <- function(data,
   output_processed$diagnostics$mc_accept <- mc_accept
   
   # DIC
-  output_sub <- subset(output_processed$output, phase == "sampling" & rung == rungs)
-  deviance <- -2*output_sub$loglikelihood
-  DIC <- mean(deviance) + 0.5*var(deviance)
+  DIC <- df_pt %>%
+    dplyr::filter(.data$phase == "sampling" & .data$rung == rungs) %>%
+    dplyr::select(.data$loglikelihood) %>%
+    dplyr::mutate(deviance = -2*.data$loglikelihood) %>%
+    dplyr::summarise(DIC = mean(.data$deviance) + 0.5*var(.data$deviance)) %>%
+    dplyr::pull(.data$DIC)
   output_processed$diagnostics$DIC_Gelman <- DIC
   
   ## Parameters
@@ -480,7 +566,7 @@ run_mcmc <- function(data,
                                       rungs = rungs,
                                       chains = chains,
                                       coupling_on = coupling_on,
-                                      GTI_pow = GTI_pow,
+                                      alpha = alpha,
                                       beta_manual = beta_manual)
   
   # save output as custom class

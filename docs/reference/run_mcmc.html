@@ -40,8 +40,11 @@
 
 
 <meta property="og:title" content="Run drjacoby MCMC — run_mcmc" />
-<meta property="og:description" content="Run MCMC using defined data object, likelihood function, prior
-  function and parameters." />
+<meta property="og:description" content="Run MCMC either with or without parallel tempering turned on.
+  Minimum inputs include a data object, a data.frame of parameters, a
+  log-likelihood function and a log-prior function. Produces an object of
+  class drjacoby_output, which contains all MCMC output along with
+  some diagnostics and a record of inputs." />
 
 
 
@@ -93,7 +96,7 @@
       <a href="../articles/example.html">Basic Example</a>
     </li>
     <li>
-      <a href="../articles/metropolis_coupling.html">Metropolis Coupling</a>
+      <a href="../articles/metropolis_coupling.html">Parallel Tempering</a>
     </li>
     <li>
       <a href="../articles/parallel.html">Running Parallel Chains</a>
@@ -154,8 +157,11 @@
     </div>
 
     <div class="ref-description">
-    <p>Run MCMC using defined data object, likelihood function, prior
-  function and parameters.</p>
+    <p>Run MCMC either with or without parallel tempering turned on.
+  Minimum inputs include a data object, a data.frame of parameters, a
+  log-likelihood function and a log-prior function. Produces an object of
+  class <code>drjacoby_output</code>, which contains all MCMC output along with
+  some diagnostics and a record of inputs.</p>
     </div>
 
     <pre class="usage"><span class='fu'>run_mcmc</span><span class='op'>(</span>
@@ -168,12 +174,13 @@
   samples <span class='op'>=</span> <span class='fl'>10000</span>,
   rungs <span class='op'>=</span> <span class='fl'>1</span>,
   chains <span class='op'>=</span> <span class='fl'>5</span>,
-  coupling_on <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  GTI_pow <span class='op'>=</span> <span class='fl'>1</span>,
   beta_manual <span class='op'>=</span> <span class='cn'>NULL</span>,
+  alpha <span class='op'>=</span> <span class='fl'>1</span>,
   cluster <span class='op'>=</span> <span class='cn'>NULL</span>,
+  coupling_on <span class='op'>=</span> <span class='cn'>TRUE</span>,
   pb_markdown <span class='op'>=</span> <span class='cn'>FALSE</span>,
   save_data <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  save_hot_draws <span class='op'>=</span> <span class='cn'>FALSE</span>,
   silent <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
@@ -182,10 +189,10 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>data</th>
-      <td><p>a named list of numeric data values. When using C++ versions of
-the likelihood and/or prior these values are treated internally as doubles,
-so while integer and Boolean values can be used, keep in mind that these
-will be recast as doubles in the likelihood (i.e. <code>TRUE = 1.0</code>).</p></td>
+      <td><p>a named list of numeric data values. When using C++ likelihood
+and/or prior these values are treated internally as doubles, so while
+integer and Boolean values can be used, keep in mind that these will be
+recast as doubles in the likelihood (i.e. <code>TRUE = 1.0</code>).</p></td>
     </tr>
     <tr>
       <th>df_params</th>
@@ -193,17 +200,20 @@ will be recast as doubles in the likelihood (i.e. <code>TRUE = 1.0</code>).</p><
     </tr>
     <tr>
       <th>misc</th>
-      <td><p>optional list object passed to likelihood and prior.</p></td>
+      <td><p>optional list object passed to likelihood and prior. This can be
+useful for passing values that are not strictly data, for example passing a
+lookup table to the prior function.</p></td>
     </tr>
     <tr>
       <th>loglike, logprior</th>
       <td><p>the log-likelihood and log-prior functions used in
-the MCMC. Can either be passed in as R functions, or as character strings
-naming compiled in C++ functions.</p></td>
+the MCMC. Can either be passed in as R functions (not in quotes), or as
+character strings naming compiled C++ functions (in quotes).</p></td>
     </tr>
     <tr>
       <th>burnin</th>
-      <td><p>the number of burn-in iterations.</p></td>
+      <td><p>the number of burn-in iterations. Automatic tuning of proposal
+standard deviations is only active during the burn-in period.</p></td>
     </tr>
     <tr>
       <th>samples</th>
@@ -211,32 +221,34 @@ naming compiled in C++ functions.</p></td>
     </tr>
     <tr>
       <th>rungs</th>
-      <td><p>the number of temperature rungs used in Metropolis coupling (see
-<code>coupling_on</code>).</p></td>
+      <td><p>the number of temperature rungs used in the parallel tempering
+method. By default, \(\beta\) values are equally spaced between 0 and 1,
+i.e. \(\beta[i]=\)<code>(i-1)/(rungs-1)</code> for <code>i</code> in <code>1:rungs</code>.
+The likelihood for the i<sup>th</sup> heated chain is raised to the
+power \(\beta[i]^\alpha\), meaning we can use the \(\alpha\) parameter
+to concentrate rungs towards the start or the end of the interval (see the
+<code>alpha</code> argument).</p></td>
     </tr>
     <tr>
       <th>chains</th>
-      <td><p>the number of independent replicates of the MCMC chain to run.
-If a <code>cluster</code> object is defined then these chains are run in
-parallel, otherwise they are run in serial.</p></td>
-    </tr>
-    <tr>
-      <th>coupling_on</th>
-      <td><p>whether to implement Metropolis-coupling over temperature 
-rungs.</p></td>
-    </tr>
-    <tr>
-      <th>GTI_pow</th>
-      <td><p>values in the temperature ladder are raised to this power.
-Provides a convenient way of concentrating rungs towards one end of the
-temperature scale.</p></td>
+      <td><p>the number of independent replicates of the MCMC to run. If a
+<code>cluster</code> object is defined then these chains are run in parallel,
+otherwise they are run in serial.</p></td>
     </tr>
     <tr>
       <th>beta_manual</th>
-      <td><p>option to manually define temperature ladder. These values
-are raised to the power <code>GTI_pow</code>, hence you should use <code>GTI_pow
-= 1</code> if you want to fix powers exactly. If <code>NULL</code> then an equal
-spacing of length <code>rungs</code> is used between 0 and 1.</p></td>
+      <td><p>vector of manually defined \(\beta\) values used in the
+parallel tempering approach. If defined, this overrides the spacing defined
+by <code>rungs</code>. Note that even manually defined \(\beta\) values are
+raised to the power \(\alpha\) internally, hence you should set
+<code>alpha = 1</code> if you want to fix \(\beta\) values exactly.</p></td>
+    </tr>
+    <tr>
+      <th>alpha</th>
+      <td><p>the likelihood for the i<sup>th</sup> heated chain is
+raised to the power \(\beta[i]^\alpha\), meaning we can use the
+\(\alpha\) parameter to concentrate rungs towards the start or the end of
+the temperature scale.</p></td>
     </tr>
     <tr>
       <th>cluster</th>
@@ -244,9 +256,16 @@ spacing of length <code>rungs</code> is used between 0 and 1.</p></td>
 run in parallel (see package "parallel").</p></td>
     </tr>
     <tr>
+      <th>coupling_on</th>
+      <td><p>whether to implement Metropolis-coupling over temperature
+rungs. The option of deactivating coupling has been retained for general
+interest and debugging purposes only. If this parameter is <code>FALSE</code>
+then parallel tempering will have no impact on MCMC mixing.</p></td>
+    </tr>
+    <tr>
       <th>pb_markdown</th>
       <td><p>whether to run progress bars in markdown mode, meaning
-they are only updated when they reach 100<!-- % to avoid large amounts of output -->
+they are only updated when they reach 100% to avoid large amounts of output
 being printed to markdown files.</p></td>
     </tr>
     <tr>
@@ -256,11 +275,23 @@ for reference in the project output. This allows complete reproducibility
 from a project, but may be undesirable when datasets are very large.</p></td>
     </tr>
     <tr>
+      <th>save_hot_draws</th>
+      <td><p>if <code>TRUE</code> the parameter draws relating to the hot
+chains are also stored inside the <code>pt</code> element of the project output.
+If <code>FALSE</code> (the default) only log-likelihoods and log-priors are
+stored from heated chains.</p></td>
+    </tr>
+    <tr>
       <th>silent</th>
       <td><p>whether to suppress all console output.</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Note that both <code>data</code> and <code>misc</code> are passed into
+  log-likelihood/log-prior functions *by reference*. This means if you modify
+  these objects inside the functions then any changes will persist.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -42,7 +42,7 @@ plot_rung_loglike <- function(x, chain = 1, phase = "sampling", x_axis_type = 1,
   # get plotting values (loglikelihoods)
   phase_get <- phase
   chain_get <- chain
-  data <- dplyr::filter(x$output, .data$chain == chain_get, .data$phase == phase_get)
+  data <- dplyr::filter(x$pt, .data$chain == chain_get, .data$phase == phase_get)
   y_lab <- "log-likelihood"
   
   # move to plotting deviance if specified
@@ -183,18 +183,16 @@ plot_mc_acceptance <- function(x, chain = NULL, phase = "sampling", x_axis_type 
 #' @param lag maximum lag. Must be an integer between 1 and 500.
 #' @param par vector of parameter names. If \code{NULL} all parameters are
 #'   plotted.
-#' @param rung which temperature rung to plot. If \code{NULL} then defaults to
-#'   the cold rung.
 #' 
 #' @export
 
-plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling", rung = NULL) {
-
+plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling") {
+  
   # check inputs
   assert_class(x, "drjacoby_output")
   assert_single_bounded(lag, 1, 500)
   if (is.null(par)) {
-    par <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase",
+    par <- setdiff(names(x$output), c("chain", "iteration", "phase",
                                       "logprior", "loglikelihood"))
   }
   assert_vector_string(par)
@@ -202,19 +200,12 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
   assert_in(phase, c("burnin", "sampling"))
-  max_rungs <- max(x$diagnostics$rung_details$rung)
-  if (is.null(rung)) {
-    rung <- max_rungs
-  }
-  assert_single_pos_int(rung)
-  assert_leq(rung, max_rungs)
-  
-  # get output for the chosen chain, phase and rung
+
+  # get output for the chosen chain, phase
   chain_get <- chain
-  rung_get <- rung
   phase_get <- phase
-  data <- dplyr::filter(x$output, .data$chain == chain_get, .data$rung == rung_get, .data$phase == phase_get) %>%
-    dplyr::select(-.data$chain, -.data$rung, -.data$iteration, -.data$phase, -.data$logprior, -.data$loglikelihood) %>%
+  data <- dplyr::filter(x$output, .data$chain == chain_get, .data$phase == phase_get) %>%
+    dplyr::select(-.data$chain, -.data$iteration, -.data$phase, -.data$logprior, -.data$loglikelihood) %>%
     as.data.frame()
   
   # select parameters
@@ -259,21 +250,18 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #' @param lag maximum lag. Must be an integer between 1 and 500.
 #' @param downsample boolean. Whether to downsample chain to make plotting more
 #'   efficient.
-#' @param rung which temperature rung to plot. If \code{NULL} then defaults to
-#'   the cold rung.
 #' @param display boolean. Whether to show plots, if \code{FALSE} then plotting
 #'   objects are returned without displaying.
 #'
 #' @export
 
 plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
-                     downsample = TRUE, phase = "sampling", rung = NULL,
+                     downsample = TRUE, phase = "sampling",
                      chain = NULL, display = TRUE) {
   
   # check inputs and define defaults
   assert_class(x, "drjacoby_output")
-  assert_non_null(x$output)
-  param_names <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
+  param_names <- setdiff(names(x$output), c("chain", "iteration", "phase", "logprior", "loglikelihood"))
   if (!is.null(show)) {
     assert_vector_string(show)
     assert_in(show, param_names)
@@ -292,12 +280,6 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   assert_single_bounded(lag, 1, 500)
   assert_single_logical(downsample)
   assert_in(phase, c("burnin", "sampling", "both"))
-  max_rungs <- max(x$diagnostics$rung_details$rung)
-  if (is.null(rung)) {
-    rung <- max_rungs
-  }
-  assert_single_pos_int(rung)
-  assert_leq(rung, max_rungs)
   if (is.null(chain)) {
     chain <- unique(x$output$chain)
   }
@@ -309,22 +291,21 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
     phase <- c("burnin", "sampling")
   }
   
-  # subset based on rung, chain and phase
-  rung_get <- rung
+  # subset based on chain and phase
   chain_get <- chain
   phase_get <- phase
-  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get, chain %in% chain_get) 
+  data <- dplyr::filter(x$output, phase %in% phase_get, chain %in% chain_get) 
   
-  # Downsample
+  # get autocorrelation (on full data, before downsampling)
+  ac_data <- as.data.frame(apply(data[, param_names, drop = FALSE], 2, acf_data, lag = lag))
+  ac_data$lag <- 0:lag
+  
+  # downsample
   if (downsample & nrow(data) > 2000) {
     data <- data[round(seq(1, nrow(data), length.out = 2000)),]
   }
   
-  # Autocorrealtion (on downsample)
-  ac_data <- as.data.frame(apply(data[, param_names, drop = FALSE], 2, acf_data, lag = lag))
-  ac_data$lag <- 0:lag
-  
-  # Set minimum bin number
+  # set minimum bin number
   b <- min(nrow(data) / 4, 40)
   
   # produce plots over all parameters
@@ -396,16 +377,15 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 #' @description Plots correlation between two parameters
 #'
 #' @inheritParams plot_rung_loglike
-#' @param parameter1 Name of parameter first parameter.
-#' @param parameter2 Name of parameter second parameter.
-#' @param downsample Downsample chain for efficiency
-#' @param rung Rung
+#' @param parameter1 name of parameter first parameter.
+#' @param parameter2 name of parameter second parameter.
+#' @param downsample whether to downsample output to speed up plotting.
 #'
 #' @export
 
 plot_cor <- function(x, parameter1, parameter2,
                      downsample = TRUE, phase = "sampling",
-                     chain = NULL, rung = NULL) {
+                     chain = NULL) {
 
   # check inputs
   assert_class(x, "drjacoby_output")
@@ -419,12 +399,6 @@ plot_cor <- function(x, parameter1, parameter2,
     chain <- unique(x$output$chain)
   }
   assert_pos_int(chain)
-  max_rungs <- max(x$diagnostics$rung_details$rung)
-  if (is.null(rung)) {
-    rung <- max_rungs
-  }
-  assert_single_pos_int(rung)
-  assert_leq(rung, max_rungs)
   
   # deal with phase = "both" situation
   if (phase == "both") {
@@ -432,10 +406,9 @@ plot_cor <- function(x, parameter1, parameter2,
   }
   
   # get basic quantities
-  rung_get <- rung
   chain_get <- chain
   phase_get <- phase
-  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get, chain %in% chain_get)
+  data <- dplyr::filter(x$output, phase %in% phase_get, chain %in% chain_get)
   
   # subset to corr params
   data <- data[,c("chain", parameter1, parameter2)]  
@@ -464,13 +437,12 @@ plot_cor <- function(x, parameter1, parameter2,
 #'   parameters (defauls to all parameters).
 #' 
 #' @inheritParams plot_rung_loglike
-#' @param show Vector of parameter names to plot.
-#' @param rung Which rung to plot.
-#' @param param_names Optional vector of names to replace the default parameter names.
+#' @param show vector of parameter names to plot.
+#' @param param_names optional vector of names to replace the default parameter names.
 #'
 #' @export
 
-plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param_names = NULL) {
+plot_credible <- function(x, show = NULL, phase = "sampling", param_names = NULL) {
   
   # check inputs
   assert_class(x, "drjacoby_output")
@@ -479,12 +451,6 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
     assert_in(show, names(x$output))
   }
   assert_in(phase, c("burnin", "sampling", "both"))
-  max_rungs <- max(x$diagnostics$rung_details$rung)
-  if (is.null(rung)) {
-    rung <- max_rungs
-  }
-  assert_single_pos_int(rung)
-  assert_leq(rung, max_rungs)
   
   # define defaults
   if (is.null(show)) {
@@ -500,9 +466,8 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
   }
   
   # subset based on phase and rung
-  rung_get <- rung
   phase_get <- phase
-  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get)
+  data <- dplyr::filter(x$output, phase %in% phase_get)
   data <- data[, show, drop = FALSE]
   
   # get quantiles
@@ -526,13 +491,12 @@ plot_credible <- function(x, show = NULL, phase = "sampling", rung = NULL, param
 #' 
 #' @inheritParams plot_rung_loglike
 #' @param show Vector of parameter names to plot.
-#' @param rung Which rung to plot.
 #' @param param_names Optional vector of names to replace the default parameter names.
 #'
 #' @importFrom stats cor
 #' @export
 
-plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_names = NULL) {
+plot_cor_mat <- function(x, show = NULL, phase = "sampling", param_names = NULL) {
 
   # check inputs
   assert_class(x, "drjacoby_output")
@@ -542,16 +506,10 @@ plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_
     assert_gr(length(show), 1, message = "must show at least two parameters")
   }
   assert_in(phase, c("burnin", "sampling", "both"))
-  max_rungs <- max(x$diagnostics$rung_details$rung)
-  if (is.null(rung)) {
-    rung <- max_rungs
-  }
-  assert_single_pos_int(rung)
-  assert_leq(rung, max_rungs)
-  
+
   # define defaults
   if (is.null(show)) {
-    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
+    show <- setdiff(names(x$output), c("chain", "iteration", "phase", "logprior", "loglikelihood"))
   }
   if (is.null(param_names)) {
     param_names <- show
@@ -562,10 +520,9 @@ plot_cor_mat <- function(x, show = NULL, phase = "sampling", rung = NULL, param_
     phase <- c("burnin", "sampling")
   }
   
-  # subset based on phase and rung
-  rung_get <- rung
+  # subset based on phase
   phase_get <- phase
-  data <- dplyr::filter(x$output, rung == rung_get, phase %in% phase_get)
+  data <- dplyr::filter(x$output, phase %in% phase_get)
   data <- data[, show, drop = FALSE]
   n <- ncol(data)
   
