@@ -212,6 +212,6 @@ mcmc <- run_mcmc(data = data_list,
                  pb_markdown = TRUE)
 ```
 
-You should see that this MCMC runs considerably faster than the previous version that used R functions. On the other hand, writing C++ functions is arguable more error-prone and difficult to debug than simple R functions. Hence, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R functions might be a better choice.
+You should see that this MCMC runs considerably faster than the previous version that used R functions. On the other hand, writing C++ functions is arguably more error-prone and difficult to debug than simple R functions. Hence, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R functions might be a better choice.
 
 This was a very easy problem, and so required no fancy MCMC tricks. The [next vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) demonstrates how *drjacoby* can be applied to a more challenging problem.
