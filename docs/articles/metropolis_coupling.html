@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Metropolis Coupling • drjacoby</title>
+<title>Parallel Tempering • drjacoby</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Metropolis Coupling">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Parallel Tempering">
 <meta property="og:description" content="drjacoby">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -51,7 +51,7 @@
       <a href="../articles/example.html">Basic Example</a>
     </li>
     <li>
-      <a href="../articles/metropolis_coupling.html">Metropolis Coupling</a>
+      <a href="../articles/metropolis_coupling.html">Parallel Tempering</a>
     </li>
     <li>
       <a href="../articles/parallel.html">Running Parallel Chains</a>
@@ -106,10 +106,10 @@
       </header><script src="metropolis_coupling_files/header-attrs-2.10/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Metropolis Coupling</h1>
+      <h1 data-toc-skip>Parallel Tempering</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2021-09-27</h4>
+            <h4 class="date">2021-10-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/metropolis_coupling.Rmd"><code>vignettes/metropolis_coupling.Rmd</code></a></small>
       <div class="hidden name"><code>metropolis_coupling.Rmd</code></div>
@@ -118,8 +118,8 @@
 
     
     
-<p>MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has Twin Peaks then ordinary Metropolis-Hastings might not be enough. Hamiltonian Monte Carlo (HMC) can help with correlated distributions, as it allows the proposal particle to “roll around” the target distribution allowing it to go round corners, but it still struggles with multimodal distributions as it is unlikely that the particle will have enough momentum to cross deep valleys in the likelihood. Metropolis coupling, on the other hand, tends to mitigate both problems and requires nothing more than some extra chains.</p>
-<p>This vignette demonstrates how Metropolis coupling can be implemented within <em>drjacoby</em> to solve a deliberately awkward MCMC problem.</p>
+<p>MCMC becomes considerably harder when the posterior distribution is 1) highly correlated, and/or 2) highly multimodal. For exampe, if your posterior has Twin Peaks then ordinary Metropolis-Hastings might not be enough. Parallel tempering tends to mitigate these problems and requires nothing more than some extra heated chains.</p>
+<p>This vignette demonstrates how parallel tempering can be implemented within <em>drjacoby</em> to solve a deliberately awkward MCMC problem.</p>
 <div id="setup" class="section level2">
 <h2 class="hasAnchor">
 <a href="#setup" class="anchor"></a>Setup</h2>
@@ -191,7 +191,7 @@ SEXP create_xptr(std::string function_name) {
 <div id="running-the-mcmc" class="section level2">
 <h2 class="hasAnchor">
 <a href="#running-the-mcmc" class="anchor"></a>Running the MCMC</h2>
-<p>First, we will try running the basic MCMC without Metropolis coupling. The following block of code repeats the same MCMC analysis nine times, each time producing a plot of posterior <code>alpha</code> against <code>beta</code>:</p>
+<p>First, we will try running the basic MCMC without parallel tempering. The following block of code repeats the same MCMC analysis nine times, each time producing a plot of posterior <code>alpha</code> against <code>beta</code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">plot_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="op">)</span>
 <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq_len</a></span><span class="op">(</span><span class="fl">9</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
@@ -215,7 +215,7 @@ SEXP create_xptr(std::string function_name) {
 <span class="fu">gridExtra</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/gridExtra/man/arrangeGrob.html">grid.arrange</a></span><span class="op">(</span>grobs <span class="op">=</span> <span class="va">plot_list</span><span class="op">)</span></code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-5-1.png" width="768"></p>
 <p>Clearly this MCMC is not mixing well! By looking over all nine plots we can get a rough idea of what the distribution <em>should</em> look like, but no single MCMC run has captured it adequately. You can experiment with increasing the number of samples - you should get better results for more samples, but a <em>very</em> large number of samples are needed before we get good mixing between the left and right sides of the distribution.</p>
-<p>Metropolis coupling is perfectly designed to solve this kind of problem. To activate Metropolis coupling we need to specify an additional argument to the <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> function - the number of <code>rungs</code>. Each rung represents a different MCMC chain arranged in a “temperature ladder”, with the hotter chains being more free to explore the parameter space. Every iteration, chains have the option of swapping parameter values between rungs, thereby allowing the freely-moving hot chains to propose values to the more constrained colder chains. When looking at the output, we tend to focus exclusively on the coldest chain which can be interpreted the same way as a single chain returned from regular MCMC.</p>
+<p>Parallel tempering is perfectly designed to solve this kind of problem. To activate parallel tempering we need to specify an additional argument to the <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> function - the number of <code>rungs</code>. Each rung represents a different MCMC chain arranged in a “temperature ladder”, with the hotter chains being more free to explore the parameter space. Every iteration, chains have the option of swapping parameter values between rungs, thereby allowing the freely-moving hot chains to propose values to the more constrained colder chains. When looking at the output, we tend to focus exclusively on the coldest chain which can be interpreted the same way as a single chain from regular MCMC.</p>
 <p>In this example we use 20 rungs:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run MCMC</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>mcmc <span class="ot">&lt;-</span> <span class="fu">run_mcmc</span>(<span class="at">data =</span> data_list,</span>
@@ -238,18 +238,19 @@ SEXP create_xptr(std::string function_name) {
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 23.4%</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 5.191446 seconds</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co"># create plot of alpha against beta</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_cor</span>(mcmc, <span class="st">"alpha"</span>, <span class="st">"beta"</span>) <span class="sc">+</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ylim</span>(<span class="dv">0</span>, <span class="dv">10</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">xlim</span>(<span class="sc">-</span><span class="dv">10</span>, <span class="dv">10</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code></pre></div>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 5.048216 seconds</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; total MCMC run-time: 5.05 seconds</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># create plot of alpha against beta</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_cor</span>(mcmc, <span class="st">"alpha"</span>, <span class="st">"beta"</span>) <span class="sc">+</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ylim</span>(<span class="dv">0</span>, <span class="dv">10</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">xlim</span>(<span class="sc">-</span><span class="dv">10</span>, <span class="dv">10</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-6-1.png" width="480"></p>
 <p>You should see a much better characterisation of the posterior distribution. The run time scales approximately linearly with the number of rungs, so there is a computational cost to using this method, but on the other hand our results are far better than we would obtain by simply increasing the number of samples by a factor of 20.</p>
 </div>
 <div id="how-many-rungs-to-use" class="section level2">
 <h2 class="hasAnchor">
 <a href="#how-many-rungs-to-use" class="anchor"></a>How many rungs to use?</h2>
-<p>Metropolis coupling in <em>drjacoby</em> works by proposing swaps betweed adjacent rungs in the temperature ladder, which are accepted or rejected according to the standard Metropolis-Hastings ratio. If, for example, a hot rung happens upon a set of parameter values that have high likelihood then there is a good chance these values will be swapped up to the next rung. In this way, information can effectively bubble-sort its way from the prior (the hottest rung) to the posterior (the coldest rung). The average chance of a swap being accepted depends on the two adjacent rungs being similar enough in distribution that values drawn from one have a high likelihood in the other. This, in turn, means that swaps have a higher chance of being accepted when we have a large number of densely packed rungs.</p>
+<p>Parallel tempering in <em>drjacoby</em> works by proposing swaps between adjacent rungs in the temperature ladder, which are accepted or rejected according to the standard Metropolis-Hastings ratio. If, for example, a hot rung happens upon a set of parameter values that have high likelihood then there is a good chance these values will be swapped up to the next rung. In this way, information can effectively bubble-sort its way from the prior (the hottest chain) to the posterior (the coldest chain). The average chance of a swap being accepted depends on the two adjacent rungs being similar enough in distribution that values drawn from one have a high likelihood in the other. This, in turn, means that swaps have a higher chance of being accepted when we have a large number of densely packed rungs.</p>
 <p>To explore this, we start by re-running the above MCMC with a small number of rungs and a small number of samples to highlight the problem. We can use the <code><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance()</a></code> function to plot the acceptance rate between rungs:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># run MCMC</span>
@@ -266,13 +267,13 @@ SEXP create_xptr(std::string function_name) {
 <span class="co"># plot coupling acceptance rates</span>
 <span class="fu"><a href="../reference/plot_mc_acceptance.html">plot_mc_acceptance</a></span><span class="op">(</span><span class="va">mcmc</span>, x_axis_type <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-7-1.png" width="480"></p>
-<p>The 10 vertical grey bars in the above plot show the positions of our 10 rungs in the thermodynamic interval [0,1], and the red dots between them show the proportion of swaps that were accepted between rungs (this same information is available in a dataframe via <code>mcmc$diagnostics$mc_accept</code>). Notice that the acceptance rate between the hottest and second-hottest rung is close to zero, meaning very little of the information in the hottest rung made it up the ladder to the colder rungs. We can see the problems this causes when we plot the posterior draws:</p>
+<p>The 10 vertical grey bars in the above plot show the positions of our 10 rungs in the thermodynamic interval [0,1], and the red dots between them show the proportion of swaps that were accepted between rungs (this information is available via <code>mcmc$diagnostics$mc_accept</code>). Notice that the acceptance rate between the hottest and second-hottest rung is close to zero, meaning very little of the information in the hottest rung made it up the ladder to the colder rungs. We can see the problems this causes when we plot the posterior draws:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span><span class="op">(</span><span class="va">mcmc</span>, <span class="st">"alpha"</span>, <span class="st">"beta"</span><span class="op">)</span> <span class="op">+</span>
     <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-8-1.png" width="480"></p>
 <p>Although we have some mixing between the left and right sides of the distribution, overall sampling is still very patchy.</p>
-<p>One way of improving mixing between rungs is simply to increase the number of rungs, so the distance between distributions is smaller:</p>
+<p>One way of improving mixing between rungs is simply to increase the number of rungs so the distance between distributions is smaller:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># run MCMC</span>
 <span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>,
@@ -294,7 +295,7 @@ SEXP create_xptr(std::string function_name) {
 <span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span><span class="op">(</span><span class="va">mcmc</span>, <span class="st">"alpha"</span>, <span class="st">"beta"</span><span class="op">)</span> <span class="op">+</span>
     <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-9-2.png" width="480"></p>
-<p>This mitigates the problem to some extent, as we now have acceptance rates going “deeper” towards the prior, however the hottest rung is still not passing information up the ladder. This strategy also comes at a high computational cost, as we are effectively running the MCMC 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter <code>GTI_pow</code>, which represents a power that the temperature ladder is raised to. Higher values of <code>GTI_pow</code> therefore lead to rungs being more highly concentrated at the prior end of the spectrum. The previous two MCMCs had <code>GTI_pow</code> set to 1.0 by default, leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with just 20 rungs and <code>GTI_pow = 5.0</code>:</p>
+<p>This mitigates the problem to some extent, as we now have acceptance rates going “deeper” towards the prior, however the hottest rung is still not passing information up the ladder. This strategy also comes at a high computational cost, as we are effectively running the MCMC algorithm 50 times. A more efficient method is usually to change the distribution of rungs so they are more concentrated at low thermodynamic powers (i.e. near the prior end of the spectrum). This can be achieved through the parameter <code>alpha</code>, which represents a power that the temperature ladder is raised to. Higher values of <code>alpha</code> therefore lead to rungs being more concentrated at the prior end of the spectrum. The previous two MCMCs had <code>alpha</code> set to 1.0 by default, leading to evenly distributed rungs between [0,1]. Now we repeat the MCMC with just 20 rungs and <code>alpha = 5.0</code>:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># run MCMC</span>
 <span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>,
@@ -305,7 +306,7 @@ SEXP create_xptr(std::string function_name) {
                  samples <span class="op">=</span> <span class="fl">1e3</span>,
                  rungs <span class="op">=</span> <span class="fl">20</span>,
                  chains <span class="op">=</span> <span class="fl">1</span>,
-                 GTI_pow <span class="op">=</span> <span class="fl">5.0</span>,
+                 alpha <span class="op">=</span> <span class="fl">5.0</span>,
                  silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 
 <span class="co"># plot coupling acceptance rates</span>
@@ -320,8 +321,8 @@ SEXP create_xptr(std::string function_name) {
 <span class="fu"><a href="../reference/plot_cor.html">plot_cor</a></span><span class="op">(</span><span class="va">mcmc</span>, parameter1 <span class="op">=</span> <span class="st">"alpha"</span>, <span class="st">"beta"</span><span class="op">)</span> <span class="op">+</span>
     <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></code></pre></div>
 <p><img src="metropolis_coupling_files/figure-html/unnamed-chunk-10-2.png" width="480"></p>
-<p>We find that with just 20 rungs we now have decent acceptance rates all the way through the temperature ladder. If we really wanted to fine-tune the mixing we could use the <code>beta_manual</code> argument inside <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> to define the temperature ladder exactly as a vector of values between 0 and 1. Note, this ladder is always raised to the power <code>GTI_pow</code>, so we should set this to 1.0 if we don’t want any additional transformation applied.</p>
-<p>In summary, the correct number of rungs to use in Metropolis-coupled MCMC is whatever number provides decent acceptance rates all the way through our temperature ladder. When this is the case we can be condifent that the prior is “talking to” the posterior, making it <em>extremely unlikely</em> (but not impossible) that the MCMC is still missing large parts of the posterior distribution.</p>
+<p>We find that with just 20 rungs we now have decent acceptance rates all the way through the temperature ladder. If we really wanted to fine-tune the mixing we could use the <code>beta_manual</code> argument inside <code><a href="../reference/run_mcmc.html">run_mcmc()</a></code> to define the temperature ladder exactly as a vector of values between 0 and 1. Note, this ladder is always raised to the power <code>alpha</code>, so we should set <code>alpha=1.0</code> if we don’t want any additional transformation applied.</p>
+<p>In summary, the correct number of rungs to use in parallel tempered MCMC is whatever number provides decent acceptance rates all the way through our temperature ladder. When this is the case we can be condifent that the prior is “talking to” the posterior, making it <em>extremely unlikely</em> (but not impossible) that the MCMC is still missing large parts of the posterior distribution.</p>
 </div>
   </div>
 
