@@ -35,6 +35,7 @@ public:
   bool coupling_on;
   std::vector<double> beta_raised;
   int chain;
+  double target_acceptance;
   
   // misc parameters
   bool save_hot_draws;

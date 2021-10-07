@@ -16,6 +16,7 @@ run_mcmc(
   chains = 5,
   beta_manual = NULL,
   alpha = 1,
+  target_acceptance = 0.44,
   cluster = NULL,
   coupling_on = TRUE,
   pb_markdown = FALSE,
@@ -67,6 +68,9 @@ raised to the power \eqn{\alpha} internally, hence you should set
 raised to the power \eqn{\beta[i]^\alpha}, meaning we can use the
 \eqn{\alpha} parameter to concentrate rungs towards the start or the end of
 the temperature scale.}
+
+\item{target_acceptance}{Target acceptance rate. Should be between 0 and 1.
+Default of 0.44, set as optimum for unvariate proposal distributions.}
 
 \item{cluster}{option to pass in a cluster environment, allowing chains to be
 run in parallel (see package "parallel").}

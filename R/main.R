@@ -184,6 +184,8 @@ check_params <- function(x) {
 #'   raised to the power \eqn{\beta[i]^\alpha}, meaning we can use the
 #'   \eqn{\alpha} parameter to concentrate rungs towards the start or the end of
 #'   the temperature scale.
+#' @param target_acceptance Target acceptance rate. Should be between 0 and 1.
+#'   Default of 0.44, set as optimum for unvariate proposal distributions.
 #' @param cluster option to pass in a cluster environment, allowing chains to be
 #'   run in parallel (see package "parallel").
 #' @param coupling_on whether to implement Metropolis-coupling over temperature
@@ -217,6 +219,7 @@ run_mcmc <- function(data,
                      chains = 5,
                      beta_manual = NULL,
                      alpha = 1.0,
+                     target_acceptance = 0.44,
                      cluster = NULL,
                      coupling_on = TRUE,
                      pb_markdown = FALSE,
@@ -250,6 +253,7 @@ run_mcmc <- function(data,
   assert_single_pos_int(chains, zero_allowed = FALSE)
   assert_single_logical(coupling_on)
   assert_single_pos(alpha)
+  assert_bounded(target_acceptance, 0, 1)
   
   # check df_params
   df_params <- check_params(df_params)
@@ -362,7 +366,8 @@ run_mcmc <- function(data,
                       beta_raised = beta_raised,
                       save_hot_draws = save_hot_draws,
                       pb_markdown = pb_markdown,
-                      silent = silent)
+                      silent = silent,
+                      target_acceptance = target_acceptance)
   
   # functions to pass to C++
   args_functions <- list(loglike = loglike,

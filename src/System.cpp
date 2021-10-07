@@ -27,6 +27,7 @@ void System::load(Rcpp::List args) {
   trans_type = rcpp_to_vector_int(args_params["trans_type"]);
   skip_param = rcpp_to_vector_bool(args_params["skip_param"]);
   d = int(theta_min.size());
+  target_acceptance = rcpp_to_double(args_params["target_acceptance"]);
   
   // MCMC parameters
   burnin = rcpp_to_int(args_params["burnin"]);
