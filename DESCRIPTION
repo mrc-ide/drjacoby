@@ -28,7 +28,8 @@ Imports:
     cowplot,
     dplyr,
     magrittr,
-    readr
+    readr,
+    data.table
 SystemRequirements: C++11
 Suggests: 
     testthat,

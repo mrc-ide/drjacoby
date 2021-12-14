@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Check that drjacoby package has loaded successfully — check_drjacoby_loaded • drjacoby</title>
+<title>Load system file — drjacoby_file • drjacoby</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,9 @@
 
 
 
-<meta property="og:title" content="Check that drjacoby package has loaded successfully — check_drjacoby_loaded" />
-<meta property="og:description" content="Simple function to check that drjacoby package has loaded 
-  successfully. Prints &quot;drjacoby loaded successfully!&quot; if so." />
+<meta property="og:title" content="Load system file — drjacoby_file" />
+<meta property="og:description" content="Load a file from within the inst/extdata folder of the drjacoby
+  package. File extension must be one of .csv or .rds." />
 
 
 
@@ -151,18 +151,26 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Check that drjacoby package has loaded successfully</h1>
+    <h1>Load system file</h1>
     <small class="dont-index">Source: <a href='https://github.com/mrc-ide/drjacoby/blob/master/R/main.R'><code>R/main.R</code></a></small>
-    <div class="hidden name"><code>check_drjacoby_loaded.Rd</code></div>
+    <div class="hidden name"><code>drjacoby_file.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Simple function to check that drjacoby package has loaded 
-  successfully. Prints "drjacoby loaded successfully!" if so.</p>
+    <p>Load a file from within the inst/extdata folder of the drjacoby
+  package. File extension must be one of .csv or .rds.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>check_drjacoby_loaded</span><span class='op'>(</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>drjacoby_file</span><span class='op'>(</span><span class='va'>name</span><span class='op'>)</span></pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>name</th>
+      <td><p>the name of a file within the inst/extdata folder.</p></td>
+    </tr>
+    </table>
 
 
   </div>

@@ -12,6 +12,37 @@ check_drjacoby_loaded <- function() {
 }
 
 #------------------------------------------------
+#' @title Load system file
+#'
+#' @description Load a file from within the inst/extdata folder of the drjacoby
+#'   package. File extension must be one of .csv or .rds.
+#'
+#' @param name the name of a file within the inst/extdata folder.
+#'
+#' @importFrom data.table fread
+#' @export
+
+drjacoby_file <- function(name) {
+  
+  # check that valid file extension
+  ext <- strsplit(name, "\\.")[[1]]
+  ext <- ext[length(ext)]
+  assert_in(ext, c("csv", "rds"), message = "file extension not valid")
+  
+  # get full file path
+  name_full <- system.file("extdata/", name, package = 'drjacoby', mustWork = TRUE)
+  
+  # read in file
+  if (ext == "rds") {
+    ret <- readRDS(name_full)
+  } else {
+    ret <- data.table::fread(name_full, data.table = FALSE)
+  }
+  
+  return(ret)
+}
+
+#------------------------------------------------
 #' @title Define parameters dataframe
 #'
 #' @description Provides a convenient way of defining parameters in the format
