@@ -112,7 +112,7 @@
       <h1 data-toc-skip>Getting Model Fits</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2021-12-14</h4>
+            <h4 class="date">2021-12-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/getting_model_fits.Rmd"><code>vignettes/getting_model_fits.Rmd</code></a></small>
       <div class="hidden name"><code>getting_model_fits.Rmd</code></div>
@@ -129,8 +129,8 @@
 <p>For this example we will use some data on population growth and we will attempt to fit a simple curve through these points. The data can be loaded directly from within the <em>drjacoby</em> package, and takes the form of a simple data.frame of sampling times and population sizes:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># load example data</span>
-<span class="va">pop_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drjacoby_file.html">drjacoby_file</a></span><span class="op">(</span><span class="st">"getting_model_fits_data.rds"</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">pop_data</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="st">"population_data"</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">population_data</span><span class="op">)</span>
 <span class="co">#&gt;   pop time</span>
 <span class="co">#&gt; 1  14   33</span>
 <span class="co">#&gt; 2  26   37</span>
@@ -140,7 +140,7 @@
 <span class="co">#&gt; 6  57   48</span>
 
 <span class="co"># plot points</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">pop_data</span><span class="op">$</span><span class="va">time</span>, <span class="va">pop_data</span><span class="op">$</span><span class="va">pop</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">120</span><span class="op">)</span>, pch <span class="op">=</span> <span class="fl">20</span>,
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">population_data</span><span class="op">$</span><span class="va">time</span>, <span class="va">population_data</span><span class="op">$</span><span class="va">pop</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">120</span><span class="op">)</span>, pch <span class="op">=</span> <span class="fl">20</span>,
      xlab <span class="op">=</span> <span class="st">"Time (days)"</span>, ylab <span class="op">=</span> <span class="st">"Population size"</span><span class="op">)</span></code></pre></div>
 <p><img src="getting_model_fits_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
 <p>For our model we will assume a discrete-time logistic growth model, in which the population starts at size <span class="math inline">\(N_0\)</span> and grows at a rate <span class="math inline">\(r\)</span> each timestep, but also experiences density-dependent death causing it to plateau out a maximum population size <span class="math inline">\(N_{max}\)</span>. If we use <span class="math inline">\(N_t\)</span> to denote the population size at time <span class="math inline">\(t\)</span> then we can write this model as follows:</p>
@@ -192,7 +192,7 @@
 <span class="op">}</span></code></pre></div>
 <p>When running the MCMC we want to make sure <code>misc$output_type = 1</code>:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run MCMC</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>mcmc <span class="ot">&lt;-</span> <span class="fu">run_mcmc</span>(<span class="at">data =</span> pop_data,</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>mcmc <span class="ot">&lt;-</span> <span class="fu">run_mcmc</span>(<span class="at">data =</span> population_data,</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">df_params =</span> df_params,</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">misc =</span> <span class="fu">list</span>(<span class="at">output_type =</span> <span class="dv">1</span>),</span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">loglike =</span> loglike,</span>
@@ -212,7 +212,7 @@
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 43.9%</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 4.573401 seconds</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 4.281182 seconds</span></span>
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; MCMC chain 2</span></span>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; burn-in</span></span>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
@@ -224,7 +224,7 @@
 <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
 <span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 44%</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 4.380358 seconds</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 4.096652 seconds</span></span>
 <span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; MCMC chain 3</span></span>
 <span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; burn-in</span></span>
 <span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
@@ -236,8 +236,8 @@
 <span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
 <span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; acceptance rate: 44%</span></span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 4.226461 seconds</span></span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; total MCMC run-time: 13.2 seconds</span></span></code></pre></div>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; chain completed in 4.112060 seconds</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; total MCMC run-time: 12.5 seconds</span></span></code></pre></div>
 <p>Once we have MCMC output we should perform our usual checks to make sure that everything has converged nicely. Assuming everything is OK, we can move on to exploring model fits. We will do this by running the same likelihood function but with <code>misc$output_type = 2</code>, using the posterior parameter draws as inputs. We may not want to use every posterior parameter draw, in which case we can use the <code><a href="../reference/sample_chains.html">sample_chains()</a></code> function to sub-sample the output down as needed:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># sample from posterior</span>
@@ -246,13 +246,13 @@
 
 <span class="co"># get matrix of model predictions</span>
 <span class="va">model_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html">apply</a></span><span class="op">(</span><span class="va">param_draws</span>, <span class="fl">1</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fu">loglike</span><span class="op">(</span>params <span class="op">=</span> <span class="va">x</span>, data <span class="op">=</span> <span class="va">pop_data</span>, misc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>output_type <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
+  <span class="fu">loglike</span><span class="op">(</span>params <span class="op">=</span> <span class="va">x</span>, data <span class="op">=</span> <span class="va">population_data</span>, misc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>output_type <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span></code></pre></div>
 <p>Plotting these against the data we can see that - reassuringly - the posterior model fits make a smooth curve through the data points:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/matplot.html">matplot</a></span><span class="op">(</span><span class="va">model_matrix</span>, type <span class="op">=</span> <span class="st">'l'</span>, lty <span class="op">=</span> <span class="fl">1</span>, col <span class="op">=</span> <span class="st">"#99000010"</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">120</span><span class="op">)</span>,
         xlab <span class="op">=</span> <span class="st">"Time (days)"</span>, ylab <span class="op">=</span> <span class="st">"Population size"</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/points.html">points</a></span><span class="op">(</span><span class="va">pop_data</span><span class="op">$</span><span class="va">time</span>, <span class="va">pop_data</span><span class="op">$</span><span class="va">pop</span>, pch <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/points.html">points</a></span><span class="op">(</span><span class="va">population_data</span><span class="op">$</span><span class="va">time</span>, <span class="va">population_data</span><span class="op">$</span><span class="va">pop</span>, pch <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></code></pre></div>
 <p><img src="getting_model_fits_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
 <p>Notice that we only had to define the model fitting computation once in this pipeline, as the same likelihood function was used for both inference and obtaining the fit. There are more complicated versions of this approach that may be useful in some settings, for example using <code>switch</code> functions or multiple <code>if</code> statements to allow for several different types of output from the likelihood function, or even varying aspects of the core model such as the error distribution using flags contained in <code>misc</code>.</p>
 </div>

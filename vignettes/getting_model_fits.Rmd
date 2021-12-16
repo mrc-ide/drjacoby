@@ -38,11 +38,11 @@ For this example we will use some data on population growth and we will attempt 
 
 ```{r, width = 10, height = 5}
 # load example data
-pop_data <- drjacoby_file("getting_model_fits_data.rds")
-head(pop_data)
+data("population_data")
+head(population_data)
 
 # plot points
-plot(pop_data$time, pop_data$pop, ylim = c(0, 120), pch = 20,
+plot(population_data$time, population_data$pop, ylim = c(0, 120), pch = 20,
      xlab = "Time (days)", ylab = "Population size")
 ```
 
@@ -106,7 +106,7 @@ When running the MCMC we want to make sure `misc$output_type = 1`:
 
 ```{r}
 # run MCMC
-mcmc <- run_mcmc(data = pop_data,
+mcmc <- run_mcmc(data = population_data,
                  df_params = df_params,
                  misc = list(output_type = 1),
                  loglike = loglike,
@@ -125,7 +125,7 @@ param_draws <- sample_chains(mcmc, 1000)
 
 # get matrix of model predictions
 model_matrix <- apply(param_draws, 1, function(x) {
-  loglike(params = x, data = pop_data, misc = list(output_type = 2))
+  loglike(params = x, data = population_data, misc = list(output_type = 2))
 })
 ```
 
@@ -134,7 +134,7 @@ Plotting these against the data we can see that - reassuringly - the posterior m
 ```{r}
 matplot(model_matrix, type = 'l', lty = 1, col = "#99000010", ylim = c(0, 120),
         xlab = "Time (days)", ylab = "Population size")
-points(pop_data$time, pop_data$pop, pch = 20)
+points(population_data$time, population_data$pop, pch = 20)
 ```
 
 Notice that we only had to define the model fitting computation once in this pipeline, as the same likelihood function was used for both inference and obtaining the fit. There are more complicated versions of this approach that may be useful in some settings, for example using `switch` functions or multiple `if` statements to allow for several different types of output from the likelihood function, or even varying aspects of the core model such as the error distribution using flags contained in `misc`.

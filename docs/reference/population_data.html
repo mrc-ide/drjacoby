@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function reference • drjacoby</title>
+<title>Population data. — population_data • drjacoby</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,8 @@
 
 
 
-<meta property="og:title" content="Function reference" />
+<meta property="og:title" content="Population data. — population_data" />
+<meta property="og:description" content="Example population growth data." />
 
 
 
@@ -58,7 +59,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-reference-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -147,132 +148,31 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Reference</h1>
+    <h1>Population data.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/drjacoby/blob/master/R/data.R'><code>R/data.R</code></a></small>
+    <div class="hidden name"><code>population_data.Rd</code></div>
     </div>
 
-    <table class="ref-index">
+    <div class="ref-description">
+    <p>Example population growth data.</p>
+    </div>
 
-    <colgroup>
-      
-      <col class="alias" />
-      <col class="title" />
-    </colgroup>
+    <pre class="usage"><span class='va'>population_data</span></pre>
 
-    <tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
-        </th>
-      </tr>
-      
-      
-    </tbody><tbody>
-      
-      
-      <tr>
-        
-        <td>
-          <p><code><a href="acf_data.html">acf_data()</a></code> </p>
-        </td>
-        <td><p>Estimate autocorrelation</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="check_drjacoby_loaded.html">check_drjacoby_loaded()</a></code> </p>
-        </td>
-        <td><p>Check that drjacoby package has loaded successfully</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="cpp_template.html">cpp_template()</a></code> </p>
-        </td>
-        <td><p>Create template for cpp</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="define_params.html">define_params()</a></code> </p>
-        </td>
-        <td><p>Define parameters dataframe</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="drjacoby.html">drjacoby</a></code> </p>
-        </td>
-        <td><p>Flexible Markov Chain Monte Carlo via Reparameterization</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="gelman_rubin.html">gelman_rubin()</a></code> </p>
-        </td>
-        <td><p>Gelman-Rubin statistic</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_autocorrelation.html">plot_autocorrelation()</a></code> </p>
-        </td>
-        <td><p>Plot autocorrelation</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_cor.html">plot_cor()</a></code> </p>
-        </td>
-        <td><p>Plot parameter correlation</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_cor_mat.html">plot_cor_mat()</a></code> </p>
-        </td>
-        <td><p>Plot posterior correlation matrix</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_credible.html">plot_credible()</a></code> </p>
-        </td>
-        <td><p>Plot 95% credible intervals</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_mc_acceptance.html">plot_mc_acceptance()</a></code> </p>
-        </td>
-        <td><p>Plot Metropolis coupling acceptance rates</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_par.html">plot_par()</a></code> </p>
-        </td>
-        <td><p>Plot parameter estimates</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_rung_loglike.html">plot_rung_loglike()</a></code> </p>
-        </td>
-        <td><p>Plot loglikelihood 95% credible intervals</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="population_data.html">population_data</a></code> </p>
-        </td>
-        <td><p>Population data.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="run_mcmc.html">run_mcmc()</a></code> </p>
-        </td>
-        <td><p>Run drjacoby MCMC</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="sample_chains.html">sample_chains()</a></code> </p>
-        </td>
-        <td><p>Sample N draws from all available chains</p></td>
-      </tr>
-    </tbody>
-    </table>
+
+    <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
+
+    <p>A data frame with 20 rows and 2 variables:</p><dl>
+  <dt>pop</dt><dd><p>population size</p></dd>
+  <dt>time</dt><dd><p>time</p></dd>
+  ...
+
+</dl>
+
+
   </div>
-
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
       <h2 data-toc-skip>Contents</h2>
