@@ -17,6 +17,8 @@ navbar:
           href: articles/metropolis_coupling.html
         - text: "Running Parallel Chains"
           href: articles/parallel.html
+        - text: "Getting Model Fits"
+          href: articles/getting_model_fits.html
         - text: "Using Likelihood Blocks"
           href: articles/blocks.html
     - text: "Checks"
