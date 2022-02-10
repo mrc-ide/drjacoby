@@ -8,8 +8,9 @@ articles:
   checks_normal_model: checks_normal_model.html
   checks_return_prior: checks_return_prior.html
   example: example.html
+  getting_model_fits: getting_model_fits.html
   installation: installation.html
   metropolis_coupling: metropolis_coupling.html
   parallel: parallel.html
-last_built: 2021-10-04T07:55Z
+last_built: 2021-12-16T09:33Z
 

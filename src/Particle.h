@@ -144,7 +144,7 @@ public:
         logprior = logprior_prop;
         
         // Robbins-Monro positive update  (on the log scale)
-        bw[i] = exp(log(bw[i]) + bw_stepsize*(1 - 0.234) / sqrt(bw_index[i]));
+        bw[i] = exp(log(bw[i]) + bw_stepsize*(1 - s_ptr->target_acceptance) / sqrt(bw_index[i]));
         bw_index[i]++;
         
         // add to acceptance rate count
@@ -156,7 +156,7 @@ public:
         phi_prop[i] = phi[i];
         
         // Robbins-Monro negative update (on the log scale)
-        bw[i] = exp(log(bw[i]) - bw_stepsize*0.234 / sqrt(bw_index[i]));
+        bw[i] = exp(log(bw[i]) - bw_stepsize*s_ptr->target_acceptance / sqrt(bw_index[i]));
         bw_index[i]++;
         
       } // end MH step

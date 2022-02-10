@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.5.1</span>
       </span>
     </div>
 
@@ -55,6 +55,9 @@
     </li>
     <li>
       <a href="../articles/parallel.html">Running Parallel Chains</a>
+    </li>
+    <li>
+      <a href="../articles/getting_model_fits.html">Getting Model Fits</a>
     </li>
     <li>
       <a href="../articles/blocks.html">Using Likelihood Blocks</a>
@@ -109,7 +112,7 @@
       <h1 data-toc-skip>Using Likelihood Blocks</h1>
                         <h4 class="author">Bob Verity and Pete Winskill</h4>
             
-            <h4 class="date">2021-10-04</h4>
+            <h4 class="date">2021-12-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/blocks.Rmd"><code>vignettes/blocks.Rmd</code></a></small>
       <div class="hidden name"><code>blocks.Rmd</code></div>
@@ -218,9 +221,79 @@
 </ol>
 </li>
 </ol>
-<pre><code>Warning in normalizePath(path.expand(path), winslash, mustWork): path[1]="C:/
-Users/pwinskil/Documents/R_Packages/drjacoby/extdata/../inst/include": The
-system cannot find the path specified</code></pre>
+<pre><code>#include &lt;Rcpp.h&gt;
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
+  
+  // unpack parameters
+  int pi = 0;
+  std::vector&lt;double&gt; mu(6);
+  for (int i = 0; i &lt; 6; ++i) {
+    mu[i] = params[pi++];
+  }
+  double sigma = params["sigma"];
+  double phi = params["phi"];
+  double tau = params["tau"];
+  
+  // get current update block
+  int block = misc["block"];
+  
+  // distinct method for first 6 blocks, vs 7th
+  double ret = 0.0;
+  if (block == 7) {  // likelihood for the global parameters
+    
+    // calculate likelihood component
+    for (int i = 0; i &lt; 6; ++i) {
+      ret += R::dnorm(mu[i], phi, tau, true);
+    }
+    
+  } else {  // likelihood for each of the 6 data groups
+    
+    // get data for this group
+    NumericVector x = data[block - 1];
+    
+    // calculate likelihood component
+    for (int i = 0; i &lt; x.size(); ++i) {
+      ret += R::dnorm(x[i], mu[block - 1], sigma, true);
+    }
+    
+  }
+  
+  return Rcpp::wrap(ret);
+}
+
+// [[Rcpp::export]]
+SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
+  
+  // unpack parameters
+  double sigma = params["sigma"];
+  double phi = params["phi"];
+  double tau = params["tau"];
+  
+  // apply priors
+  double ret = R::dgamma(sigma, 0.01, 100.0, true) +
+    R::dnorm(phi, 0, 1000, true) +
+    R::dgamma(tau, 0.01, 100.0, true);
+  
+  return Rcpp::wrap(ret);
+}
+
+// [[Rcpp::export]]  
+SEXP create_xptr(std::string function_name) {  
+  typedef SEXP (*funcPtr_likelihood)(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc);  
+  typedef SEXP (*funcPtr_prior)(Rcpp::NumericVector params, Rcpp::List misc);  
+  
+  if (function_name == "loglike"){
+    return(Rcpp::XPtr&lt;funcPtr_likelihood&gt;(new funcPtr_likelihood(&amp;loglike)));
+  } 
+  if (function_name == "logprior"){
+    return(Rcpp::XPtr&lt;funcPtr_prior&gt;(new funcPtr_prior(&amp;logprior)));
+  } 
+  
+  stop("cpp function %i not found", function_name);
+}</code></pre>
 <p>If we were to run this likelihood for blocks 1 through 7 and sum the values, we would obtain the full model log-likelihood.</p>
 <p>For the prior function we don’t need to worry about blocks, we just need to apply the appropriate distributions:</p>
 <p>We can then run the MCMC as normal:</p>
@@ -237,7 +310,7 @@ system cannot find the path specified</code></pre>
 <p>Assuming we are happy with MCMC performance (convergence, ESS etc.), we can explore the posterior credible intervals of all parameters:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_credible.html">plot_credible</a></span><span class="op">(</span><span class="va">mcmc</span><span class="op">)</span></code></pre></div>
-<p><img src="blocks_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<p><img src="blocks_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>Here we obtain a different mean estimate for each group, with the global mean (<code>phi</code>) being somewhere near the centre. If you compare the <code>mu</code> estimates to the raw mean of the data in each group you will find that they are “shrunk” towards the global mean. This is the impact of the random effects model - by sharing information between groups we end up pulling everything towards the centre.</p>
 <p>Likelihood blocks take some getting used to, but for complex models they can make life much easier and be much more efficient. In reality <em>drjacoby</em> always uses blocks internally, it just places all parameters into block 1 if not specified by the user. There are no checks performed on the blocks that you define, so make sure your blocks are independent and cover the complete likelihood of the model.</p>
 </div>

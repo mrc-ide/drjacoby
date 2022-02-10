@@ -76,7 +76,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.5.1</span>
       </span>
     </div>
 
@@ -100,6 +100,9 @@
     </li>
     <li>
       <a href="../articles/parallel.html">Running Parallel Chains</a>
+    </li>
+    <li>
+      <a href="../articles/getting_model_fits.html">Getting Model Fits</a>
     </li>
     <li>
       <a href="../articles/blocks.html">Using Likelihood Blocks</a>
@@ -176,6 +179,7 @@
   chains <span class='op'>=</span> <span class='fl'>5</span>,
   beta_manual <span class='op'>=</span> <span class='cn'>NULL</span>,
   alpha <span class='op'>=</span> <span class='fl'>1</span>,
+  target_acceptance <span class='op'>=</span> <span class='fl'>0.44</span>,
   cluster <span class='op'>=</span> <span class='cn'>NULL</span>,
   coupling_on <span class='op'>=</span> <span class='cn'>TRUE</span>,
   pb_markdown <span class='op'>=</span> <span class='cn'>FALSE</span>,
@@ -249,6 +253,11 @@ raised to the power \(\alpha\) internally, hence you should set
 raised to the power \(\beta[i]^\alpha\), meaning we can use the
 \(\alpha\) parameter to concentrate rungs towards the start or the end of
 the temperature scale.</p></td>
+    </tr>
+    <tr>
+      <th>target_acceptance</th>
+      <td><p>Target acceptance rate. Should be between 0 and 1.
+Default of 0.44, set as optimum for unvariate proposal distributions.</p></td>
     </tr>
     <tr>
       <th>cluster</th>
