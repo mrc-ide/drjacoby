@@ -91,8 +91,14 @@ public:
       // generate new phi_prop[i]
       propose_phi(i);
       
+      Rcpp::Rcout << "Phi : " << phi << "\n";
+      Rcpp::Rcout << "Proposed phi : " << phi_prop << "\n";
+      
       // transform phi_prop[i] to theta_prop[i]
       phi_prop_to_theta_prop(i);
+      
+      Rcpp::Rcout << "Theta : " << theta << "\n";
+      Rcpp::Rcout << "Proposed theta : " << theta_prop << "\n";
       
       // calculate adjustment factor, taking into account forwards and backwards
       // moves
@@ -109,7 +115,13 @@ public:
       // calculate overall likelihood and prior of proposed theta
       loglike_prop = sum(loglike_prop_block);
       
+      Rcpp::Rcout << "The value of loglike : " << loglike << "\n";
+      Rcpp::Rcout << "The value of loglike_prop : " << loglike_prop << "\n";
+      
       logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, s_ptr->misc));
+      
+      Rcpp::Rcout << "The value of logprior : " << logprior << "\n";
+      Rcpp::Rcout << "The value of logprior_prop : " << logprior_prop << "\n";
       
       // Check for NA/NaN/Inf in likelihood or prior
       if(R_IsNaN(loglike_prop) || loglike_prop == R_PosInf || R_IsNA(loglike_prop)){
@@ -129,11 +141,14 @@ public:
         MH = beta_raised*(loglike_prop - loglike) + (logprior_prop - logprior) + adj;
       }
 
+      Rcpp::Rcout << "The value of MH : " << MH << "\n";
+      
       // accept or reject move
       bool MH_accept = (log(R::runif(0,1)) < MH);
       
       // implement changes
       if (MH_accept) {
+        Rcpp::Rcout << "Accepted" << "\n";
         // update theta and phi
         theta[i] = theta_prop[i];
         phi[i] = phi_prop[i];
@@ -146,11 +161,12 @@ public:
         // Robbins-Monro positive update  (on the log scale)
         bw[i] = exp(log(bw[i]) + bw_stepsize*(1 - s_ptr->target_acceptance) / sqrt(bw_index[i]));
         bw_index[i]++;
-        
+        Rcpp::Rcout << "bw " << bw[i] << "\n";
         // add to acceptance rate count
         accept_count++;
         
       } else {
+        Rcpp::Rcout << "Rejected" << "\n";
         // reset theta_prop and phi_prop
         theta_prop[i] = theta[i];
         phi_prop[i] = phi[i];
@@ -158,10 +174,11 @@ public:
         // Robbins-Monro negative update (on the log scale)
         bw[i] = exp(log(bw[i]) - bw_stepsize*s_ptr->target_acceptance / sqrt(bw_index[i]));
         bw_index[i]++;
-        
+        Rcpp::Rcout << "bw " << bw[i] << "\n";
       } // end MH step
     }  // end loop over parameters
     
+    Rcpp::Rcout << " " << "\n";
   }  // end update_univar function
   
   // other public methods
@@ -169,5 +186,6 @@ public:
   void phi_prop_to_theta_prop(int i);
   void theta_to_phi();
   double get_adjustment(int i);
+  
   
 };
