@@ -62,11 +62,17 @@ public:
       for (unsigned int j = 0; j < s_ptr->block[i].size(); ++j) {
         int this_block = s_ptr->block[i][j];
         s_ptr->misc["block"] = this_block;
+        PutRNGstate();
         loglike_block[this_block - 1] = Rcpp::as<double>(get_loglike(theta, s_ptr->x, s_ptr->misc));
+        GetRNGstate();
       }
     }
     loglike = sum(loglike_block);
+    
+    PutRNGstate();
     logprior = Rcpp::as<double>(get_logprior(theta, s_ptr->misc));
+    GetRNGstate();
+    
     // Catch for -Inf in likelihood or prior given init theta
     if(loglike == R_NegInf || logprior == R_NegInf){
       Rcpp::Rcerr << "\n Current theta " << theta << std::endl;
@@ -103,13 +109,17 @@ public:
       for (unsigned int j = 0; j < s_ptr->block[i].size(); ++j) {
         int this_block = s_ptr->block[i][j];
         s_ptr->misc["block"] = this_block;
+        PutRNGstate();
         loglike_prop_block[this_block - 1] = Rcpp::as<double>(get_loglike(theta_prop, s_ptr->x, s_ptr->misc));
+        GetRNGstate();
       }
       
       // calculate overall likelihood and prior of proposed theta
       loglike_prop = sum(loglike_prop_block);
       
+      PutRNGstate();
       logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, s_ptr->misc));
+      GetRNGstate();
       
       // Check for NA/NaN/Inf in likelihood or prior
       if(R_IsNaN(loglike_prop) || loglike_prop == R_PosInf || R_IsNA(loglike_prop)){
