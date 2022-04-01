@@ -46,7 +46,17 @@ void Particle::init(System &s, double beta_raised) {
 //------------------------------------------------
 // propose new value of phi[i] from univariate normal distribution
 void Particle::propose_phi(int i) {
+  
+  Rcpp::Rcout << "propose_phi phi : " << phi[i] << "\n";
+  Rcpp::Rcout << "propose_phi bw : " << bw[i] << "\n";
+  
+  for(int j = 0; j < 4; ++j){
+    Rcpp::Rcout << "Sample draw dif : " << phi[i] - R::rnorm(phi[i], bw[i]) << "\n";
+  }
+  
   phi_prop[i] = R::rnorm(phi[i], bw[i]);
+  
+  Rcpp::Rcout << " " << "\n";
 }
 
 //------------------------------------------------

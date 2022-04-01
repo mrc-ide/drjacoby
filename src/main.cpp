@@ -163,13 +163,22 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       
       // store results
       loglike_burnin[r][rep] = particle_vec[r].loglike;
+      
+      Rcpp::Rcout << "The value of loglike outer burnin : " << loglike_burnin[r][rep] << "\n";
+      
       logprior_burnin[r][rep] = particle_vec[r].logprior;
+      
+      Rcpp::Rcout << "The value of logprior outer burnin : " << logprior_burnin[r][rep] << "\n";
+      
       if (s.save_hot_draws) {
         theta_burnin[r][rep] = Rcpp::as< vector<double> >(particle_vec[r].theta);
       }
     }
     if (!s.save_hot_draws) {
       theta_burnin[0][rep] = Rcpp::as< vector<double> >(particle_vec[rungs - 1].theta);
+      
+      Rcpp::Rcout << "The value of theta outer burnin : " << theta_burnin[0][rep][0] << "\n";
+      
     }
     
     // perform Metropolis coupling
@@ -223,19 +232,31 @@ Rcpp::List run_mcmc(Rcpp::List args, TYPE1 get_loglike, TYPE2 get_logprior) {
       
       // store results
       loglike_sampling[r][rep] = particle_vec[r].loglike;
+      
+      Rcpp::Rcout << "The value of loglike outer sampling : " << loglike_sampling[r][rep] << "\n";
+      
       logprior_sampling[r][rep] = particle_vec[r].logprior;
+      
+      Rcpp::Rcout << "The value of logprior outer sampling : " << logprior_sampling[r][rep] << "\n";
+      
+      
       if (s.save_hot_draws) {
         theta_sampling[r][rep] = Rcpp::as< vector<double> >(particle_vec[r].theta);
       }
     }
     if (!s.save_hot_draws) {
       theta_sampling[0][rep] = Rcpp::as< vector<double> >(particle_vec[rungs - 1].theta);
+    
+    Rcpp::Rcout << "The value of theta outer sampling : " << theta_sampling[0][rep][0] << "\n";
+    
     }
     
     // perform Metropolis coupling
     if (s.coupling_on) {
       coupling(particle_vec, mc_accept_sampling);
     }
+    
+    Rcpp::Rcout << " " << "\n";
     
     // update progress bars
     if (!s.silent) {
