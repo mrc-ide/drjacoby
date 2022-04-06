@@ -237,8 +237,7 @@ run_mcmc <- function(data,
   
   # check data
   assert_list_named(data)
-  assert_numeric(unlist(data))
-  
+
   # check misc
   assert_list(misc)
   
