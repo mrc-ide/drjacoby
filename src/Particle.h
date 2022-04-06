@@ -58,18 +58,16 @@ public:
   // initialise likelihood and prior values
   template<class TYPE1, class TYPE2>
   void init_like(TYPE1 get_loglike, TYPE2 get_logprior) {
+    PutRNGstate();
     for (int i = 0; i < d; ++i) {
       for (unsigned int j = 0; j < s_ptr->block[i].size(); ++j) {
         int this_block = s_ptr->block[i][j];
         s_ptr->misc["block"] = this_block;
-        PutRNGstate();
         loglike_block[this_block - 1] = Rcpp::as<double>(get_loglike(theta, s_ptr->x, s_ptr->misc));
-        GetRNGstate();
       }
     }
     loglike = sum(loglike_block);
     
-    PutRNGstate();
     logprior = Rcpp::as<double>(get_logprior(theta, s_ptr->misc));
     GetRNGstate();
     
@@ -105,19 +103,17 @@ public:
       double adj = get_adjustment(i);
       
       // calculate loglikelihood in each block
+      PutRNGstate();
       loglike_prop_block = loglike_block;
       for (unsigned int j = 0; j < s_ptr->block[i].size(); ++j) {
         int this_block = s_ptr->block[i][j];
         s_ptr->misc["block"] = this_block;
-        PutRNGstate();
         loglike_prop_block[this_block - 1] = Rcpp::as<double>(get_loglike(theta_prop, s_ptr->x, s_ptr->misc));
-        GetRNGstate();
       }
       
       // calculate overall likelihood and prior of proposed theta
       loglike_prop = sum(loglike_prop_block);
       
-      PutRNGstate();
       logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, s_ptr->misc));
       GetRNGstate();
       
