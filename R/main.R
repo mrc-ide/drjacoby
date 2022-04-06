@@ -151,10 +151,7 @@ check_params <- function(x) {
 #'   log-likelihood/log-prior functions *by reference*. This means if you modify
 #'   these objects inside the functions then any changes will persist.
 #'
-#' @param data a named list of numeric data values. When using C++ likelihood
-#'   and/or prior these values are treated internally as doubles, so while
-#'   integer and Boolean values can be used, keep in mind that these will be
-#'   recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).
+#' @param data a named list or data frame or data values.
 #' @param df_params a data.frame of parameters (see \code{?define_params}).
 #' @param misc optional list object passed to likelihood and prior. This can be
 #'   useful for passing values that are not strictly data, for example passing a

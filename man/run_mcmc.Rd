@@ -26,10 +26,7 @@ run_mcmc(
 )
 }
 \arguments{
-\item{data}{a named list of numeric data values. When using C++ likelihood
-and/or prior these values are treated internally as doubles, so while
-integer and Boolean values can be used, keep in mind that these will be
-recast as doubles in the likelihood (i.e. \code{TRUE = 1.0}).}
+\item{data}{a named list or data frame or data values.}
 
 \item{df_params}{a data.frame of parameters (see \code{?define_params}).}
 
