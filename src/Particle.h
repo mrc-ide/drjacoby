@@ -58,6 +58,7 @@ public:
   // initialise likelihood and prior values
   template<class TYPE1, class TYPE2>
   void init_like(TYPE1 get_loglike, TYPE2 get_logprior) {
+    PutRNGstate();
     for (int i = 0; i < d; ++i) {
       for (unsigned int j = 0; j < s_ptr->block[i].size(); ++j) {
         int this_block = s_ptr->block[i][j];
@@ -66,7 +67,10 @@ public:
       }
     }
     loglike = sum(loglike_block);
+    
     logprior = Rcpp::as<double>(get_logprior(theta, s_ptr->misc));
+    GetRNGstate();
+    
     // Catch for -Inf in likelihood or prior given init theta
     if(loglike == R_NegInf || logprior == R_NegInf){
       Rcpp::Rcerr << "\n Current theta " << theta << std::endl;
@@ -99,6 +103,7 @@ public:
       double adj = get_adjustment(i);
       
       // calculate loglikelihood in each block
+      PutRNGstate();
       loglike_prop_block = loglike_block;
       for (unsigned int j = 0; j < s_ptr->block[i].size(); ++j) {
         int this_block = s_ptr->block[i][j];
@@ -110,6 +115,7 @@ public:
       loglike_prop = sum(loglike_prop_block);
       
       logprior_prop = Rcpp::as<double>(get_logprior(theta_prop, s_ptr->misc));
+      GetRNGstate();
       
       // Check for NA/NaN/Inf in likelihood or prior
       if(R_IsNaN(loglike_prop) || loglike_prop == R_PosInf || R_IsNA(loglike_prop)){
