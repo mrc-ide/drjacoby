@@ -1,7 +1,7 @@
 Package: drjacoby
 Type: Package
 Title: Flexible Markov Chain Monte Carlo via Reparameterization
-Version: 1.5.3
+Version: 2.0.0
 Authors@R: c(
     person("Bob", "Verity", email = "r.verity@imperial.ac.uk", role = c("aut", "cre")),
     person("Pete", "Winskill", email = "p.winskill@imperial.ac.uk", role = c("aut"))
@@ -13,31 +13,8 @@ Description: drjacoby is an R package for performing Bayesian inference via
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 LinkingTo: 
-    Rcpp
-Imports: 
-    Rcpp,
-    coda,
-    parallel,
-    ggplot2,
-    RcppXPtrUtils,
-    usethis,
-    tools,
-    rlang,
-    cowplot,
-    dplyr,
-    magrittr,
-    readr,
-    data.table
+    cpp11
 SystemRequirements: C++11
-Suggests: 
-    testthat,
-    covr,
-    knitr,
-    rmarkdown,
-    microbenchmark,
-    gridExtra
 BugReports: https://github.com/mrc-ide/drjacoby/issues
-VignetteBuilder: knitr
-Depends: R (>= 3.1.0)
