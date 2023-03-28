@@ -20,3 +20,10 @@ rhat <- function(output, parameter_names, n_chains, samples){
   return(rhat_est)
 }
 
+#' @title Estimate autocorrelation
+#'
+#' @export
+acf_data <- function(x, lag){
+  stats::acf(x, plot = FALSE, lag.max = lag)$acf
+}
+
