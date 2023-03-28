@@ -1,5 +1,5 @@
 # define default init values
-get_init <- function(df_params){
+get_init <- function(df_params, chains){
   init_list <- list()
   for (i in 1:nrow(df_params)) {
     transform_type <- get_transform_type(df_params[i,]$min, df_params[i,]$max)

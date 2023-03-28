@@ -205,7 +205,7 @@ check_params <- function(x) {
 #' @importFrom stats setNames var runif
 #' @export
 
-run_mcmc <- function(data,
+run_mcmc_old <- function(data,
                      df_params,
                      misc = list(),
                      loglike,

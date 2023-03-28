@@ -34,12 +34,6 @@ $$
 $$
 where $\gamma$ is a parameter that defines the strength of the well (higher $\gamma$ leads to a deeper valley and hence more challenging problem). NB, there is no data in this example, as the likelihood is defined exactly by these parameters.
 
-Likelihood and prior:
-
-```{r, echo = FALSE, comment = ''}
-Rcpp::sourceCpp(system.file("extdata/checks/", "doublewell_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE))
-```
-
 Parameters dataframe:
 
 ```{r}
@@ -55,13 +49,12 @@ df_params <- define_params(name = "mu", min = -L, max = L,
 ```{r}
 mcmc <- run_mcmc(data = list(x = -1),
                  df_params = df_params,
-                 loglike = "loglike",
-                 logprior = "logprior",
-                 burnin = 1e3,
-                 samples = 1e5,
-                 chains = 1,
-                 rungs = 1,
-                 silent = TRUE)
+                 loglike = loglike_double_well,
+                 logprior = logprior_null,
+                 burnin = 1e3L,
+                 samples = 1e5L,
+                 chains = 1L,
+                 rungs = 1L)
 ```
 
 ```{r}
@@ -90,14 +83,12 @@ lines(x, fx, col = 2, lwd = 2)
 ```{r}
 mcmc <- run_mcmc(data = list(x = -1),
                  df_params = df_params,
-                 loglike = "loglike",
-                 logprior = "logprior",
-                 burnin = 1e3,
-                 samples = 1e5,
-                 chains = 1,
-                 rungs = 11,
-                 alpha = 2,
-                 pb_markdown = TRUE)
+                 loglike = loglike_double_well,
+                 logprior = logprior_null,
+                 burnin = 1e3L,
+                 samples = 1e5L,
+                 chains = 1L,
+                 rungs = 11L)
 ```
 
 ```{r, fig.width=6, fig.height=5}

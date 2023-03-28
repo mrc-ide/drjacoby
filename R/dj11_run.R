@@ -1,4 +1,6 @@
-run_dj11 <- function(
+#' @title Run drjacoby MCM
+#' @export
+run_mcmc <- function(
     data,
     df_params,
     loglike,
@@ -14,6 +16,8 @@ run_dj11 <- function(
     coupling_on = TRUE,
     progress = TRUE
 ){
+  
+  # TODO: Update action
   # TODO: progress bar
   # TODO: beta manual
   # TODO: skip params
@@ -32,7 +36,10 @@ run_dj11 <- function(
   if(use_init){
     check_init(df_params, chains)
   } else {
-    df_params$init <- get_init(df_params)
+    df_params$init <- get_init(df_params, chains)
+  }
+  if(!"blocks" %in% names(df_params)){
+    df_params$block <- 1
   }
   
   # List inputs - to distribute if running in parallel
@@ -53,8 +60,8 @@ run_dj11 <- function(
     input$logprior <- logprior
     input$target_acceptance <- target_acceptance
     input$misc <- misc
-    input$n_rungs <- rungs
-    input$beta_init <- seq(1, 0, length.out = input$n_rungs)
+    input$rungs <- rungs
+    input$beta_init <- seq(1, 0, length.out = rungs)
     input$swap <- coupling_on
     input$chains <- chains
     return(input)
@@ -134,6 +141,7 @@ run_dj11 <- function(
   ##############################################################################
   
   out <- out[c("output", "diagnostics", "parameters")]
+  class(out) <- "drjacoby_output"
   return(out)
 }
 
@@ -147,9 +155,9 @@ run_internal <- function(input){
     input$logprior <- get(input$logprior)
   }
   # Run mcmc
-  mcmc_out <- mcmc(input$theta_init, input$theta_names, input$theta_transform_type,  input$theta_min,  input$theta_max,
+    mcmc_out <- mcmc(input$theta_init, input$theta_names, input$theta_transform_type,  input$theta_min,  input$theta_max,
                    input$blocks_list, input$n_unique_blocks, input$data, input$burnin, input$samples, input$loglike, input$logprior,
-                   input$target_acceptance, input$misc, input$n_rungs, input$beta_init, input$swap)
+                   input$target_acceptance, input$misc, input$rungs, input$beta_init, input$swap)
   # Add Chain, burnin, sampling columns
   mcmc_out$output <- cbind(
     data.frame(chain = input$chain, phase = rep(c("burnin", "sampling"), c(input$burnin, input$samples))),

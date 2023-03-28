@@ -45,9 +45,9 @@ mcmc <- run_mcmc(data = data_list,
                  df_params = df_params,
                  loglike = loglike_normal,
                  logprior = logprior_null,
-                 burnin = 1e3,
-                 samples = 1e5,
-                 chains = 10)
+                 burnin = 1e3L,
+                 samples = 1e4L,
+                 chains = 10L)
 ```
 
 ## Posterior plots
