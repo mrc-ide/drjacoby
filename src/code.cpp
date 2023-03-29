@@ -4,6 +4,7 @@
 #include "Rmath.h"
 #include "utils.h"
 #include "transform.h"
+#include <iostream>
 #include <vector>
 using namespace cpp11;
 namespace writable = cpp11::writable;
@@ -72,7 +73,7 @@ list mcmc(
   for(int b = 0; b < n_unique_blocks; ++b) {
     for(int i = 0; i < n_rungs; ++i){
       misc["block"] = as_sexp(b + 1);
-      block_ll[i][b] = ll_f(theta_prop, data, misc);
+      block_ll[i][b] = cpp11::as_cpp<double>(ll_f(theta_prop, data, misc));
     }
   }
   
@@ -91,7 +92,7 @@ list mcmc(
   // Initialise log prior vector
   std::vector<double> lp(n_rungs);
   for(int r = 0; r < n_rungs; ++r){
-    lp[r] = lp_f(theta_prop);
+    lp[r] = cpp11::as_cpp<double>(lp_f(theta_prop));
   }
   // Initialise proposal log prior
   double lp_prop;
@@ -185,10 +186,24 @@ list mcmc(
           for(int b = 0; b < blocks.size(); ++b) {
             int block = blocks[b];
             misc["block"] = as_sexp(block);
-            block_ll_prop[block - 1] = ll_f(theta_prop, data, misc);
+            block_ll_prop[block - 1] = cpp11::as_cpp<double>(ll_f(theta_prop, data, misc));
           }
           // Update proposal prior
-          lp_prop = lp_f(theta_prop);
+          lp_prop = cpp11::as_cpp<double>(lp_f(theta_prop));
+          
+          // Check for NA/NaN/Inf in likelihood or prior
+          if(!std::isfinite(lp_prop) || std::isnan(lp_prop)){
+            return writable::list({
+              "error"_nm = "NA or Inf returned by log prior function",
+              "theta_prop"_nm = theta_prop
+            });
+          }
+          if(!std::isfinite(sum(block_ll_prop)) || std::isnan(sum(block_ll_prop))){
+            return writable::list({
+              "error"_nm = "NA or Inf returned by log likelihood function",
+              "theta_prop"_nm = theta_prop
+            });
+          }
           
           // get parameter transformation adjustment
           adjustment = get_adjustment(theta[index][p], theta_prop[p], transform_type[p], theta_min[p], theta_max[p]);
@@ -284,4 +299,4 @@ list mcmc(
       "swap_acceptance_burnin"_nm = swap_acceptance_burnin,
       "swap_acceptance_sampling"_nm = swap_acceptance_sampling
   });
-}
+            }

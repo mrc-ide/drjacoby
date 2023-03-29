@@ -9,3 +9,4 @@ double sum(std::vector<double> x) {
   }
   return total;
 }
+

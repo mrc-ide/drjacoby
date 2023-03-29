@@ -21,9 +21,7 @@ run_mcmc <- function(
   # TODO: Update action
   # TODO: progress bar
   # TODO: beta init rename
-  # TODO: skip params
-  # TODO: Inf likelihood
-  
+
   ### Inputs ###################################################################
   # Input checks
   stopifnot(is.list(data))
@@ -98,6 +96,10 @@ run_mcmc <- function(
   ##############################################################################
   
   ### MCMC output ##############################################################
+  if("error" %in% sapply(mcmc_runs, names)){
+    warning("One or more chains produced errors, returning error output")
+    return(mcmc_runs)
+  }
   out <- list()
   out$output <- dplyr::bind_rows(sapply(mcmc_runs, '[', 'output'))
   ##############################################################################
@@ -175,6 +177,11 @@ run_internal <- function(input){
   mcmc_out <- mcmc(input$theta_init, input$theta_names, input$theta_transform_type,  input$theta_min,  input$theta_max,
                    input$blocks_list, input$n_unique_blocks, input$data, input$burnin, input$samples, input$loglike, input$logprior,
                    input$target_acceptance, input$misc, input$rungs, input$beta_init, input$swap, input$infer_parameter)
+  
+  if("error" %in% names(mcmc_out)){
+    return(mcmc_out)
+  }
+  
   # Add Chain, burnin, sampling columns
   mcmc_out$output <- cbind(
     data.frame(chain = input$chain, phase = rep(c("burnin", "sampling"), c(input$burnin, input$samples))),
