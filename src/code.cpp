@@ -28,18 +28,18 @@ list mcmc(
     int n_rungs,
     doubles beta_init,
     bool swap) {
-
-
+  
+  
   int iterations = burnin + samples;
   int n_par = theta_init.size();
-
+  
   // Initialisise variables, ////////////////////////////////////////////////////
   double mh;
   bool mh_accept;
   double adjustment;
   int block;
   misc.push_back({"block"_nm = 0});
-
+  
   // Initialise matrix for theta
   double theta[n_rungs][n_par];
   for(int i = 0; i < n_rungs; ++i){
@@ -55,7 +55,7 @@ list mcmc(
     theta_prop[p] = theta_init[p];
   }
   theta_prop.names() = theta_names;
-
+  
   // Initialise value for transformed theta: phi
   double phi[n_rungs][n_par];
   for(int i = 0; i < n_rungs; ++i){
@@ -65,16 +65,16 @@ list mcmc(
   }
   // Initialise vector for proposal phi
   std::vector<double> phi_prop(n_par);
-
+  
   // Initialise vector to store blocked log likelihood
   double block_ll[n_rungs][n_unique_blocks];
-    for(int b = 0; b < n_unique_blocks; ++b) {
-      for(int i = 0; i < n_rungs; ++i){
+  for(int b = 0; b < n_unique_blocks; ++b) {
+    for(int i = 0; i < n_rungs; ++i){
       misc["block"] = as_sexp(b + 1);
       block_ll[i][b] = ll_f(theta_prop, data, misc);
     }
   }
-
+  
   // Initialise vector to store proposal blocked log likelihood
   std::vector<double> block_ll_prop(n_unique_blocks);
   // Initialise vector to store rung log likelihood (summed over blocks)
@@ -86,7 +86,7 @@ list mcmc(
     }
     ll[r] = sum_ll;
   }
-
+  
   // Initialise log prior vector
   std::vector<double> lp(n_rungs);
   for(int r = 0; r < n_rungs; ++r){
@@ -95,7 +95,7 @@ list mcmc(
   // Initialise proposal log prior
   double lp_prop;
   //////////////////////////////////////////////////////////////////////////////
-
+  
   // Outputs ///////////////////////////////////////////////////////////////////
   // Initialise output matrix
   writable::doubles_matrix<> out(iterations, n_par + 3);
@@ -106,7 +106,7 @@ list mcmc(
   out(0, n_par + 1) = lp[0];
   out(0, n_par + 2) = ll[0];
   //////////////////////////////////////////////////////////////////////////////
-
+  
   // Tuning ////////////////////////////////////////////////////////////////////
   // Initialise matrix for proposal sd
   double proposal_sd[n_par][n_rungs];
@@ -115,7 +115,7 @@ list mcmc(
       proposal_sd[i][j] = 0.1;
     }
   }
-
+  
   // Initialise acceptance count matrix
   int acceptance[n_par][n_rungs];
   for(int i = 0; i < n_par; ++i){
@@ -123,20 +123,24 @@ list mcmc(
       acceptance[i][j] = 0;
     }
   }
-
-  // Initialise swap acceptance count vector
-  std::vector<int> swap_acceptance(n_rungs - 1);
+  
+  // Initialise swap acceptance count vectors
+  std::vector<int> swap_acceptance_burnin(n_rungs - 1);
   for(int i = 0; i < (n_rungs - 1); ++i){
-    swap_acceptance[i] = 0;
+    swap_acceptance_burnin[i] = 0;
+  }
+  std::vector<int> swap_acceptance_sampling(n_rungs - 1);
+  for(int i = 0; i < (n_rungs - 1); ++i){
+    swap_acceptance_sampling[i] = 0;
   }
   //////////////////////////////////////////////////////////////////////////////
-
+  
   // PT ////////////////////////////////////////////////////////////////////////
   int rung;
   double rung_beta;
   double rung_proposal_sd;
   int index;
-
+  
   // Index of rungs, 0 = cold rung, n_rungs - 1 = hot rung
   std::vector<int> rung_index(n_rungs);
   for(int r = 0; r < n_rungs; ++r){
@@ -148,28 +152,28 @@ list mcmc(
     beta[r] = beta_init[r];
   }
   //////////////////////////////////////////////////////////////////////////////
-
-
+  
+  
   // Run ///////////////////////////////////////////////////////////////////////
   for(int i = 1; i < iterations; ++i){
     for(int r = 0; r < n_rungs; ++r){
       rung_beta = beta[r];
       index = rung_index[r];
-
+      
       // Copy rung theta and phi
       for(int p = 0; p < n_par; ++p){
         theta_prop[p] = theta[index][p];
         phi_prop[p] = phi[index][p];
       }
-
+      
       lp_prop = lp[r];
-
+      
       for(int p = 0; p < n_par; ++p){
         // Propose new value of phi
         phi_prop[p] = Rf_rnorm(phi[index][p], proposal_sd[p][r]);
         // Transform new phi_prop -> theta_prop
         theta_prop[p] = phi_to_theta(phi_prop[p], transform_type[p], theta_min[p], theta_max[p]);
-
+        
         // Copy blocked log-likelihood
         for(int b = 0; b < n_unique_blocks; ++b){
           block_ll_prop[b] = block_ll[index][b];
@@ -183,7 +187,7 @@ list mcmc(
         }
         // Update proposal prior
         lp_prop = lp_f(theta_prop);
-
+        
         // get parameter transformation adjustment
         adjustment = get_adjustment(theta[index][p], theta_prop[p], transform_type[p], theta_min[p], theta_max[p]);
         // calculate Metropolis-Hastings ratio
@@ -229,7 +233,7 @@ list mcmc(
         out(i, n_par + 2) = ll[0];
       }
     }
-
+    
     // loop over rungs, starting with the hottest chain and moving to the cold
     // chain. Each time propose a swap with the next rung up
     if(swap){
@@ -238,15 +242,19 @@ list mcmc(
         double rung_beta2 = beta[r - 1];
         double loglike1 = ll[r];
         double loglike2 = ll[r - 1];
-
+        
         double acceptance = (loglike2*rung_beta1 + loglike1*rung_beta2) - (loglike1*rung_beta1 + loglike2*rung_beta2);
         // accept or reject move
         bool accept_move = log(Rf_runif(0, 1)) < acceptance;
-
+        
         if(accept_move){
           int ri1 = rung_index[r];
           int ri2 = rung_index[r - 1];
-          swap_acceptance[r - 1] += 1;
+          if(i <= burnin){
+            swap_acceptance_burnin[r - 1] += 1;
+          } else {
+            swap_acceptance_sampling[r - 1] += 1;
+          }
           rung_index[r] = ri2;
           rung_index[r - 1] = ri1;
           ll[r] = loglike2;
@@ -255,7 +263,7 @@ list mcmc(
       }
     }
   }
-
+  
   // Extract the cold chain proposal sd and acceptance rates for output
   std::vector<double> proposal_sd_out(n_par);
   std::vector<double> acceptance_out(n_par);
@@ -263,13 +271,14 @@ list mcmc(
     proposal_sd_out[i] = proposal_sd[i][0];
     acceptance_out[i] = acceptance[i][0];
   }
-
+  
   // Return outputs in a list
   return writable::list({
-      "output"_nm = out,
+    "output"_nm = out,
       "proposal_sd"_nm = proposal_sd_out,
       "acceptance"_nm = acceptance_out,
       "rung_index"_nm = rung_index,
-      "swap_acceptance"_nm = swap_acceptance
+      "swap_acceptance_burnin"_nm = swap_acceptance_burnin,
+      "swap_acceptance_sampling"_nm = swap_acceptance_sampling
   });
 }

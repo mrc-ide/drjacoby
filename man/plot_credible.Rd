@@ -7,11 +7,7 @@
 plot_credible(x, show = NULL, phase = "sampling", param_names = NULL)
 }
 \arguments{
-\item{x}{an object of class \code{drjacoby_output}}
-
 \item{show}{vector of parameter names to plot.}
-
-\item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
 \item{param_names}{optional vector of names to replace the default parameter names.}
 }

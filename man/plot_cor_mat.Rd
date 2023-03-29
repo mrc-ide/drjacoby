@@ -7,11 +7,7 @@
 plot_cor_mat(x, show = NULL, phase = "sampling", param_names = NULL)
 }
 \arguments{
-\item{x}{an object of class \code{drjacoby_output}}
-
 \item{show}{Vector of parameter names to plot.}
-
-\item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 
 \item{param_names}{Optional vector of names to replace the default parameter names.}
 }

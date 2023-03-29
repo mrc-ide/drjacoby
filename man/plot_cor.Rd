@@ -14,17 +14,11 @@ plot_cor(
 )
 }
 \arguments{
-\item{x}{an object of class \code{drjacoby_output}}
-
 \item{parameter1}{name of parameter first parameter.}
 
 \item{parameter2}{name of parameter second parameter.}
 
 \item{downsample}{whether to downsample output to speed up plotting.}
-
-\item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
-
-\item{chain}{which chain to plot.}
 }
 \description{
 Plots correlation between two parameters

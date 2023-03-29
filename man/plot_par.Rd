@@ -16,8 +16,6 @@ plot_par(
 )
 }
 \arguments{
-\item{x}{an object of class \code{drjacoby_output}}
-
 \item{show}{optional vector of parameter names to plot. Parameters matching
 show will be included.}
 
@@ -28,10 +26,6 @@ matching hide will be hidden.}
 
 \item{downsample}{boolean. Whether to downsample chain to make plotting more
 efficient.}
-
-\item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
-
-\item{chain}{which chain to plot.}
 
 \item{display}{boolean. Whether to show plots, if \code{FALSE} then plotting
 objects are returned without displaying.}

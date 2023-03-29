@@ -15,6 +15,7 @@ run_mcmc(
   rungs = 1L,
   chains = 1,
   beta_manual = NULL,
+  alpha = 1,
   target_acceptance = 0.44,
   cluster = NULL,
   coupling_on = TRUE,

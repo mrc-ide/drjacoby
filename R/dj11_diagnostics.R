@@ -27,3 +27,26 @@ acf_data <- function(x, lag){
   stats::acf(x, plot = FALSE, lag.max = lag)$acf
 }
 
+#' @title MC coupling rates
+#'
+#' @export
+mc_acceptance <- function(mcmc_runs, chains, rungs, burnin, samples){
+  mc_accept_burnin <- (dplyr::bind_rows(
+    sapply(mcmc_runs, '[', 'swap_acceptance_burnin')
+  ) / burnin) |>
+    dplyr::rename(value = swap_acceptance_burnin) |>
+    dplyr::mutate(
+      phase = "burnin",
+      chain = rep(1:chains, each = (rungs - 1))
+    )
+  mc_accept_sampling <- (dplyr::bind_rows(
+    sapply(mcmc_runs, '[', 'swap_acceptance_sampling')
+  ) / samples) |>
+    dplyr::rename(value = swap_acceptance_sampling) |>
+    dplyr::mutate(
+      phase = "sampling",
+      chain = rep(1:chains, each = (rungs - 1))
+    )
+  dplyr::bind_rows(mc_accept_burnin, mc_accept_sampling)
+}
+

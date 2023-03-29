@@ -7,16 +7,10 @@
 plot_autocorrelation(x, lag = 20, par = NULL, chain = 1, phase = "sampling")
 }
 \arguments{
-\item{x}{an object of class \code{drjacoby_output}}
-
 \item{lag}{maximum lag. Must be an integer between 1 and 500.}
 
 \item{par}{vector of parameter names. If \code{NULL} all parameters are
 plotted.}
-
-\item{chain}{which chain to plot.}
-
-\item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
 }
 \description{
 Plot autocorrelation for specified parameters

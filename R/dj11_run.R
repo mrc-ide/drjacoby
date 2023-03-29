@@ -11,6 +11,7 @@ run_mcmc <- function(
     rungs = 1L,
     chains = 1,
     beta_manual = NULL,
+    alpha = 1,
     target_acceptance = 0.44,
     cluster = NULL,
     coupling_on = TRUE,
@@ -19,7 +20,7 @@ run_mcmc <- function(
   
   # TODO: Update action
   # TODO: progress bar
-  # TODO: beta manual
+  # TODO: beta init rename
   # TODO: skip params
   # TODO: Inf likelihood
   
@@ -42,6 +43,11 @@ run_mcmc <- function(
     df_params$block <- 1
   }
   
+  if(is.null(beta_manual)){
+    beta_manual <- seq(1, 0, length.out = rungs)
+  }
+  beta_raised <- beta_manual^alpha
+  
   # List inputs - to distribute if running in parallel
   input <- lapply(1:chains, function(x){
     input <- list()
@@ -61,7 +67,7 @@ run_mcmc <- function(
     input$target_acceptance <- target_acceptance
     input$misc <- misc
     input$rungs <- rungs
-    input$beta_init <- seq(1, 0, length.out = rungs)
+    input$beta_init <- beta_raised
     input$swap <- coupling_on
     input$chains <- chains
     return(input)
@@ -101,13 +107,20 @@ run_mcmc <- function(
   out$diagnostics$rung_index <- NULL
   if(rungs > 1){
     # MC acceptance
-    out$diagnostics$mc_accept <- dplyr::bind_rows(
-      sapply(mcmc_runs, '[', 'swap_acceptance')
-    )
+    out$diagnostics$mc_accept <- mc_acceptance(
+      mcmc_runs = mcmc_runs,
+      chains = chains,
+      rungs = rungs,
+      burnin = burnin,
+      samples = samples
+      )
     # Rung index
     out$diagnostics$rung_index <- dplyr::bind_rows(
       sapply(mcmc_runs, '[', 'rung_index')
     )
+    # Thermodynamic power
+    out$diagnostics$rung_details <- data.frame(rung = 1:rungs,
+                                               thermodynamic_power = beta_raised)
   }
   
   # ESS
@@ -155,7 +168,7 @@ run_internal <- function(input){
     input$logprior <- get(input$logprior)
   }
   # Run mcmc
-    mcmc_out <- mcmc(input$theta_init, input$theta_names, input$theta_transform_type,  input$theta_min,  input$theta_max,
+  mcmc_out <- mcmc(input$theta_init, input$theta_names, input$theta_transform_type,  input$theta_min,  input$theta_max,
                    input$blocks_list, input$n_unique_blocks, input$data, input$burnin, input$samples, input$loglike, input$logprior,
                    input$target_acceptance, input$misc, input$rungs, input$beta_init, input$swap)
   # Add Chain, burnin, sampling columns
