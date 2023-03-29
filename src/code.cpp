@@ -4,6 +4,7 @@
 #include "Rmath.h"
 #include "utils.h"
 #include "transform.h"
+#include "progressbar.hpp"
 #include <iostream>
 #include <vector>
 using namespace cpp11;
@@ -29,7 +30,8 @@ list mcmc(
     int n_rungs,
     doubles beta_init,
     bool swap,
-    integers infer_parameter) {
+    integers infer_parameter,
+    const bool progress) {
   
   
   int iterations = burnin + samples;
@@ -107,6 +109,9 @@ list mcmc(
   }
   out(0, n_par + 1) = lp[0];
   out(0, n_par + 2) = ll[0];
+  
+  progressbar burnin_bar(burnin);
+  progressbar sampling_bar(samples);
   //////////////////////////////////////////////////////////////////////////////
   
   // Tuning ////////////////////////////////////////////////////////////////////
@@ -155,9 +160,21 @@ list mcmc(
   }
   //////////////////////////////////////////////////////////////////////////////
   
-  
   // Run ///////////////////////////////////////////////////////////////////////
   for(int i = 1; i < iterations; ++i){
+    if(progress){
+      if(i <= burnin){
+        if(i == 1){
+          message("\nBurn in progress:");
+        }
+        burnin_bar.update();
+      } else {
+        if(i == (burnin + 1)){
+          message("\nSampling progress:");
+        }
+        sampling_bar.update();
+      }
+    }
     for(int r = 0; r < n_rungs; ++r){
       rung_beta = beta[r];
       index = rung_index[r];
@@ -195,13 +212,13 @@ list mcmc(
           if(!std::isfinite(lp_prop) || std::isnan(lp_prop)){
             return writable::list({
               "error"_nm = "NA or Inf returned by log prior function",
-              "theta_prop"_nm = theta_prop
+                "theta_prop"_nm = theta_prop
             });
           }
           if(!std::isfinite(sum(block_ll_prop)) || std::isnan(sum(block_ll_prop))){
             return writable::list({
               "error"_nm = "NA or Inf returned by log likelihood function",
-              "theta_prop"_nm = theta_prop
+                "theta_prop"_nm = theta_prop
             });
           }
           
@@ -299,4 +316,4 @@ list mcmc(
       "swap_acceptance_burnin"_nm = swap_acceptance_burnin,
       "swap_acceptance_sampling"_nm = swap_acceptance_sampling
   });
-            }
+}

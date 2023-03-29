@@ -54,10 +54,4 @@ Assuming everything installed correctly, we need to load the package:
 library(drjacoby)
 ```
 
-You can test that the package is loaded and working by running the following command, which should produce this output:
-
-```{r}
-check_drjacoby_loaded()
-```
-
 
