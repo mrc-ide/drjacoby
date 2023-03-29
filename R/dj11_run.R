@@ -39,7 +39,7 @@ run_mcmc <- function(
   } else {
     df_params$init <- get_init(df_params, chains)
   }
-  if(!"blocks" %in% names(df_params)){
+  if(!"block" %in% names(df_params)){
     df_params$block <- 1
   }
   

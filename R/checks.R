@@ -43,3 +43,17 @@ logprior_return <- function(params, misc){
     dbeta(x = params["unit_interval"], shape1 = 3.0, shape2 = 3.0, log = TRUE)
  return(ret)
 }
+
+#' @title Blocked log likelihood function
+#' @export
+loglike_block <- function(params, data, misc){
+  block <- misc[["block"]]
+  if(block == 6){
+    out <- sum(dnorm(params[1:5], mean = 0, sd = 1, log = TRUE))
+  } else {
+    x <- data[[block]]
+    out <- sum(dnorm(x, mean = params[block], sd = 1, log = TRUE))
+  }
+  return(out)
+}
+
