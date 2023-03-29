@@ -27,7 +27,8 @@ list mcmc(
     writable::list misc,
     int n_rungs,
     doubles beta_init,
-    bool swap) {
+    bool swap,
+    integers infer_parameter) {
   
   
   int iterations = burnin + samples;
@@ -100,8 +101,8 @@ list mcmc(
   // Initialise output matrix
   writable::doubles_matrix<> out(iterations, n_par + 3);
   out(0, 0) = 1;
-  for(int p = 1; p < (n_par + 1); ++p){
-    out(0, p) =  theta[0][p];
+  for(int p = 0; p < n_par; ++p){
+    out(0, p + 1) =  theta[0][p];
   }
   out(0, n_par + 1) = lp[0];
   out(0, n_par + 2) = ll[0];
@@ -169,68 +170,70 @@ list mcmc(
       lp_prop = lp[r];
       
       for(int p = 0; p < n_par; ++p){
-        // Propose new value of phi
-        phi_prop[p] = Rf_rnorm(phi[index][p], proposal_sd[p][r]);
-        // Transform new phi_prop -> theta_prop
-        theta_prop[p] = phi_to_theta(phi_prop[p], transform_type[p], theta_min[p], theta_max[p]);
-        
-        // Copy blocked log-likelihood
-        for(int b = 0; b < n_unique_blocks; ++b){
-          block_ll_prop[b] = block_ll[index][b];
-        }
-        // For any block this parameter is associated with, update blocked log-likelihood
-        writable::integers blocks(blocks_list[p]);
-        for(int b = 0; b < blocks.size(); ++b) {
-          int block = blocks[b];
-          misc["block"] = as_sexp(block);
-          block_ll_prop[block - 1] = ll_f(theta_prop, data, misc);
-        }
-        // Update proposal prior
-        lp_prop = lp_f(theta_prop);
-        
-        // get parameter transformation adjustment
-        adjustment = get_adjustment(theta[index][p], theta_prop[p], transform_type[p], theta_min[p], theta_max[p]);
-        // calculate Metropolis-Hastings ratio
-        mh = rung_beta * (sum(block_ll_prop) - ll[r]) + (lp_prop - lp[r]) + adjustment;
-        // accept or reject move
-        mh_accept = log(Rf_runif(0, 1)) < mh;
-        if(mh_accept){
-          // Update theta
-          theta[index][p] = theta_prop[p];
-          // Update phi
-          phi[index][p] = phi_prop[p];
-          // Update blocked log likelihood
+        if(infer_parameter[p] == 1){
+          // Propose new value of phi
+          phi_prop[p] = Rf_rnorm(phi[index][p], proposal_sd[p][r]);
+          // Transform new phi_prop -> theta_prop
+          theta_prop[p] = phi_to_theta(phi_prop[p], transform_type[p], theta_min[p], theta_max[p]);
+          
+          // Copy blocked log-likelihood
           for(int b = 0; b < n_unique_blocks; ++b){
-            block_ll[index][b] = block_ll_prop[b];
+            block_ll_prop[b] = block_ll[index][b];
           }
-          // Update log likelihood
-          ll[r] = sum(block_ll_prop);
-          lp[r] = lp_prop;
-          // Robbins monroe step
-          if(i <= burnin){
-            proposal_sd[p][r] = exp(log(proposal_sd[p][r]) + (1 - target_acceptance) / sqrt(i));
+          // For any block this parameter is associated with, update blocked log-likelihood
+          writable::integers blocks(blocks_list[p]);
+          for(int b = 0; b < blocks.size(); ++b) {
+            int block = blocks[b];
+            misc["block"] = as_sexp(block);
+            block_ll_prop[block - 1] = ll_f(theta_prop, data, misc);
           }
-          acceptance[p][r] = acceptance[p][r] + 1;
-        } else {
-          // Revert theta prop
-          theta_prop[p] =  theta[index][p];
-          // Revert phi prop
-          phi_prop[p] = phi[index][p];
-          // Robbins monroe step
-          if(i <= burnin){
-            proposal_sd[p][r] = exp(log(proposal_sd[p][r]) - target_acceptance / sqrt(i));
+          // Update proposal prior
+          lp_prop = lp_f(theta_prop);
+          
+          // get parameter transformation adjustment
+          adjustment = get_adjustment(theta[index][p], theta_prop[p], transform_type[p], theta_min[p], theta_max[p]);
+          // calculate Metropolis-Hastings ratio
+          mh = rung_beta * (sum(block_ll_prop) - ll[r]) + (lp_prop - lp[r]) + adjustment;
+          // accept or reject move
+          mh_accept = log(Rf_runif(0, 1)) < mh;
+          if(mh_accept){
+            // Update theta
+            theta[index][p] = theta_prop[p];
+            // Update phi
+            phi[index][p] = phi_prop[p];
+            // Update blocked log likelihood
+            for(int b = 0; b < n_unique_blocks; ++b){
+              block_ll[index][b] = block_ll_prop[b];
+            }
+            // Update log likelihood
+            ll[r] = sum(block_ll_prop);
+            lp[r] = lp_prop;
+            // Robbins monroe step
+            if(i <= burnin){
+              proposal_sd[p][r] = exp(log(proposal_sd[p][r]) + (1 - target_acceptance) / sqrt(i));
+            }
+            acceptance[p][r] = acceptance[p][r] + 1;
+          } else {
+            // Revert theta prop
+            theta_prop[p] =  theta[index][p];
+            // Revert phi prop
+            phi_prop[p] = phi[index][p];
+            // Robbins monroe step
+            if(i <= burnin){
+              proposal_sd[p][r] = exp(log(proposal_sd[p][r]) - target_acceptance / sqrt(i));
+            }
           }
         }
-      }
-      // Only store values for the cold chain
-      if(r == 0){
-        out(i, 0) = i;
-        // Record parameters
-        for(int p = 0; p < n_par; ++p){
-          out(i, p + 1) =  theta[index][p];
+        // Only store values for the cold chain
+        if(r == 0){
+          out(i, 0) = i;
+          // Record parameters
+          for(int p = 0; p < n_par; ++p){
+            out(i, p + 1) =  theta[index][p];
+          }
+          out(i, n_par + 1) = lp[0];
+          out(i, n_par + 2) = ll[0];
         }
-        out(i, n_par + 1) = lp[0];
-        out(i, n_par + 2) = ll[0];
       }
     }
     

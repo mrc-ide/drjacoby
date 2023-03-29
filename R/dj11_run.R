@@ -48,28 +48,32 @@ run_mcmc <- function(
   }
   beta_raised <- beta_manual^alpha
   
+  infer_parameter <- as.integer(!df_params$max == df_params$min)
+  
   # List inputs - to distribute if running in parallel
   input <- lapply(1:chains, function(x){
-    input <- list()
-    input$chain = x
-    input$theta_init <- sapply(df_params$init, '[', x)
-    input$theta_names <- unlist(df_params$name)
-    input$theta_min <-  unlist(df_params$min)
-    input$theta_max <-  unlist(df_params$max)
-    input$theta_transform_type <- get_transform_type(input$theta_min, input$theta_max)
-    input$blocks_list <- lapply(df_params$block, as.integer)
-    input$n_unique_blocks <- length(unique(unlist(input$blocks_list)))
-    input$data <- data
-    input$burnin <- burnin
-    input$samples <- samples
-    input$loglike <- loglike
-    input$logprior <- logprior
-    input$target_acceptance <- target_acceptance
-    input$misc <- misc
-    input$rungs <- rungs
-    input$beta_init <- beta_raised
-    input$swap <- coupling_on
-    input$chains <- chains
+    input <- list(
+      chain = x,
+      theta_init = sapply(df_params$init, '[', x),
+      theta_names = unlist(df_params$name),
+      theta_min =  unlist(df_params$min),
+      theta_max =  unlist(df_params$max),
+      theta_transform_type = get_transform_type(unlist(df_params$min), unlist(df_params$max)),
+      blocks_list = lapply(df_params$block, as.integer),
+      n_unique_blocks = length(unique(unlist(lapply(df_params$block, as.integer)))),
+      data = data,
+      burnin = burnin,
+      samples = samples,
+      loglike = loglike,
+      logprior = logprior,
+      target_acceptance = target_acceptance,
+      misc = misc,
+      rungs = rungs,
+      beta_init = beta_raised,
+      swap = coupling_on,
+      chains = chains,
+      infer_parameter = infer_parameter
+    )
     return(input)
   })
   ##############################################################################
@@ -113,7 +117,7 @@ run_mcmc <- function(
       rungs = rungs,
       burnin = burnin,
       samples = samples
-      )
+    )
     # Rung index
     out$diagnostics$rung_index <- dplyr::bind_rows(
       sapply(mcmc_runs, '[', 'rung_index')
@@ -170,7 +174,7 @@ run_internal <- function(input){
   # Run mcmc
   mcmc_out <- mcmc(input$theta_init, input$theta_names, input$theta_transform_type,  input$theta_min,  input$theta_max,
                    input$blocks_list, input$n_unique_blocks, input$data, input$burnin, input$samples, input$loglike, input$logprior,
-                   input$target_acceptance, input$misc, input$rungs, input$beta_init, input$swap)
+                   input$target_acceptance, input$misc, input$rungs, input$beta_init, input$swap, input$infer_parameter)
   # Add Chain, burnin, sampling columns
   mcmc_out$output <- cbind(
     data.frame(chain = input$chain, phase = rep(c("burnin", "sampling"), c(input$burnin, input$samples))),
