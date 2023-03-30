@@ -34,7 +34,7 @@ list mcmc(
     doubles beta_init,
     bool swap,
     integers infer_parameter,
-    const bool progress) {
+    const bool silent) {
   
   message("\nChain " + std::to_string(chain));
   // start timer
@@ -175,7 +175,7 @@ list mcmc(
   
   // Run ///////////////////////////////////////////////////////////////////////
   for(int i = 1; i < iterations; ++i){
-    if(progress){
+    if(silent){
       if(i <= burnin){
         if(i == 1){
           message("Burn in progress:");

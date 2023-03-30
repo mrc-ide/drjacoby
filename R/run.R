@@ -78,7 +78,7 @@ run_mcmc <- function(
     target_acceptance = 0.44,
     cluster = NULL,
     coupling_on = TRUE,
-    progress = TRUE
+    silent = TRUE
 ){
 
   ### Inputs ###################################################################
@@ -130,7 +130,7 @@ run_mcmc <- function(
       swap = coupling_on,
       chains = chains,
       infer_parameter = infer_parameter,
-      progress = progress
+      silent = silent
     )
     return(input)
   })
@@ -235,7 +235,7 @@ run_internal <- function(input){
   # Run mcmc
   mcmc_out <- mcmc(input$chain, input$theta_init, input$theta_names, input$theta_transform_type,  input$theta_min,  input$theta_max,
                    input$blocks_list, input$n_unique_blocks, input$data, input$burnin, input$samples, input$loglike, input$logprior,
-                   input$target_acceptance, input$misc, input$rungs, input$beta_init, input$swap, input$infer_parameter, input$progress)
+                   input$target_acceptance, input$misc, input$rungs, input$beta_init, input$swap, input$infer_parameter, input$silent)
   
   if("error" %in% names(mcmc_out)){
     return(mcmc_out)
