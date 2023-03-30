@@ -36,7 +36,9 @@ list mcmc(
     integers infer_parameter,
     const bool silent) {
   
-  message("\nChain " + std::to_string(chain));
+  if(!silent){
+    message("\nChain " + std::to_string(chain));
+  }
   // start timer
   std::chrono::high_resolution_clock::time_point t0 =  std::chrono::high_resolution_clock::now();
   
@@ -324,7 +326,7 @@ list mcmc(
   }
   
   // end timer
-  chrono_timer(t0, "\nChain completed in ", true);
+  chrono_timer(t0, "\nChain completed in ", !silent);
   
   // Return outputs in a list
   return writable::list({
