@@ -4,14 +4,13 @@
 #include "Rmath.h"
 #include "utils.h"
 #include "transform.h"
-#include "progressbar.hpp"
+#include <RProgress.h>
 #include <iostream>
 #include <vector>
 
 
 using namespace cpp11;
 namespace writable = cpp11::writable;
-
 
 [[cpp11::register]]
 list mcmc(
@@ -36,6 +35,13 @@ list mcmc(
     integers infer_parameter,
     const bool silent) {
   
+  
+  RProgress::RProgress progress_burnin("Burn in progress [:bar] Time remaining: :eta");
+  progress_burnin.set_total(burnin);
+  progress_burnin.set_clear(false);
+  RProgress::RProgress progress_sampling("Sampling progress [:bar] Time remaining: :eta");
+  progress_sampling.set_total(samples);
+
   if(!silent){
     message("\nChain " + std::to_string(chain));
   }
@@ -121,9 +127,6 @@ list mcmc(
   }
   out(0, n_par + 1) = lp[0];
   out(0, n_par + 2) = ll[0];
-  
-  progressbar burnin_bar(burnin);
-  progressbar sampling_bar(samples - 1);
   //////////////////////////////////////////////////////////////////////////////
   
   // Tuning ////////////////////////////////////////////////////////////////////
@@ -146,7 +149,8 @@ list mcmc(
   }
   
   // Initialise total acceptance
-  int total_accept = 0;
+  double total_accept = 0;
+  double total_attempt = 0;
   
   // Initialise swap acceptance count vectors
   std::vector<int> swap_acceptance_burnin(n_rungs - 1);
@@ -179,15 +183,13 @@ list mcmc(
   for(int i = 1; i < iterations; ++i){
     if(!silent){
       if(i <= burnin){
-        if(i == 1){
-          message("Burn in progress:");
-        }
-        burnin_bar.update();
+        progress_burnin.tick();
       } else {
-        if(i == (burnin + 1)){
-          message("\nSampling progress:");
+        if(i == burnin + 1){
+          std::string ar = std::to_string(int(100 * (total_accept / total_attempt)));
+          message("Acceptance rate: " + ar + "%");
         }
-        sampling_bar.update();
+        progress_sampling.tick();
       }
     }
     for(int r = 0; r < n_rungs; ++r){
@@ -243,6 +245,7 @@ list mcmc(
           mh = rung_beta * (sum(block_ll_prop) - ll[r]) + (lp_prop - lp[r]) + adjustment;
           // accept or reject move
           mh_accept = log(Rf_runif(0, 1)) < mh;
+          total_attempt += 1;
           if(mh_accept){
             // Update theta
             theta[index][p] = theta_prop[p];

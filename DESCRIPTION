@@ -16,5 +16,6 @@ LazyData: true
 RoxygenNote: 7.2.3
 LinkingTo: 
     cpp11,
+    progress
 SystemRequirements: C++11
 BugReports: https://github.com/mrc-ide/drjacoby/issues

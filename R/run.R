@@ -134,6 +134,11 @@ run_mcmc <- function(
     )
     return(input)
   })
+  # Currently need to do this to get progress bar to display on windows 
+  # See https://github.com/r-lib/progress/issues/56
+  if(!silent){
+    Sys.setenv(RSTUDIO = "1")
+  }
   ##############################################################################
   
   ### Run MCMC #################################################################
