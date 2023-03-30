@@ -15,22 +15,22 @@ namespace writable = cpp11::writable;
 
 [[cpp11::register]]
 list mcmc(
-    int chain,
+    const int chain,
     doubles theta_init,
     strings theta_names,
     integers transform_type,
     doubles theta_min,
     doubles theta_max,
     list blocks_list,
-    int n_unique_blocks,
+    const int n_unique_blocks,
     list data,
-    int burnin,
-    int samples,
+    const int burnin,
+    const int samples,
     function ll_f,
     function lp_f,
     double target_acceptance,
     writable::list misc,
-    int n_rungs,
+    const int n_rungs,
     doubles beta_init,
     bool swap,
     integers infer_parameter,
@@ -40,8 +40,8 @@ list mcmc(
   // start timer
   std::chrono::high_resolution_clock::time_point t0 =  std::chrono::high_resolution_clock::now();
   
-  int iterations = burnin + samples;
-  int n_par = theta_init.size();
+  const int iterations = burnin + samples;
+  const int n_par = theta_init.size();
   
   // Initialisise variables, ////////////////////////////////////////////////////
   double mh;
@@ -51,7 +51,9 @@ list mcmc(
   misc.push_back({"block"_nm = 0});
   
   // Initialise matrix for theta
-  double theta[n_rungs][n_par];
+  //double theta[n_rungs][n_par];
+  std::vector<std::vector<double>> theta;
+  theta.resize(n_rungs, std::vector<double>(n_par));
   for(int i = 0; i < n_rungs; ++i){
     for(int j = 0; j < n_par; ++j){
       theta[i][j] = theta_init[j];
@@ -59,7 +61,7 @@ list mcmc(
   }
   // Initialise vector for proposal theta
   // Proposal theta is always the theta given to the likelihood function
-  // and therefore must be a named vectord, which is why it is writeable::doubles
+  // and therefore must be a named vector, which is why it is writeable::doubles
   writable::doubles theta_prop(n_par);
   for(int p = 0; p < n_par; ++p){
     theta_prop[p] = theta_init[p];
@@ -67,7 +69,8 @@ list mcmc(
   theta_prop.names() = theta_names;
   
   // Initialise value for transformed theta: phi
-  double phi[n_rungs][n_par];
+  std::vector<std::vector<double>> phi;
+  phi.resize(n_rungs, std::vector<double>(n_par));
   for(int i = 0; i < n_rungs; ++i){
     for(int j = 0; j < n_par; ++j){
       phi[i][j] = theta_to_phi(theta[i][j], transform_type[j], theta_min[j], theta_max[j]);
@@ -77,7 +80,8 @@ list mcmc(
   std::vector<double> phi_prop(n_par);
   
   // Initialise vector to store blocked log likelihood
-  double block_ll[n_rungs][n_unique_blocks];
+  std::vector<std::vector<double>> block_ll;
+  block_ll.resize(n_rungs, std::vector<double>(n_unique_blocks));
   for(int b = 0; b < n_unique_blocks; ++b) {
     for(int i = 0; i < n_rungs; ++i){
       misc["block"] = as_sexp(b + 1);
@@ -122,7 +126,8 @@ list mcmc(
   
   // Tuning ////////////////////////////////////////////////////////////////////
   // Initialise matrix for proposal sd
-  double proposal_sd[n_par][n_rungs];
+  std::vector<std::vector<double>> proposal_sd;
+  proposal_sd.resize(n_par, std::vector<double>(n_rungs));
   for(int i = 0; i < n_par; ++i){
     for(int j = 0; j < n_rungs; ++j){
       proposal_sd[i][j] = 0.1;
@@ -130,7 +135,8 @@ list mcmc(
   }
   
   // Initialise acceptance count matrix
-  int acceptance[n_par][n_rungs];
+  std::vector<std::vector<int>> acceptance;
+  acceptance.resize(n_par, std::vector<int>(n_rungs));
   for(int i = 0; i < n_par; ++i){
     for(int j = 0; j < n_rungs; ++j){
       acceptance[i][j] = 0;
@@ -152,9 +158,7 @@ list mcmc(
   //////////////////////////////////////////////////////////////////////////////
   
   // PT ////////////////////////////////////////////////////////////////////////
-  int rung;
   double rung_beta;
-  double rung_proposal_sd;
   int index;
   
   // Index of rungs, 0 = cold rung, n_rungs - 1 = hot rung
@@ -210,7 +214,7 @@ list mcmc(
           // For any block this parameter is associated with, update blocked log-likelihood
           writable::integers blocks(blocks_list[p]);
           for(int b = 0; b < blocks.size(); ++b) {
-            int block = blocks[b];
+            block = blocks[b];
             misc["block"] = as_sexp(block);
             block_ll_prop[block - 1] = cpp11::as_cpp<double>(ll_f(theta_prop, data, misc));
           }
@@ -320,7 +324,7 @@ list mcmc(
   }
   
   // end timer
-  double t_diff =  chrono_timer(t0, "\nChain completed in ", progress);
+  chrono_timer(t0, "\nChain completed in ", progress);
   
   // Return outputs in a list
   return writable::list({
