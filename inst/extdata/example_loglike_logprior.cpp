@@ -6,7 +6,7 @@ using namespace cpp11;
 // namespace writable = cpp11::writable;
 
 [[cpp11::register]]
-double loglike(doubles params, list data, list misc){
+double loglike_cpp11(doubles params, list data, list misc){
   // extract parameters
   double mu = params["mu"];
   double sigma = params["sigma"];
@@ -25,7 +25,7 @@ double loglike(doubles params, list data, list misc){
 }
 
 [[cpp11::register]]
-double logprior(doubles params, list misc){
+double logprior_cpp11(doubles params, list misc){
   
   // extract parameters
   double sigma = params["sigma"];
