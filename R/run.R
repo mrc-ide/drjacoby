@@ -72,7 +72,7 @@ run_mcmc <- function(
     samples,
     misc = list(),
     rungs = 1L,
-    chains = 1,
+    chains = 1L,
     beta_manual = NULL,
     alpha = 1,
     target_acceptance = 0.44,
@@ -188,19 +188,18 @@ run_mcmc <- function(
     out$diagnostics$rung_details <- data.frame(rung = 1:rungs,
                                                thermodynamic_power = beta_raised)
   }
-  
   # ESS
   out$diagnostics$ess <- ess(
     output = out$output,
-    parameter_names = input$theta_names
+    parameter_names = input[[1]]$theta_names
   )
   
   # Rhat (Gelman-Rubin diagnostic)
-  out$diagnostics$rhat <- NA
+  out$diagnostics$rhat <- "rhat not relevant for a single chain"
   if(chains > 1){
     out$diagnostics$rhat <- rhat(
       output = out$output,
-      parameter_names = input$theta_names,
+      parameter_names = input[[1]]$theta_names,
       n_chains = chains,
       samples= samples
     )
@@ -234,7 +233,7 @@ run_internal <- function(input){
     input$logprior <- get(input$logprior)
   }
   # Run mcmc
-  mcmc_out <- mcmc(input$theta_init, input$theta_names, input$theta_transform_type,  input$theta_min,  input$theta_max,
+  mcmc_out <- mcmc(input$chain, input$theta_init, input$theta_names, input$theta_transform_type,  input$theta_min,  input$theta_max,
                    input$blocks_list, input$n_unique_blocks, input$data, input$burnin, input$samples, input$loglike, input$logprior,
                    input$target_acceptance, input$misc, input$rungs, input$beta_init, input$swap, input$infer_parameter, input$progress)
   

@@ -5,8 +5,10 @@ date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Basic Example}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include = FALSE}
@@ -115,7 +117,7 @@ Be careful to ensure that your prior is defined over the same range as specified
 
 ## Running the MCMC
 
-Once we have all the elements above it is straightforward to run a basic MCMC in *drjacoby*. We simply input the four elements, along with the number of burn-in and sampling iterations. By default *drjacoby* prints progress bars to the console to keep you updated on the progress of the MCMC. When running in R markdown we can use the option `pb_markdown = TRUE` to print progress bars in a markdown-friendly way, although you will probably want to leave this option turned off when running interactively (simply delete this argument).
+Once we have all the elements above it is straightforward to run a basic MCMC in *drjacoby*. We simply input the four elements, along with the number of burn-in and sampling iterations. By default *drjacoby* prints progress bars to the console to keep you updated on the progress of the MCMC, we will turn them off here.
 
 ```{r}
 # run MCMC
@@ -123,9 +125,10 @@ mcmc <- run_mcmc(data = data_list,
                  df_params = df_params,
                  loglike = r_loglike,
                  logprior = r_logprior,
-                 burnin = 1e3,
-                 samples = 1e3,
-                 pb_markdown = TRUE)
+                 burnin = 1e3L,
+                 samples = 1e3L,
+                 chains = 5L,
+                 progress = TRUE)
 ```
 
 The output returned by the MCMC function has four parts: 1) an "output" dataframe containing raw posterior draws and other key elements at each iteration of the MCMC, 2) a "pt" dataframe containing output related to parallel tempering (if not used this just contains the log-likelihood and log-prior at every iteration), 3) a "diagnostics" object containing useful summaries such as the effective sample size of each parameter, 3) a "parameters" object containing a record of the exact parameters used to run the MCMC. We can take a peek at the first of these outputs:
@@ -152,7 +155,7 @@ Notice that for all five chains both `mu` and `sigma` move quickly from their in
 mcmc$diagnostics$rhat
 ```
 
-Values close to 1 indicate that the MCMC has converged (typically the threshold <1.1 is used). This output uses the variance between chains, and therefore is only availble when running multiple chains.
+Values close to 1 indicate that the MCMC has converged (typically the threshold <1.1 is used). This output uses the variance between chains, and therefore is only available when running multiple chains.
 
 By setting `phase = "sampling"` we can look at trace plots from the sampling phase only:
 
@@ -174,7 +177,7 @@ The final question is how confident can we be that our MCMC has actually explore
 
 ## Using C++ functions
 
-Although *drjacoby* is an R package, under the hood it is running C++ through the fantastic [Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html) package. When we pass an R likelihood function to `run_mcmc()`, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This creates a computational overhead that can be avoided by specifying functions directly within C++.
+Although *drjacoby* is an R package, under the hood it is running C++ through the fantastic [cpp11](https://cpp11.r-lib.org/) package. When we pass an R likelihood function to `run_mcmc()`, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This creates a computational overhead that can be avoided by specifying functions directly within C++.
 
 To use C++ a function within *drjacoby* we first write it out as stand-alone file. The example used here can be found inside the *inst/extdata* folder of the package, and reads as follows:
 
@@ -183,22 +186,23 @@ likelihood_filename <- system.file("extdata", "example_loglike_logprior.cpp", pa
 cat(readLines(likelihood_filename), sep = '\n')
 ```
 
-The logic of this function is identical to the R version above, just written in the language of C++. To allow drjacoby to talk to your C++ function(s) we need to have a linking function in this C++ file, in this case called `create_xptr()`. With this set up all we need to do is source our C++ file with `Rccp::sourcecpp()` then simply pass the function *names* to `run_mcmc()`. To make life easy when setting up a new C++ model, you can create a template for your cpp file with the `cpp_template()` function - then all you need to do is fill in the internals of the loglikehood and logprior.
+The logic of this function is identical to the R version above, just written in the language of C++. 
+With this set up all we need to do is source our C++ file with `cpp11::cpp_source()` then simply pass the function *names* to `run_mcmc()`. To make life easy when setting up a new C++ model, you can create a template for your cpp file with the `cpp_template()` function - then all you need to do is fill in the internals of the loglikehood and logprior.
 
 As before, there are some constraints on what this function must look like. It **must** take the same three input arguments described in the previous section, defined in the following formats:
 
-1. `params` must be an `Rcpp::NumericVector`
-3. `data` must be an `Rcpp::List`
-4. `misc` must be an `Rcpp::List`
+1. `params` must be an `cpp11::doubles`
+3. `data` must be an `cpp11::list`
+4. `misc` must be an `cpp11::list`
 
-All parameter values will be coerced to `double` within the code, hence parameters consisting of integer or boolean values should be dealt with as though they are continuous (for example `TRUE = 1.0`, `FALSE = 0.0`). Second, the function **must** return an object of class `SEXP`. The easiest way to achieve this is to calculate the raw return value as a double, and then to use the `Rcpp::wrap()` function to transform to `SEXP`. As before, the value returned should be the likelihood evaluated in **log space**.
+All parameter values will be coerced to `double` within the code, hence parameters consisting of integer or boolean values should be dealt with as though they are continuous (for example `TRUE = 1.0`, `FALSE = 0.0`). Second, the function **must** return an object of class `double`. As before, the value returned should be the likelihood evaluated in **log space**.
 
-Even though we are working in C++, we still have access to most of R's nice distribution functions through the `R::` namespace. For example, the `dnorm()` function can be accessed within C++ using `R::dnorm()`. A list of probability distributions available within Rcpp can be found [here](https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html#gamma-distribution).
+Even though we are working in C++, we still have access to versions of most of R's nice distribution functions through the `Rmath` library. For example, the `Rf_dnorm4()` function can be accessed within C++ using `R::dnorm()`. A list of probability distributions available within cpp11 can be found [here](https://github.com/atks/Rmath/blob/master/Rmath/Rmath.h).
 
 With these two functions in hand we can run the MCMC exactly the same as before, passing in the new functions:
 
 ```{r, echo = FALSE, comment = '', warning=FALSE}
-Rcpp::sourceCpp(likelihood_filename)
+cpp11::cpp_source(likelihood_filename)
 ```
 
 ```{r}
@@ -207,11 +211,12 @@ mcmc <- run_mcmc(data = data_list,
                  df_params = df_params,
                  loglike = "loglike",
                  logprior = "logprior",
-                 burnin = 1e3,
-                 samples = 1e3,
-                 pb_markdown = TRUE)
+                 burnin = 1e3L,
+                 samples = 1e3L,
+                 chains = 5L,
+                 progress = TRUE)
 ```
 
-You should see that this MCMC runs considerably faster than the previous version that used R functions. On the other hand, writing C++ functions is arguably more error-prone and difficult to debug than simple R functions. Hence, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R functions might be a better choice.
+You should notice that this MCMC runs faster than the previous version that used R functions. On the other hand, writing C++ functions is arguably more error-prone and difficult to debug than simple R functions. Hence, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R functions might be a better choice.
 
 This was a very easy problem, and so required no fancy MCMC tricks. The [next vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) demonstrates how *drjacoby* can be applied to a more challenging problem.

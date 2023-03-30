@@ -1,50 +1,38 @@
-#include <Rcpp.h>
-using namespace Rcpp;
+#include "cpp11.hpp"
+#include "cpp11/doubles.hpp"
+#include "Rmath.h"
+// #include <vector>
+using namespace cpp11;
+// namespace writable = cpp11::writable;
 
-// [[Rcpp::export]]
-SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
-  
+[[cpp11::register]]
+double loglike(doubles params, list data, list misc){
   // extract parameters
   double mu = params["mu"];
   double sigma = params["sigma"];
   
   // unpack data
-  std::vector<double> x = Rcpp::as< std::vector<double> >(data["x"]);
+  doubles x = data["x"];
   
   // sum log-likelihood over all data
   double ret = 0.0;
-  for (unsigned int i = 0; i < x.size(); ++i) {
-    ret += R::dnorm(x[i], mu, sigma, true);
+  for (int i = 0; i < x.size(); ++i) {
+    ret += Rf_dnorm4(x[i], mu, sigma, 1);
   }
   
   // return as SEXP
-  return Rcpp::wrap(ret);
+  return(ret);
 }
 
-// [[Rcpp::export]]
-SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
+[[cpp11::register]]
+double logprior(doubles params, list misc){
   
   // extract parameters
   double sigma = params["sigma"];
   
   // calculate logprior
-  double ret = -log(20.0) + R::dlnorm(sigma, 0.0, 1.0, true);
+  double ret = -log(20.0) + Rf_dnorm4(sigma, 0.0, 1.0, true);
   
   // return as SEXP
-  return Rcpp::wrap(ret);
-}
-
-// [[Rcpp::export]]  
-SEXP create_xptr(std::string function_name) {  
-  typedef SEXP (*funcPtr_likelihood)(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc);  
-  typedef SEXP (*funcPtr_prior)(Rcpp::NumericVector params, Rcpp::List misc);  
-  
-  if (function_name == "loglike"){
-    return(Rcpp::XPtr<funcPtr_likelihood>(new funcPtr_likelihood(&loglike)));
-  } 
-  if (function_name == "logprior"){
-    return(Rcpp::XPtr<funcPtr_prior>(new funcPtr_prior(&logprior)));
-  } 
-  
-  stop("cpp function %i not found", function_name);
+  return(ret);
 }

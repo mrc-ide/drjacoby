@@ -7,12 +7,15 @@
 #include "progressbar.hpp"
 #include <iostream>
 #include <vector>
+
+
 using namespace cpp11;
 namespace writable = cpp11::writable;
 
 
 [[cpp11::register]]
 list mcmc(
+    int chain,
     doubles theta_init,
     strings theta_names,
     integers transform_type,
@@ -33,6 +36,9 @@ list mcmc(
     integers infer_parameter,
     const bool progress) {
   
+  message("\nChain " + std::to_string(chain));
+  // start timer
+  std::chrono::high_resolution_clock::time_point t0 =  std::chrono::high_resolution_clock::now();
   
   int iterations = burnin + samples;
   int n_par = theta_init.size();
@@ -94,7 +100,7 @@ list mcmc(
   // Initialise log prior vector
   std::vector<double> lp(n_rungs);
   for(int r = 0; r < n_rungs; ++r){
-    lp[r] = cpp11::as_cpp<double>(lp_f(theta_prop));
+    lp[r] = cpp11::as_cpp<double>(lp_f(theta_prop, misc));
   }
   // Initialise proposal log prior
   double lp_prop;
@@ -131,6 +137,9 @@ list mcmc(
     }
   }
   
+  // Initialise total acceptance
+  int total_accept = 0;
+  
   // Initialise swap acceptance count vectors
   std::vector<int> swap_acceptance_burnin(n_rungs - 1);
   for(int i = 0; i < (n_rungs - 1); ++i){
@@ -160,12 +169,12 @@ list mcmc(
   }
   //////////////////////////////////////////////////////////////////////////////
   
-    // Run ///////////////////////////////////////////////////////////////////////
+  // Run ///////////////////////////////////////////////////////////////////////
   for(int i = 1; i < iterations; ++i){
     if(progress){
       if(i <= burnin){
         if(i == 1){
-          message("\nBurn in progress:");
+          message("Burn in progress:");
         }
         burnin_bar.update();
       } else {
@@ -206,7 +215,7 @@ list mcmc(
             block_ll_prop[block - 1] = cpp11::as_cpp<double>(ll_f(theta_prop, data, misc));
           }
           // Update proposal prior
-          lp_prop = cpp11::as_cpp<double>(lp_f(theta_prop));
+          lp_prop = cpp11::as_cpp<double>(lp_f(theta_prop, misc));
           
           // Check for NA/NaN/Inf in likelihood or prior
           if(!std::isfinite(lp_prop) || std::isnan(lp_prop)){
@@ -245,6 +254,9 @@ list mcmc(
               proposal_sd[p][r] = exp(log(proposal_sd[p][r]) + (1 - target_acceptance) / sqrt(i));
             }
             acceptance[p][r] = acceptance[p][r] + 1;
+            if(r == 0){
+              total_accept += 1;
+            }
           } else {
             // Revert theta prop
             theta_prop[p] =  theta[index][p];
@@ -306,6 +318,9 @@ list mcmc(
     proposal_sd_out[i] = proposal_sd[i][0];
     acceptance_out[i] = acceptance[i][0];
   }
+  
+  // end timer
+  double t_diff =  chrono_timer(t0, "\nChain completed in ", progress);
   
   // Return outputs in a list
   return writable::list({
