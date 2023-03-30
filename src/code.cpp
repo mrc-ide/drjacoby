@@ -324,7 +324,7 @@ list mcmc(
   }
   
   // end timer
-  chrono_timer(t0, "\nChain completed in ", progress);
+  chrono_timer(t0, "\nChain completed in ", true);
   
   // Return outputs in a list
   return writable::list({
