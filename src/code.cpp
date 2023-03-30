@@ -175,7 +175,7 @@ list mcmc(
   
   // Run ///////////////////////////////////////////////////////////////////////
   for(int i = 1; i < iterations; ++i){
-    if(silent){
+    if(!silent){
       if(i <= burnin){
         if(i == 1){
           message("Burn in progress:");
