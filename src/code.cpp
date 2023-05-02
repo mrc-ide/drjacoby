@@ -14,38 +14,47 @@ namespace writable = cpp11::writable;
 
 [[cpp11::register]]
 list mcmc(
+    // Options
     const int chain,
+    const bool burnin,
+    const int iterations,
+    const bool silent,
+    // Parameters
     doubles theta_init,
     strings theta_names,
     integers transform_type,
     doubles theta_min,
     doubles theta_max,
-    list blocks_list,
-    const int n_unique_blocks,
+    integers infer_parameter,
+    // Data, likelihood and prior
     list data,
-    const bool burnin,
-    const int iterations,
     function ll_f,
     function lp_f,
-    double target_acceptance,
     writable::list misc,
-    const int n_rungs,
-    doubles beta_init,
+    // Tuning and acceptance
+    proposal_sd_init, // TODO: New element to pass in and out
+    acceptance_init, // TODO: New element to pass in and out
+    double target_acceptance,
+    // PT
     bool swap,
-    integers infer_parameter,
-    const bool silent) {
+    const int n_rungs, // TODO: Should we infer n_rungs from length of beta?
+    doubles beta_init,
+    swap_acceptance_init, // TODO: New element to pass in and out
+    // Blocks
+    list blocks_list,
+    const int n_unique_blocks
+) {
 
   // start timer
   std::chrono::high_resolution_clock::time_point t0 =  std::chrono::high_resolution_clock::now();
+  RProgress::RProgress progress("Progress [:bar] Time remaining: :eta");
+  progress.set_total(iterations);
   if(!silent){
-    RProgress::RProgress progress("Progress [:bar] Time remaining: :eta");
-    progress.set_total(iterations);
     message("\nChain " + std::to_string(chain));
   }
 
-  const int n_par = theta_init.size();
-  
   // Initialisise variables ////////////////////////////////////////////////////
+  const int n_par = theta_init.size();
   double mh;
   bool mh_accept;
   double adjustment;
@@ -53,7 +62,7 @@ list mcmc(
   misc.push_back({"block"_nm = 0});
   
   // Initialise matrix for theta
-  //double theta[n_rungs][n_par];
+  // double theta[n_rungs][n_par];
   std::vector<std::vector<double>> theta;
   theta.resize(n_rungs, std::vector<double>(n_par));
   for(int i = 0; i < n_rungs; ++i){
@@ -125,11 +134,12 @@ list mcmc(
   
   // Tuning ////////////////////////////////////////////////////////////////////
   // Initialise matrix for proposal sd
+  // double[n_par][n_rungs]
   std::vector<std::vector<double>> proposal_sd;
   proposal_sd.resize(n_par, std::vector<double>(n_rungs));
   for(int i = 0; i < n_par; ++i){
     for(int j = 0; j < n_rungs; ++j){
-      proposal_sd[i][j] = 0.1;
+      proposal_sd[i][j] = proposal_sd_init[i][j];
     }
   }
   
@@ -138,18 +148,14 @@ list mcmc(
   acceptance.resize(n_par, std::vector<int>(n_rungs));
   for(int i = 0; i < n_par; ++i){
     for(int j = 0; j < n_rungs; ++j){
-      acceptance[i][j] = 0;
+      acceptance[i][j] = acceptance_init[i][j];
     }
   }
-  
-  // Initialise total acceptance
-  double total_accept = 0;
-  double total_attempt = 0;
   
   // Initialise swap acceptance count vector
   std::vector<int> swap_acceptance(n_rungs - 1);
   for(int i = 0; i < (n_rungs - 1); ++i){
-    swap_acceptance[i] = 0;
+    swap_acceptance[i] = swap_acceptance_init[i];
   }
   //////////////////////////////////////////////////////////////////////////////
   
@@ -227,7 +233,6 @@ list mcmc(
           mh = rung_beta * (sum(block_ll_prop) - ll[r]) + (lp_prop - lp[r]) + adjustment;
           // accept or reject move
           mh_accept = log(Rf_runif(0, 1)) < mh;
-          total_attempt += 1;
           if(mh_accept){
             // Update theta
             theta[index][p] = theta_prop[p];
@@ -245,9 +250,6 @@ list mcmc(
               proposal_sd[p][r] = exp(log(proposal_sd[p][r]) + (1 - target_acceptance) / sqrt(i));
             }
             acceptance[p][r] = acceptance[p][r] + 1;
-            if(r == 0){
-              total_accept += 1;
-            }
           } else {
             // Revert theta prop
             theta_prop[p] =  theta[index][p];
