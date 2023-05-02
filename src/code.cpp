@@ -23,8 +23,8 @@ list mcmc(
     list blocks_list,
     const int n_unique_blocks,
     list data,
-    const int burnin,
-    const int samples,
+    const bool burnin,
+    const int iterations,
     function ll_f,
     function lp_f,
     double target_acceptance,
@@ -34,24 +34,18 @@ list mcmc(
     bool swap,
     integers infer_parameter,
     const bool silent) {
-  
-  
-  RProgress::RProgress progress_burnin("Burn in progress [:bar] Time remaining: :eta");
-  progress_burnin.set_total(burnin);
-  progress_burnin.set_clear(false);
-  RProgress::RProgress progress_sampling("Sampling progress [:bar] Time remaining: :eta");
-  progress_sampling.set_total(samples);
 
-  if(!silent){
-    message("\nChain " + std::to_string(chain));
-  }
   // start timer
   std::chrono::high_resolution_clock::time_point t0 =  std::chrono::high_resolution_clock::now();
-  
-  const int iterations = burnin + samples;
+  if(!silent){
+    RProgress::RProgress progress("Progress [:bar] Time remaining: :eta");
+    progress.set_total(iterations);
+    message("\nChain " + std::to_string(chain));
+  }
+
   const int n_par = theta_init.size();
   
-  // Initialisise variables, ////////////////////////////////////////////////////
+  // Initialisise variables ////////////////////////////////////////////////////
   double mh;
   bool mh_accept;
   double adjustment;
@@ -152,14 +146,10 @@ list mcmc(
   double total_accept = 0;
   double total_attempt = 0;
   
-  // Initialise swap acceptance count vectors
-  std::vector<int> swap_acceptance_burnin(n_rungs - 1);
+  // Initialise swap acceptance count vector
+  std::vector<int> swap_acceptance(n_rungs - 1);
   for(int i = 0; i < (n_rungs - 1); ++i){
-    swap_acceptance_burnin[i] = 0;
-  }
-  std::vector<int> swap_acceptance_sampling(n_rungs - 1);
-  for(int i = 0; i < (n_rungs - 1); ++i){
-    swap_acceptance_sampling[i] = 0;
+    swap_acceptance[i] = 0;
   }
   //////////////////////////////////////////////////////////////////////////////
   
@@ -182,15 +172,7 @@ list mcmc(
   // Run ///////////////////////////////////////////////////////////////////////
   for(int i = 1; i < iterations; ++i){
     if(!silent){
-      if(i <= burnin){
-        progress_burnin.tick();
-      } else {
-        if(i == burnin + 1){
-          std::string ar = std::to_string(int(100 * (total_accept / total_attempt)));
-          message("Acceptance rate: " + ar + "%");
-        }
-        progress_sampling.tick();
-      }
+        progress.tick();
     }
     for(int r = 0; r < n_rungs; ++r){
       rung_beta = beta[r];
@@ -272,7 +254,7 @@ list mcmc(
             // Revert phi prop
             phi_prop[p] = phi[index][p];
             // Robbins monroe step
-            if(i <= burnin){
+            if(burnin){
               proposal_sd[p][r] = exp(log(proposal_sd[p][r]) - target_acceptance / sqrt(i));
             }
           }
@@ -306,11 +288,7 @@ list mcmc(
         if(accept_move){
           int ri1 = rung_index[r];
           int ri2 = rung_index[r - 1];
-          if(i <= burnin){
-            swap_acceptance_burnin[r - 1] += 1;
-          } else {
-            swap_acceptance_sampling[r - 1] += 1;
-          }
+          swap_acceptance[r - 1] += 1;
           rung_index[r] = ri2;
           rung_index[r - 1] = ri1;
           ll[r] = loglike2;
@@ -337,7 +315,6 @@ list mcmc(
       "proposal_sd"_nm = proposal_sd_out,
       "acceptance"_nm = acceptance_out,
       "rung_index"_nm = rung_index,
-      "swap_acceptance_burnin"_nm = swap_acceptance_burnin,
-      "swap_acceptance_sampling"_nm = swap_acceptance_sampling
+      "swap_acceptance"_nm = swap_acceptance,
   });
 }
