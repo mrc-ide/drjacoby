@@ -18,6 +18,7 @@ list mcmc(
     const int chain,
     const bool burnin,
     const int iterations,
+    const int iteration_counter_init,  // TODO: New element to pass in and out
     const bool silent,
     // Parameters
     doubles theta_init,
@@ -44,7 +45,7 @@ list mcmc(
     list blocks_list,
     const int n_unique_blocks
 ) {
-
+  
   // start timer
   std::chrono::high_resolution_clock::time_point t0 =  std::chrono::high_resolution_clock::now();
   RProgress::RProgress progress("Progress [:bar] Time remaining: :eta");
@@ -52,9 +53,10 @@ list mcmc(
   if(!silent){
     message("\nChain " + std::to_string(chain));
   }
-
+  
   // Initialisise variables ////////////////////////////////////////////////////
   const int n_par = theta_init.size();
+  int iteration_counter = iteration_counter_init;
   double mh;
   bool mh_accept;
   double adjustment;
@@ -178,7 +180,7 @@ list mcmc(
   // Run ///////////////////////////////////////////////////////////////////////
   for(int i = 1; i < iterations; ++i){
     if(!silent){
-        progress.tick();
+      progress.tick();
     }
     for(int r = 0; r < n_rungs; ++r){
       rung_beta = beta[r];
@@ -246,8 +248,8 @@ list mcmc(
             ll[r] = sum(block_ll_prop);
             lp[r] = lp_prop;
             // Robbins monroe step
-            if(i <= burnin){
-              proposal_sd[p][r] = exp(log(proposal_sd[p][r]) + (1 - target_acceptance) / sqrt(i));
+            if(burnin){
+              proposal_sd[p][r] = exp(log(proposal_sd[p][r]) + (1 - target_acceptance) / sqrt(iteration_counter));
             }
             acceptance[p][r] = acceptance[p][r] + 1;
           } else {
@@ -257,7 +259,7 @@ list mcmc(
             phi_prop[p] = phi[index][p];
             // Robbins monroe step
             if(burnin){
-              proposal_sd[p][r] = exp(log(proposal_sd[p][r]) - target_acceptance / sqrt(i));
+              proposal_sd[p][r] = exp(log(proposal_sd[p][r]) - target_acceptance / sqrt(iteration_counter));
             }
           }
         }
@@ -298,6 +300,7 @@ list mcmc(
         }
       }
     }
+    iteration_counter ++;
   }
   
   // Extract the cold chain proposal sd and acceptance rates for output
@@ -315,6 +318,7 @@ list mcmc(
   return writable::list({
     "output"_nm = out,
       "proposal_sd"_nm = proposal_sd_out,
+      "iteration_counter"_nm = iteration_counter,
       "acceptance"_nm = acceptance_out,
       "rung_index"_nm = rung_index,
       "swap_acceptance"_nm = swap_acceptance,
