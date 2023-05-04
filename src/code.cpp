@@ -33,14 +33,13 @@ list mcmc(
     function lp_f,
     writable::list misc,
     // Tuning and acceptance
-    proposal_sd_init, // TODO: New element to pass in and out
-    acceptance_init, // TODO: New element to pass in and out
+    doubles_matrix<> proposal_sd_init, // TODO: New element to pass in and out
+    integers_matrix<> acceptance_init, // TODO: New element to pass in and out
     double target_acceptance,
     // PT
     bool swap,
-    const int n_rungs, // TODO: Should we infer n_rungs from length of beta?
     doubles beta_init,
-    swap_acceptance_init, // TODO: New element to pass in and out
+    const integers swap_acceptance_init, // TODO: New element to pass in and out
     // Blocks
     list blocks_list,
     const int n_unique_blocks
@@ -56,6 +55,7 @@ list mcmc(
   
   // Initialisise variables ////////////////////////////////////////////////////
   const int n_par = theta_init.size();
+  const int n_rungs = beta_init.size();
   int iteration_counter = iteration_counter_init;
   double mh;
   bool mh_accept;
@@ -141,7 +141,7 @@ list mcmc(
   proposal_sd.resize(n_par, std::vector<double>(n_rungs));
   for(int i = 0; i < n_par; ++i){
     for(int j = 0; j < n_rungs; ++j){
-      proposal_sd[i][j] = proposal_sd_init[i][j];
+      proposal_sd[i][j] = proposal_sd_init(i,j);
     }
   }
   
@@ -150,7 +150,7 @@ list mcmc(
   acceptance.resize(n_par, std::vector<int>(n_rungs));
   for(int i = 0; i < n_par; ++i){
     for(int j = 0; j < n_rungs; ++j){
-      acceptance[i][j] = acceptance_init[i][j];
+      acceptance[i][j] = acceptance_init(i,j);
     }
   }
   
@@ -196,6 +196,7 @@ list mcmc(
       
       for(int p = 0; p < n_par; ++p){
         if(infer_parameter[p] == 1){
+          std::cout << proposal_sd[p][r];
           // Propose new value of phi
           phi_prop[p] = Rf_rnorm(phi[index][p], proposal_sd[p][r]);
           // Transform new phi_prop -> theta_prop
