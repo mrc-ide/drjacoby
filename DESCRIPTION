@@ -19,3 +19,5 @@ LinkingTo:
     progress
 SystemRequirements: C++11
 BugReports: https://github.com/mrc-ide/drjacoby/issues
+Imports: 
+    R6
