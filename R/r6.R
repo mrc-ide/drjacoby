@@ -19,6 +19,7 @@ dj <- R6::R6Class(
     theta_min =  NULL,
     theta_max =  NULL,
     theta_transform_type = NULL,
+    infer_parameter = NULL,
     
     chains = NULL,
     
@@ -27,17 +28,22 @@ dj <- R6::R6Class(
     
     proposal_sd = NULL,
     target_acceptance = NULL,
+    acceptance_counter = NULL,
     
     rungs = 1,
-    n_rungs = 1,
     beta = 1,
+    swap = FALSE, # TODO: user input or inferred from beta?
+    swap_acceptance_counter = rep(0L, 1),
+    
+    iteration = 1L,
     
     output = NULL
   ),
   
   public = list(
     ### Public variables ###
-
+    error_debug = NULL,
+    
     ### Initialisation ###
     initialize = function(data, df_params, loglikelihood, logprior, chains = 1L, misc = list()){
       stopifnot(is.list(data))
@@ -57,55 +63,129 @@ dj <- R6::R6Class(
       private$theta_min = unlist(df_params$min)
       private$theta_max = unlist(df_params$max)
       private$theta_transform_type = get_transform_type(private$theta_min,  private$theta_max)
-      private$proposal_sd = rep(1, length(private$theta))
+      private$proposal_sd = matrix(0.1, nrow = length(private$theta), ncol = private$rungs)
+      private$infer_parameter = as.integer(!(private$theta_min == private$theta_max))
       
       private$chains = chains
       
       private$blocks = set_blocks(df_params)
       private$n_unique_blocks = length(unique(unlist(private$blocks)))
+      
+      private$acceptance_counter = matrix(0L, nrow = length(private$theta), ncol = private$rungs)
     },
     
     #### Public functions ###
     tune = function(iterations){
       private$tune_called <- TRUE
-      # For Bob
+      
+      # As well as updating internal elements as in burnin,
+      # the following will all need to be updated if this function is called:
+        ## private$rungs
+        ## private$beta
+        ## private$swap = FALSE
+        ## private$swap_acceptance_counter
+        ## private$proposal_sd - to increase ncol to match rungs
+        ## private$acceptance_counter  - to increase ncol to match rungs
+      
     },
     
-    burn = function(iterations, target_acceptance = 0.44){
+    burn = function(iterations, target_acceptance = 0.44, silent = FALSE){
+      stopifnot(is.integer(iterations))
+      
       private$burn_called <- TRUE
       private$target_acceptance <- target_acceptance
       
       burnin = TRUE
+      chain = 1L ## TODO loop over chains
+      
       raw_output <- mcmc(
         chain,
         burnin,
         iterations,
-        ## iteration_counter_init,
-        ## silent,
-        private$theta,
+        silent,
+        private$theta[[chain]],
         private$theta_names,
-        ##get_transform_type(unlist(df_params$min), unlist(df_params$max)),
+        private$theta_transform_type,
         private$theta_min,
         private$theta_max,
-        ##infer_parameter,
+        private$infer_parameter,
         private$data,
         private$loglikelihood,
         private$logprior,
         private$misc,
         private$proposal_sd,
-        # acceptance_init,
+        private$acceptance_counter,
         private$target_acceptance,
-        #swap,
-        #beta_init,
-        #swap_acceptance_init,
+        private$swap,
+        private$beta,
+        private$swap_acceptance_counter,
         private$blocks,
-        private$n_unique_blocks
+        private$n_unique_blocks,
+        private$iteration
       )
+      if("error" %in% names(raw_output)){
+        self$error_debug = raw_output
+        message("Error in mcmc, check $error_debug")
+      }
+      # Update user output
+      private$output <- append_output(
+        current = private$output,
+        new = raw_output$output,
+        phase = "burn",
+        theta_names = private$theta_names
+      )
+      # Update internal states
+      private$iteration = private$iteration + iterations
+      private$proposal_sd = raw_output$proposal_sd
+      private$acceptance_counter = as.integer(raw_output$acceptance)
+      private$theta[[chain]] = private$output[nrow(private$output),private$theta_names]
+      
       
     },
     
-    sample = function(iterations){
+    sample = function(iterations, silent = FALSE){
+      stopifnot(is.integer(iterations))
+      
       private$sample_called <- TRUE
+      
+      burnin = FALSE
+      chain = 1L ## TODO loop over chains
+      
+      raw_output <- mcmc(
+        chain,
+        burnin,
+        iterations,
+        silent,
+        private$theta[[chain]],
+        private$theta_names,
+        private$theta_transform_type,
+        private$theta_min,
+        private$theta_max,
+        private$infer_parameter,
+        private$data,
+        private$loglikelihood,
+        private$logprior,
+        private$misc,
+        private$proposal_sd,
+        private$acceptance_counter,
+        private$target_acceptance,
+        private$swap,
+        private$beta,
+        private$swap_acceptance_counter,
+        private$blocks,
+        private$n_unique_blocks,
+        private$iteration
+      )
+      # Update user output
+      private$output <- append_output(
+        current = private$output,
+        new = raw_output$output,
+        phase = "sample",
+        theta_names = private$theta_names
+      )
+      # Update internal states
+      private$iteration = private$iteration + iterations
+      private$theta[[chain]] = private$output[nrow(private$output),private$theta_names]
       
     },
     

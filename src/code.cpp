@@ -18,7 +18,6 @@ list mcmc(
     const int chain,
     const bool burnin,
     const int iterations,
-    const int iteration_counter_init,  // TODO: New element to pass in and out
     const bool silent,
     // Parameters
     doubles theta_init,
@@ -42,7 +41,8 @@ list mcmc(
     const integers swap_acceptance_init, // TODO: New element to pass in and out
     // Blocks
     list blocks_list,
-    const int n_unique_blocks
+    const int n_unique_blocks,
+    const int iteration_counter_init
 ) {
   
   // start timer
@@ -196,7 +196,6 @@ list mcmc(
       
       for(int p = 0; p < n_par; ++p){
         if(infer_parameter[p] == 1){
-          std::cout << proposal_sd[p][r];
           // Propose new value of phi
           phi_prop[p] = Rf_rnorm(phi[index][p], proposal_sd[p][r]);
           // Transform new phi_prop -> theta_prop
