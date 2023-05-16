@@ -10,7 +10,7 @@ estimate_ess <- function(output, parameter_names){
   return(ess)
 }
 
-rhat <- function(output, parameter_names, n_chains, samples){
+estimate_rhat <- function(output, parameter_names, n_chains, samples){
   rhat_est <- c()
   for (p in seq_along(parameter_names)) {
     rhat_est[p] <- output[output$phase == "sample", c("chain", parameter_names[p])] |>
@@ -18,6 +18,16 @@ rhat <- function(output, parameter_names, n_chains, samples){
   }
   names(rhat_est) <- parameter_names
   return(rhat_est)
+}
+
+estimate_acceptance_rate <- function(acceptance_counter, burn_iterations, chains, theta_names){
+  ar <- lapply(acceptance_counter, function(x){
+    out <- x[1,] / (burn_iterations / chains)
+    names(out) <- theta_names
+    return(out)
+  })
+  names(ar) <- paste0("Chain_", 1:chains)
+  return(ar)
 }
 
 #' @title Estimate autocorrelation

@@ -7,7 +7,11 @@ set_init <- function(df_params, chains){
   } else {
     df_params$init <- get_init(df_params, chains)
   }
-  return(df_params$init)
+  init <- lapply(1:chains, function(x){
+    sapply(df_params$init, '[', x)
+  }
+  )
+  return(init)
 }
 
 check_init <- function(df_params, chains){

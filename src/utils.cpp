@@ -20,7 +20,7 @@ double chrono_timer(std::chrono::high_resolution_clock::time_point &t0, std::str
   
   // print time difference
   if (print_diff) {
-    message_before += std::to_string(time_double) + " seconds";
+    message_before += std::to_string(time_double) + " seconds\n";
     cpp11::message(message_before);
   }
   

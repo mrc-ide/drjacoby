@@ -53,7 +53,7 @@ list mcmc(
   RProgress::RProgress progress("Progress [:bar] Time remaining: :eta");
   progress.set_total(iterations);
   if(!silent){
-    message("\nChain " + std::to_string(chain));
+    message("Chain " + std::to_string(chain));
   }
   
   // Initialise RNG ////////////////////////////////////////////////////////////
@@ -323,7 +323,7 @@ list mcmc(
   }
   
   // end timer
-  chrono_timer(t0, "\nChain completed in ", !silent);
+  chrono_timer(t0, "\nDuration ", !silent);
   
   // Return outputs in a list
   return writable::list({
