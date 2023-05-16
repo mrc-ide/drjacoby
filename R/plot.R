@@ -206,9 +206,9 @@ create_par_plot <- function(
   
   # Autocorrealtion
   p3 <- ggplot2::ggplot(data = ac_data,
-                        ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$Autocorrelation)) + 
+                        ggplot2::aes(x = .data$Autocorrelation, y = .data$lag)) +
+    ggplot2::geom_bar(stat = "identity") + 
     ggplot2::geom_hline(yintercept = 0, lty = 2, col = "red") + 
-    ggplot2::geom_segment(size = 1.5) +
     ggplot2::theme_bw() +
     ggplot2::ylab("Autocorrelation") +
     ggplot2::xlab("Lag") +
