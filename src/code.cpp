@@ -7,7 +7,7 @@
 #include <RProgress.h>
 #include <iostream>
 #include <vector>
-
+#include <dust/r/random.hpp>
 
 using namespace cpp11;
 namespace writable = cpp11::writable;
@@ -42,7 +42,9 @@ list mcmc(
     // Blocks
     list blocks_list,
     const int n_unique_blocks,
-    const int iteration_counter_init
+    const int iteration_counter_init,
+    // RNG
+    cpp11::sexp rng_ptr
 ) {
   
   // start timer
@@ -52,6 +54,11 @@ list mcmc(
   if(!silent){
     message("\nChain " + std::to_string(chain));
   }
+  
+  // Initialise RNG ////////////////////////////////////////////////////////////
+  auto rng = dust::random::r::rng_pointer_get<dust::random::xoshiro256plus>(rng_ptr);
+  auto& state = rng->state(chain - 1);
+  //////////////////////////////////////////////////////////////////////////////
   
   // Initialisise variables ////////////////////////////////////////////////////
   const int n_par = theta_init.size();
@@ -234,7 +241,7 @@ list mcmc(
           // calculate Metropolis-Hastings ratio
           mh = rung_beta * (sum(block_ll_prop) - ll[r]) + (lp_prop - lp[r]) + adjustment;
           // accept or reject move
-          mh_accept = log(Rf_runif(0, 1)) < mh;
+          mh_accept = log(dust::random::random_real<double>(state)) < mh;
           if(mh_accept){
             // Update theta
             theta[index][p] = theta_prop[p];
@@ -287,7 +294,7 @@ list mcmc(
         
         double acceptance = (loglike2*rung_beta1 + loglike1*rung_beta2) - (loglike1*rung_beta1 + loglike2*rung_beta2);
         // accept or reject move
-        bool accept_move = log(Rf_runif(0, 1)) < acceptance;
+        bool accept_move = log(dust::random::random_real<double>(state)) < acceptance;
         
         if(accept_move){
           int ri1 = rung_index[r];

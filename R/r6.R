@@ -37,7 +37,8 @@ dj <- R6::R6Class(
     
     iteration = 1L,
     
-    output = NULL
+    output = NULL,
+    rng_ptr = NULL
   ),
   
   public = list(
@@ -72,6 +73,8 @@ dj <- R6::R6Class(
       private$n_unique_blocks = length(unique(unlist(private$blocks)))
       
       private$acceptance_counter = matrix(0L, nrow = length(private$theta), ncol = private$rungs)
+      
+      private$rng_ptr = dust::dust_rng_pointer$new(n_streams = private$chains)
     },
     
     #### Public functions ###
@@ -121,7 +124,8 @@ dj <- R6::R6Class(
         private$swap_acceptance_counter,
         private$blocks,
         private$n_unique_blocks,
-        private$iteration
+        private$iteration,
+        private$rng_ptr
       )
       if("error" %in% names(raw_output)){
         self$error_debug = raw_output
@@ -174,7 +178,8 @@ dj <- R6::R6Class(
         private$swap_acceptance_counter,
         private$blocks,
         private$n_unique_blocks,
-        private$iteration
+        private$iteration,
+        private$rng_ptr
       )
       # Update user output
       private$output <- append_output(

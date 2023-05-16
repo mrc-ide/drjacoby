@@ -13,13 +13,13 @@ run_mcmc(
   samples,
   misc = list(),
   rungs = 1L,
-  chains = 1,
+  chains = 1L,
   beta_manual = NULL,
   alpha = 1,
   target_acceptance = 0.44,
   cluster = NULL,
   coupling_on = TRUE,
-  progress = TRUE
+  silent = TRUE
 )
 }
 \arguments{
@@ -74,6 +74,8 @@ rungs. The option of deactivating coupling has been retained for general
 interest and debugging purposes only. If this parameter is \code{FALSE}
 then parallel tempering will have no impact on MCMC mixing.}
 
+\item{silent}{whether to suppress all console output.}
+
 \item{pb_markdown}{whether to run progress bars in markdown mode, meaning
 they are only updated when they reach 100\% to avoid large amounts of output
 being printed to markdown files.}
@@ -86,8 +88,6 @@ from a project, but may be undesirable when datasets are very large.}
 chains are also stored inside the \code{pt} element of the project output.
 If \code{FALSE} (the default) only log-likelihoods and log-priors are
 stored from heated chains.}
-
-\item{silent}{whether to suppress all console output.}
 }
 \description{
 Run MCMC either with or without parallel tempering turned on.
