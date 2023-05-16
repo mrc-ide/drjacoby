@@ -204,6 +204,14 @@ dj <- R6::R6Class(
     
     acceptance_rate = function(){
       private$acceptance_counter / private$burn_iterations
+    },
+    
+    dic = function(){
+      estimate_dic(private$output_df)
+    },
+    
+    ess = function(){
+      estimate_ess(private$output_df, private$theta_names)
     }
   )
 )

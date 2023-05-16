@@ -1,6 +1,6 @@
 append_output <- function(current, new, phase, theta_names){
   new <- as.data.frame(new)
-  colnames(new) <- c("iteration", theta_names, "loglikelihood", "logprior")
+  colnames(new) <- c("iteration", theta_names, "logprior", "loglikelihood")
   new$phase <- phase
   
   if(!is.null(current)){
