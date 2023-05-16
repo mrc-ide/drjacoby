@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <dust/r/random.hpp>
+#include <dust/random/normal.hpp>
 
 using namespace cpp11;
 namespace writable = cpp11::writable;
@@ -204,7 +205,7 @@ list mcmc(
       for(int p = 0; p < n_par; ++p){
         if(infer_parameter[p] == 1){
           // Propose new value of phi
-          phi_prop[p] = Rf_rnorm(phi[index][p], proposal_sd[p][r]);
+          phi_prop[p] = dust::random::normal(state, phi[index][p], proposal_sd[p][r]);
           // Transform new phi_prop -> theta_prop
           theta_prop[p] = phi_to_theta(phi_prop[p], transform_type[p], theta_min[p], theta_max[p]);
           
@@ -272,7 +273,7 @@ list mcmc(
         }
         // Only store values for the cold chain
         if(r == 0){
-          out(i, 0) = i;
+          out(i, 0) = i + 1;
           // Record parameters
           for(int p = 0; p < n_par; ++p){
             out(i, p + 1) =  theta[index][p];

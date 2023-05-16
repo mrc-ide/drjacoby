@@ -46,13 +46,13 @@ dj <- R6::R6Class(
     error_debug = NULL,
     
     ### Initialisation ###
-    initialize = function(data, df_params, loglikelihood, logprior, chains = 1L, misc = list()){
+    initialize = function(data, df_params, loglikelihood, logprior, chains = 1L, misc = list(), seed = NULL){
       stopifnot(is.list(data))
       stopifnot(is.list(df_params))
       stopifnot(is.list(misc))
       stopifnot(is.integer(chains))
       stopifnot(chains >= 1)
-      
+
       private$data = data
       private$df_params = df_params
       private$misc = misc
@@ -74,7 +74,7 @@ dj <- R6::R6Class(
       
       private$acceptance_counter = matrix(0L, nrow = length(private$theta), ncol = private$rungs)
       
-      private$rng_ptr = dust::dust_rng_pointer$new(n_streams = private$chains)
+      private$rng_ptr = dust::dust_rng_pointer$new(seed = seed, n_streams = private$chains)
     },
     
     #### Public functions ###
