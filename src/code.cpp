@@ -37,7 +37,7 @@ list mcmc(
     integers_matrix<> acceptance_init, // TODO: New element to pass in and out
     double target_acceptance,
     // PT
-    bool swap,
+    int swap,
     doubles beta_init,
     const integers swap_acceptance_init, // TODO: New element to pass in and out
     // Blocks
@@ -64,7 +64,7 @@ list mcmc(
   // Initialisise variables ////////////////////////////////////////////////////
   const int n_par = theta_init.size();
   const int n_rungs = beta_init.size();
-  int iteration_counter = iteration_counter_init;
+  int iteration_counter = iteration_counter_init + 1;
   double mh;
   bool mh_accept;
   double adjustment;
@@ -286,7 +286,7 @@ list mcmc(
     
     // loop over rungs, starting with the hottest chain and moving to the cold
     // chain. Each time propose a swap with the next rung up
-    if(swap){
+    if(swap == 1){
       for(int r = (n_rungs - 1); r >0; --r){
         double rung_beta1 = beta[r];
         double rung_beta2 = beta[r - 1];
@@ -307,6 +307,9 @@ list mcmc(
           ll[r - 1] = loglike1;
         }
       }
+    }
+    if(swap == 2){
+      // Bob to implement efficient swapping routine
     }
     iteration_counter ++;
   }

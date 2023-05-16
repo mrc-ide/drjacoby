@@ -32,12 +32,14 @@ dj <- R6::R6Class(
     
     rungs = 1,
     beta = 1,
-    swap = FALSE, # TODO: user input or inferred from beta?
+    swap = 0L,
     swap_acceptance_counter = rep(0L, 1),
     
-    iteration = 1L,
+    tune_iterations = 0L,
+    burn_iterations = 0L,
+    sample_iterations = 0L,
     
-    output = NULL,
+    output_df = NULL,
     rng_ptr = NULL
   ),
   
@@ -89,6 +91,7 @@ dj <- R6::R6Class(
         ## private$swap_acceptance_counter
         ## private$proposal_sd - to increase ncol to match rungs
         ## private$acceptance_counter  - to increase ncol to match rungs
+        ## private$tune_iterations - keep track of total iterations for tuning phase
       
     },
     
@@ -124,7 +127,7 @@ dj <- R6::R6Class(
         private$swap_acceptance_counter,
         private$blocks,
         private$n_unique_blocks,
-        private$iteration,
+        private$burn_iterations,
         private$rng_ptr
       )
       if("error" %in% names(raw_output)){
@@ -132,19 +135,17 @@ dj <- R6::R6Class(
         message("Error in mcmc, check $error_debug")
       }
       # Update user output
-      private$output <- append_output(
-        current = private$output,
+      private$output_df <- append_output(
+        current = private$output_df,
         new = raw_output$output,
         phase = "burn",
         theta_names = private$theta_names
       )
       # Update internal states
-      private$iteration = private$iteration + iterations
+      private$burn_iterations = private$burn_iterations + iterations
       private$proposal_sd = raw_output$proposal_sd
       private$acceptance_counter = as.integer(raw_output$acceptance)
-      private$theta[[chain]] = private$output[nrow(private$output),private$theta_names]
-      
-      
+      private$theta[[chain]] = private$output_df[nrow(private$output_df),private$theta_names]
     },
     
     sample = function(iterations, silent = FALSE){
@@ -178,27 +179,31 @@ dj <- R6::R6Class(
         private$swap_acceptance_counter,
         private$blocks,
         private$n_unique_blocks,
-        private$iteration,
+        private$sample_iterations,
         private$rng_ptr
       )
       # Update user output
-      private$output <- append_output(
-        current = private$output,
+      private$output_df <- append_output(
+        current = private$output_df,
         new = raw_output$output,
         phase = "sample",
         theta_names = private$theta_names
       )
       # Update internal states
-      private$iteration = private$iteration + iterations
-      private$theta[[chain]] = private$output[nrow(private$output),private$theta_names]
+      private$sample_iterations = private$sample_iterations + iterations
+      private$theta[[chain]] = private$output_df[nrow(private$output_df),private$theta_names]
       
     },
     
-    get_output = function(phase = NULL){
+    output = function(phase = NULL){
       if(!is.null(phase)){
-        return(private$output[private$output$phase == phase, ])
+        return(private$output_df[private$output_df$phase == phase, ])
       }
-      return(private$output)
+      return(private$output_df)
+    },
+    
+    acceptance_rate = function(){
+      private$acceptance_counter / private$burn_iterations
     }
   )
 )

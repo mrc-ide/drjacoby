@@ -3,7 +3,3 @@
 mcmc <- function(chain, burnin, iterations, silent, theta_init, theta_names, transform_type, theta_min, theta_max, infer_parameter, data, ll_f, lp_f, misc, proposal_sd_init, acceptance_init, target_acceptance, swap, beta_init, swap_acceptance_init, blocks_list, n_unique_blocks, iteration_counter_init, rng_ptr) {
   .Call(`_drjacoby_mcmc`, chain, burnin, iterations, silent, theta_init, theta_names, transform_type, theta_min, theta_max, infer_parameter, data, ll_f, lp_f, misc, proposal_sd_init, acceptance_init, target_acceptance, swap, beta_init, swap_acceptance_init, blocks_list, n_unique_blocks, iteration_counter_init, rng_ptr)
 }
-
-rngt <- function(ptr, chain) {
-  .Call(`_drjacoby_rngt`, ptr, chain)
-}
