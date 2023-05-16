@@ -35,9 +35,8 @@ dj <- R6::R6Class(
     swap = 0L,
     swap_acceptance_counter = rep(0L, 1),
     
-    tune_iterations = 0L,
-    burn_iterations = 0L,
-    sample_iterations = 0L,
+    iteration_counter = NULL,
+    duration = NULL,
     
     output_df = NULL,
     rng_ptr = NULL
@@ -50,7 +49,7 @@ dj <- R6::R6Class(
     ### Initialisation ###
     initialize = function(data, df_params, loglikelihood, logprior, chains = 1L, misc = list(), seed = NULL){
       
-      Sys.setenv(RSTUDIO = "1") # To get progress bar to show on Windows
+      Sys.setenv(RSTUDIO = "1") # To get progress bar to show on Windows (progress package outstanding issue)
       stopifnot(is.list(data))
       stopifnot(is.list(df_params))
       check_params(df_params)
@@ -73,14 +72,30 @@ dj <- R6::R6Class(
       private$infer_parameter = as.integer(!(private$theta_min == private$theta_max))
       
       private$chains = chains
+      private$iteration_counter = matrix(
+        0,
+        nrow = 3,
+        ncol = private$chains,
+        dimnames = list(
+          c("Tune", "Burn", "Sample"),
+          paste0("Chain_", 1:private$chains)
+        ))
+      
+      private$duration = matrix(
+        0,
+        nrow = 3,
+        ncol = private$chains,
+        dimnames = list(
+          c("Tune", "Burn", "Sample"),
+          paste0("Chain_", 1:private$chains)
+        ))
       
       private$blocks = set_blocks(df_params)
       private$n_unique_blocks = length(unique(unlist(private$blocks)))
       
       private$acceptance_counter = lapply(1:private$chains, function(x){
         matrix(0L, nrow = length(private$theta_names), ncol = private$rungs)
-      }
-      )
+      })
       private$output_df <- vector("list", private$chains)
       private$rng_ptr = dust::dust_rng_pointer$new(seed = seed, n_streams = private$chains)
     },
@@ -97,7 +112,7 @@ dj <- R6::R6Class(
       ## private$swap_acceptance_counter
       ## private$proposal_sd - to increase ncol to match rungs
       ## private$acceptance_counter  - to increase ncol to match rungs
-      ## private$tune_iterations - keep track of total iterations for tuning phase
+      ## private$iteration_counter - keep track of total iterations for tuning phase
       
     },
     
@@ -133,7 +148,7 @@ dj <- R6::R6Class(
           private$swap_acceptance_counter,
           private$blocks,
           private$n_unique_blocks,
-          private$burn_iterations,
+          private$iteration_counter[2, chain],
           private$rng_ptr
         )
         if("error" %in% names(raw_output)){
@@ -149,7 +164,8 @@ dj <- R6::R6Class(
           chain = chain
         )
         # Update internal states
-        private$burn_iterations = private$burn_iterations + iterations
+        private$duration[2, chain] = private$duration[2, chain] + raw_output$dur
+        private$iteration_counter[2, chain] = private$iteration_counter[2, chain] + iterations
         private$proposal_sd = raw_output$proposal_sd
         private$acceptance_counter[[chain]] = private$acceptance_counter[[chain]] + as.integer(raw_output$acceptance)
         private$theta[[chain]] = private$output_df[[chain]][nrow(private$output_df[[chain]]),private$theta_names]
@@ -186,7 +202,7 @@ dj <- R6::R6Class(
           private$swap_acceptance_counter,
           private$blocks,
           private$n_unique_blocks,
-          private$sample_iterations,
+          private$iteration_counter[3, chain],
           private$rng_ptr
         )
         # Update user output
@@ -198,7 +214,8 @@ dj <- R6::R6Class(
           chain = chain
         )
         # Update internal states
-        private$sample_iterations = private$sample_iterations + iterations
+        private$duration[3, chain] = private$duration[3, chain] + raw_output$dur
+        private$iteration_counter[3, chain] = private$iteration_counter[3, chain] + iterations
         private$theta[[chain]] = private$output_df[[chain]][nrow(private$output_df[[chain]]),private$theta_names]
       }
     },
@@ -214,8 +231,9 @@ dj <- R6::R6Class(
     acceptance_rate = function(){
       estimate_acceptance_rate(
         private$acceptance_counter,
-        private$burn_iterations,
-        private$chains, private$theta_names
+        private$iteration_counter,
+        private$chains,
+        private$theta_names
       )
     },
     
@@ -231,7 +249,22 @@ dj <- R6::R6Class(
     
     rhat = function(){
       output_df <- dplyr::bind_rows(private$output_df)
-      estimate_rhat(output_df, private$theta_names, private$chains, private$sample_iterations)
+      estimate_rhat(output_df, private$theta_names, private$chains, private$iteration_counter)
+    },
+    
+    timing = function(){
+      return(private$duration)
+    },
+    
+    plot_par = function(par, lag = 20, downsample = TRUE, phase = "sample", chain = NULL){
+      create_par_plot(
+        par = par,
+        output_df = private$output_df,
+        lag = lag,
+        downsample = downsample,
+        phase = phase,
+        chain = chain
+      )
     }
   )
 )

@@ -98,7 +98,7 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
   assert_single_pos_int(chain)
   assert_leq(chain, length(x))
   assert_in(phase, c("burnin", "sampling"))
-
+  
   # get output for the chosen chain, phase
   chain_get <- chain
   phase_get <- phase
@@ -153,50 +153,31 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #'
 #' @export
 
-plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
-                     downsample = TRUE, phase = "sampling",
-                     chain = NULL, display = TRUE) {
-  
-  # check inputs and define defaults
-  assert_class(x, "drjacoby_output")
-  param_names <- setdiff(names(x$output), c("chain", "iteration", "phase", "logprior", "loglikelihood"))
-  if (!is.null(show)) {
-    assert_vector_string(show)
-    assert_in(show, param_names)
-    param_names <- show
-  }
-  if (!is.null(hide)) {
-    assert_vector_string(hide)
-    assert_in(hide, param_names)
-    param_names <- setdiff(param_names, hide)
-  }
-  assert_gr(length(param_names), 0, message = "at least one parameter must be specified")
-  if (length(param_names) > 10){
-    message("More than 10 parameters to summarise, consider using the show or hide arguments 
-            to select parameters and reduce computation time.")
-  }
-  assert_single_bounded(lag, 1, 500)
-  assert_single_logical(downsample)
-  assert_in(phase, c("burnin", "sampling", "both"))
-  if (is.null(chain)) {
-    chain <- unique(x$output$chain)
-  }
-  assert_pos_int(chain, zero_allowed = FALSE)
-  assert_single_logical(display)
+create_par_plot <- function(
+    par,
+    output_df,
+    lag = 20,
+    downsample = TRUE,
+    phase = "sampling",
+    chain = NULL) {
   
   # deal with phase = "both" situation
   if (phase == "both") {
-    phase <- c("burnin", "sampling")
+    phase <- c("burn", "sample")
   }
   
   # subset based on chain and phase
-  chain_get <- chain
-  phase_get <- phase
-  data <- dplyr::filter(x$output, phase %in% phase_get, chain %in% chain_get) 
+  data <- dplyr::bind_rows(output_df)
+  if(!is.null(chain)){
+    data <- data[data$chain %in% chain, ]
+  }
+  data <- data[data$phase %in% phase, ]
+  data <- data[,c("chain", "iteration", par)]
   
   # get autocorrelation (on full data, before downsampling)
-  ac_data <- as.data.frame(apply(data[, param_names, drop = FALSE], 2, acf_data, lag = lag))
+  ac_data <- as.data.frame(apply(data[, par, drop = FALSE], 2, acf_data, lag = lag))
   ac_data$lag <- 0:lag
+  names(ac_data) <- c("lag", "Autocorrelation")
   
   # downsample
   if (downsample & nrow(data) > 2000) {
@@ -206,67 +187,38 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
   # set minimum bin number
   b <- min(nrow(data) / 4, 40)
   
-  # produce plots over all parameters
-  plot_list <- c()
-  for(j in 1:length(param_names)){
-    
-    # create plotting data
-    pd <- data[, c("chain", "iteration", param_names[j])]
-    names(pd) <- c("chain", "iteration", "y")
-    
-    pd2 <- ac_data[, c("lag", param_names[j])]
-    names(pd2) <- c("lag", "Autocorrelation")
-    
-    # Histogram
-    p1 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$y)) + 
-      ggplot2::geom_histogram(bins = b, fill = "deepskyblue3", col = "darkblue") + 
-      ggplot2::ylab("Count") + 
-      ggplot2::xlab(param_names[j]) +
-      ggplot2::theme_bw()
-    
-    # Trace plots
-    p2 <- ggplot2::ggplot(pd, ggplot2::aes(x = .data$iteration, y = .data$y, col = as.factor(.data$chain))) + 
-      ggplot2::geom_line() +
-      scale_color_discrete(name = "Chain") +
-      ggplot2::xlab("Iteration") +
-      ggplot2::ylab(param_names[j]) +
-      ggplot2::theme_bw()
-    
-    # Autocorrealtion
-    p3 <- ggplot2::ggplot(data = pd2,
-                          ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$Autocorrelation)) + 
-      ggplot2::geom_hline(yintercept = 0, lty = 2, col = "red") + 
-      ggplot2::geom_segment(size = 1.5) +
-      ggplot2::theme_bw() +
-      ggplot2::ylab("Autocorrelation") +
-      ggplot2::xlab("Lag") +
-      ggplot2::ylim(min(0, min(pd2$Autocorrelation)), 1)
-    
-    # Arrange
-    pc1 <- cowplot::plot_grid(p1, p3, ncol = 2)
-    pc2 <- cowplot::plot_grid(p2, pc1, nrow = 2)
-    plot_list[[j]] <- list(trace = p2,
-                           hist = p1,
-                           acf = p3,
-                           combined = pc2)
-    
-    # Display plots, asking user for next page if multiple parameters
-    if(display){
-      graphics::plot(plot_list[[j]]$combined)
-      if (j < length(param_names)) {
-        z <- readline("Press n for next plot, f to return the list of all plots or any other key to exit ")
-        if(z == "f"){
-          display <- FALSE
-        } 
-        if(!z %in% c("n", "f")){
-          return(invisible())            
-        }
-      }
-    }
-  }
-  names(plot_list) <- paste0("Plot_", param_names)
+  colnames(data) <- c("chain", "iteration", "y")
   
-  return(invisible(plot_list))
+  # Histogram
+  p1 <- ggplot2::ggplot(data, ggplot2::aes(x = .data$y)) + 
+    ggplot2::geom_histogram(bins = b, fill = "deepskyblue3", col = "darkblue") + 
+    ggplot2::ylab("Count") + 
+    ggplot2::xlab(par) +
+    ggplot2::theme_bw()
+  
+  # Trace plots
+  p2 <- ggplot2::ggplot(data, ggplot2::aes(x = .data$iteration, y = .data$y, col = as.factor(.data$chain))) + 
+    ggplot2::geom_line() +
+    scale_color_discrete(name = "Chain") +
+    ggplot2::xlab("Iteration") +
+    ggplot2::ylab(par) +
+    ggplot2::theme_bw()
+  
+  # Autocorrealtion
+  p3 <- ggplot2::ggplot(data = ac_data,
+                        ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$Autocorrelation)) + 
+    ggplot2::geom_hline(yintercept = 0, lty = 2, col = "red") + 
+    ggplot2::geom_segment(size = 1.5) +
+    ggplot2::theme_bw() +
+    ggplot2::ylab("Autocorrelation") +
+    ggplot2::xlab("Lag") +
+    ggplot2::ylim(min(0, min(ac_data$Autocorrelation)), 1)
+  
+  # Arrange
+  pc1 <- cowplot::plot_grid(p1, p3, ncol = 2)
+  pc2 <- cowplot::plot_grid(p2, pc1, nrow = 2)
+  
+  return(pc2)
 }
 
 #------------------------------------------------
@@ -284,7 +236,7 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 plot_cor <- function(x, parameter1, parameter2,
                      downsample = TRUE, phase = "sampling",
                      chain = NULL) {
-
+  
   # check inputs
   assert_class(x, "drjacoby_output")
   assert_single_string(parameter1)
@@ -395,7 +347,7 @@ plot_credible <- function(x, show = NULL, phase = "sampling", param_names = NULL
 #' @export
 
 plot_cor_mat <- function(x, show = NULL, phase = "sampling", param_names = NULL) {
-
+  
   # check inputs
   assert_class(x, "drjacoby_output")
   if (!is.null(show)) {
@@ -404,7 +356,7 @@ plot_cor_mat <- function(x, show = NULL, phase = "sampling", param_names = NULL)
     assert_gr(length(show), 1, message = "must show at least two parameters")
   }
   assert_in(phase, c("burnin", "sampling", "both"))
-
+  
   # define defaults
   if (is.null(show)) {
     show <- setdiff(names(x$output), c("chain", "iteration", "phase", "logprior", "loglikelihood"))

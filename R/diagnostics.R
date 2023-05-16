@@ -14,20 +14,17 @@ estimate_rhat <- function(output, parameter_names, n_chains, samples){
   rhat_est <- c()
   for (p in seq_along(parameter_names)) {
     rhat_est[p] <- output[output$phase == "sample", c("chain", parameter_names[p])] |>
-      gelman_rubin(chains = n_chains, samples = samples)
+      gelman_rubin(chains = n_chains, samples = samples[3,1])
   }
   names(rhat_est) <- parameter_names
   return(rhat_est)
 }
 
-estimate_acceptance_rate <- function(acceptance_counter, burn_iterations, chains, theta_names){
-  ar <- lapply(acceptance_counter, function(x){
-    out <- x[1,] / (burn_iterations / chains)
-    names(out) <- theta_names
-    return(out)
-  })
-  names(ar) <- paste0("Chain_", 1:chains)
-  return(ar)
+estimate_acceptance_rate <- function(acceptance_counter, iteration_counter, chains, theta_names){
+    cold_acceptance <- sapply(1:chains, function(x){
+      acceptance_counter[[x]][1,]
+    })
+    return(cold_acceptance / iteration_counter[2,])
 }
 
 #' @title Estimate autocorrelation

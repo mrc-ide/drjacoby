@@ -323,7 +323,7 @@ list mcmc(
   }
   
   // end timer
-  chrono_timer(t0, "\nDuration ", !silent);
+  double dur = chrono_timer(t0, "\nDuration ", !silent);
   
   // Return outputs in a list
   return writable::list({
@@ -333,5 +333,6 @@ list mcmc(
       "acceptance"_nm = acceptance_out,
       "rung_index"_nm = rung_index,
       "swap_acceptance"_nm = swap_acceptance,
+      "dur"_nm = dur
   });
 }
