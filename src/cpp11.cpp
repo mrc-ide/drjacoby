@@ -5,7 +5,7 @@
 #include "cpp11/declarations.hpp"
 #include <R_ext/Visibility.h>
 
-// code.cpp
+// mcmc.cpp
 list mcmc(const int chain, const bool burnin, const int iterations, const bool silent, doubles theta_init, strings theta_names, integers transform_type, doubles theta_min, doubles theta_max, integers infer_parameter, list data, function ll_f, function lp_f, writable::list misc, doubles_matrix<> proposal_sd_init, integers_matrix<> acceptance_init, double target_acceptance, int swap, doubles beta_init, const integers swap_acceptance_init, list blocks_list, const int n_unique_blocks, const int iteration_counter_init, cpp11::sexp rng_ptr);
 extern "C" SEXP _drjacoby_mcmc(SEXP chain, SEXP burnin, SEXP iterations, SEXP silent, SEXP theta_init, SEXP theta_names, SEXP transform_type, SEXP theta_min, SEXP theta_max, SEXP infer_parameter, SEXP data, SEXP ll_f, SEXP lp_f, SEXP misc, SEXP proposal_sd_init, SEXP acceptance_init, SEXP target_acceptance, SEXP swap, SEXP beta_init, SEXP swap_acceptance_init, SEXP blocks_list, SEXP n_unique_blocks, SEXP iteration_counter_init, SEXP rng_ptr) {
   BEGIN_CPP11
