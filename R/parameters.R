@@ -135,3 +135,50 @@ check_params <- function(x) {
 get_transform_type <- function(theta_min, theta_max){
   as.integer(2 * is.finite(theta_min) + is.finite(theta_max))
 }
+
+# define default init values
+set_init <- function(df_params, chains){
+  use_init <- ("init" %in% names(df_params))
+  if(use_init){
+    check_init(df_params, chains)
+  } else {
+    df_params$init <- get_init(df_params, chains)
+  }
+  init <- lapply(1:chains, function(x){
+    sapply(df_params$init, '[', x)
+  }
+  )
+  return(init)
+}
+
+check_init <- function(df_params, chains){
+  for (i in 1:nrow(df_params)) {
+    stopifnot(length(df_params$init[[i]]) == chains)
+  }
+}
+
+get_init <- function(df_params, chains){
+  init_list <- list()
+  for (i in 1:nrow(df_params)) {
+    transform_type <- get_transform_type(df_params[i,]$min, df_params[i,]$max)
+    p <- runif(chains)
+    if (transform_type == 0) {
+      init_list[[i]] <- log(p) - log(1 - p)
+    } else if (transform_type == 1) {
+      init_list[[i]] <- log(p) + df_params$max[i]
+    } else if (transform_type == 2) {
+      init_list[[i]] <- df_params$min[i] - log(p)
+    } else if (transform_type == 3) {
+      init_list[[i]] <- df_params$min[i] + (df_params$max[i] - df_params$min[i])*p
+    }
+  }
+  return(init_list)
+}
+
+set_blocks <- function(df_params){
+  if(!"block" %in% names(df_params)){
+    df_params$block <- 1
+  }
+  blocks_list <- lapply(df_params$block, as.integer)
+  return(blocks_list)
+}

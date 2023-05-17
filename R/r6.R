@@ -231,7 +231,7 @@ dj <- R6::R6Class(
         private$duration[2, chain] = private$duration[2, chain] + raw_output$dur
         private$iteration_counter[2, chain] = private$iteration_counter[2, chain] + iterations
         private$proposal_sd = raw_output$proposal_sd
-        private$acceptance_counter[[chain]] = private$acceptance_counter[[chain]] + as.integer(raw_output$acceptance)
+        private$acceptance_counter[[chain]] = matrix(as.integer(raw_output$acceptance), nrow = length(private$theta_names), ncol = private$rungs)
         private$theta[[chain]] = private$output_df[[chain]][nrow(private$output_df[[chain]]),private$theta_names]
       }
     },
