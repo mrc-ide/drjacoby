@@ -73,66 +73,6 @@ plot_mc_acceptance <- function(x, chain = NULL, phase = "sampling", x_axis_type 
 }
 
 #------------------------------------------------
-#' @title Plot autocorrelation
-#'
-#' @description Plot autocorrelation for specified parameters
-#'
-#' @inheritParams plot_rung_loglike
-#' @param lag maximum lag. Must be an integer between 1 and 500.
-#' @param par vector of parameter names. If \code{NULL} all parameters are
-#'   plotted.
-#' 
-#' @export
-
-plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sampling") {
-  
-  # check inputs
-  assert_class(x, "drjacoby_output")
-  assert_single_bounded(lag, 1, 500)
-  if (is.null(par)) {
-    par <- setdiff(names(x$output), c("chain", "iteration", "phase",
-                                      "logprior", "loglikelihood"))
-  }
-  assert_vector_string(par)
-  assert_in(par, names(x$output))
-  assert_single_pos_int(chain)
-  assert_leq(chain, length(x))
-  assert_in(phase, c("burnin", "sampling"))
-  
-  # get output for the chosen chain, phase
-  chain_get <- chain
-  phase_get <- phase
-  data <- dplyr::filter(x$output, .data$chain == chain_get, .data$phase == phase_get) %>%
-    dplyr::select(-.data$chain, -.data$iteration, -.data$phase, -.data$logprior, -.data$loglikelihood) %>%
-    as.data.frame()
-  
-  # select parameters
-  data <- data[, par, drop = FALSE]
-  
-  # estimate autocorrelation
-  out <- as.data.frame(apply(data, 2, acf_data, lag = lag))
-  
-  # format data for plotting
-  out$lag <- 0:lag
-  out <- do.call(rbind, mapply(function(i) {
-    data.frame(lag = out$lag,
-               parameter = names(out)[i],
-               autocorrelation = out[,i])
-  }, seq_len(ncol(data)), SIMPLIFY = FALSE))
-  
-  # produce plot
-  ggplot2::ggplot(data = out,
-                  ggplot2::aes(x = .data$lag, y = 0, xend = .data$lag, yend =.data$autocorrelation)) + 
-    ggplot2::geom_hline(yintercept = 0, lty = 2, col = "red") + 
-    ggplot2::geom_segment(size = 1.5) +
-    ggplot2::theme_bw() +
-    ggplot2::ylab("Autocorrelation") +
-    ggplot2::xlab("Lag") +
-    ggplot2::ylim(min(0, min(out$autocorrelation)), 1) +
-    ggplot2::facet_wrap(~ .data$parameter)
-}
-
-#------------------------------------------------
 #' @title Plot parameter estimates
 #'
 #' @description Produce a series of plots corresponding to each parameter,
@@ -156,10 +96,11 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 create_par_plot <- function(
     par,
     output_df,
-    lag = 20,
-    downsample = TRUE,
-    phase = "sampling",
-    chain = NULL) {
+    lag,
+    downsample,
+    phase,
+    chain,
+    return_elements) {
   
   # deal with phase = "both" situation
   if (phase == "both") {
@@ -214,6 +155,15 @@ create_par_plot <- function(
     ggplot2::xlab("Lag") +
     ggplot2::ylim(min(0, min(ac_data$Autocorrelation)), 1)
   
+  if(return_elements){
+    out <- list(
+      histogram = p1,
+      trace = p2,
+      autocorrelation = p3
+    )
+    return(out)
+  }
+  
   # Arrange
   pc1 <- cowplot::plot_grid(p1, p3, ncol = 2)
   pc2 <- cowplot::plot_grid(p2, pc1, nrow = 2)
@@ -232,37 +182,28 @@ create_par_plot <- function(
 #' @param downsample whether to downsample output to speed up plotting.
 #'
 #' @export
-
-plot_cor <- function(x, parameter1, parameter2,
-                     downsample = TRUE, phase = "sampling",
-                     chain = NULL) {
-  
-  # check inputs
-  assert_class(x, "drjacoby_output")
-  assert_single_string(parameter1)
-  assert_single_string(parameter2)
-  assert_in(parameter1, names(x$output))
-  assert_in(parameter2, names(x$output))
-  assert_single_logical(downsample)
-  assert_in(phase, c("burnin", "sampling", "both"))
-  if (is.null(chain)) {
-    chain <- unique(x$output$chain)
-  }
-  assert_pos_int(chain)
+create_cor_plot <- function(
+    parx,
+    pary,
+    output_df,
+    downsample,
+    phase,
+    chain)  
+{
   
   # deal with phase = "both" situation
   if (phase == "both") {
-    phase <- c("burnin", "sampling")
+    phase <- c("burn", "sample")
   }
   
-  # get basic quantities
-  chain_get <- chain
-  phase_get <- phase
-  data <- dplyr::filter(x$output, phase %in% phase_get, chain %in% chain_get)
-  
-  # subset to corr params
-  data <- data[,c("chain", parameter1, parameter2)]  
-  colnames(data) <- c("chain", "x", "y")
+  # subset based on chain and phase
+  data <- dplyr::bind_rows(output_df)
+  if(!is.null(chain)){
+    data <- data[data$chain %in% chain, ]
+  }
+  data <- data[data$phase %in% phase, ]
+  data <- data[,c("chain", "iteration", parx, pary)]
+  colnames(data) <- c("chain", "iteration", "x", "y")
   
   # downsample
   if (downsample & nrow(data) > 2000) {
@@ -273,8 +214,8 @@ plot_cor <- function(x, parameter1, parameter2,
   ggplot2::ggplot(data = data,
                   ggplot2::aes(x = .data$x, y = .data$y, col = as.factor(.data$chain))) + 
     ggplot2::geom_point(alpha = 0.5) + 
-    ggplot2::xlab(parameter1) +
-    ggplot2::ylab(parameter2) +
+    ggplot2::xlab(parx) +
+    ggplot2::ylab(pary) +
     scale_color_discrete(name = "Chain") +
     ggplot2::theme_bw()
   
@@ -292,32 +233,20 @@ plot_cor <- function(x, parameter1, parameter2,
 #'
 #' @export
 
-plot_credible <- function(x, show = NULL, phase = "sampling", param_names = NULL) {
+create_credible_plot <- function(output_df, show, phase, param_names) {
   
-  # check inputs
-  assert_class(x, "drjacoby_output")
-  if (!is.null(show)) {
-    assert_string(show)
-    assert_in(show, names(x$output))
-  }
-  assert_in(phase, c("burnin", "sampling", "both"))
-  
-  # define defaults
-  if (is.null(show)) {
-    show <- setdiff(names(x$output), c("chain", "rung", "iteration", "phase", "logprior", "loglikelihood"))
-  }
   if (is.null(param_names)) {
     param_names <- show
   }
   
   # deal with phase = "both" situation
   if (phase == "both") {
-    phase <- c("burnin", "sampling")
+    phase <- c("burn", "sample")
   }
   
-  # subset based on phase and rung
-  phase_get <- phase
-  data <- dplyr::filter(x$output, phase %in% phase_get)
+  # subset based on phase
+  data <- dplyr::bind_rows(output_df)
+  data <- data[data$phase %in% phase, ]
   data <- data[, show, drop = FALSE]
   
   # get quantiles
@@ -325,12 +254,23 @@ plot_credible <- function(x, show = NULL, phase = "sampling", param_names = NULL
   df_plot$param <- factor(param_names, levels = param_names)
   
   # produce plot
-  ggplot2::ggplot(data = df_plot) + ggplot2::theme_bw() +
+  ggplot2::ggplot(data = df_plot) +
     ggplot2::geom_point(ggplot2::aes(x = .data$param, y = .data$Q50)) +
     ggplot2::geom_segment(ggplot2::aes(x = .data$param, y = .data$Q2.5, xend = .data$param, yend = .data$Q97.5)) +
     ggplot2::xlab("") +
-    ggplot2::ylab("95% CrI")
+    ggplot2::ylab("95% CrI") +
+    ggplot2::theme_bw() +
+    ggplot2::coord_flip()
   
+}
+
+# return 95% quantile
+#' @importFrom stats quantile
+#' @noRd
+quantile_95 <- function(x) {
+  ret <- quantile(x, probs = c(0.025, 0.5, 0.975))
+  names(ret) <- c("Q2.5", "Q50", "Q97.5")
+  return(ret)
 }
 
 #------------------------------------------------
@@ -346,33 +286,20 @@ plot_credible <- function(x, show = NULL, phase = "sampling", param_names = NULL
 #' @importFrom stats cor
 #' @export
 
-plot_cor_mat <- function(x, show = NULL, phase = "sampling", param_names = NULL) {
+create_cor_mat_plot <- function(output_df, show, phase, param_names) {
   
-  # check inputs
-  assert_class(x, "drjacoby_output")
-  if (!is.null(show)) {
-    assert_string(show)
-    assert_in(show, names(x$output))
-    assert_gr(length(show), 1, message = "must show at least two parameters")
-  }
-  assert_in(phase, c("burnin", "sampling", "both"))
-  
-  # define defaults
-  if (is.null(show)) {
-    show <- setdiff(names(x$output), c("chain", "iteration", "phase", "logprior", "loglikelihood"))
-  }
   if (is.null(param_names)) {
     param_names <- show
   }
   
   # deal with phase = "both" situation
   if (phase == "both") {
-    phase <- c("burnin", "sampling")
+    phase <- c("burn", "sample")
   }
   
   # subset based on phase
-  phase_get <- phase
-  data <- dplyr::filter(x$output, phase %in% phase_get)
+  data <- dplyr::bind_rows(output_df)
+  data <- data[data$phase %in% phase, ]
   data <- data[, show, drop = FALSE]
   n <- ncol(data)
   

@@ -114,6 +114,9 @@ dj <- R6::R6Class(
       ## private$acceptance_counter  - to increase ncol to match rungs
       ## private$iteration_counter - keep track of total iterations for tuning phase
       
+      # Will also need to update plot_mc_acceptance() and add an R6 function with
+      # other plotting functions as below.
+      
     },
     
     burn = function(iterations, target_acceptance = 0.44, silent = FALSE){
@@ -228,6 +231,8 @@ dj <- R6::R6Class(
       return(output_df)
     },
     
+    ### Diagnostics ###
+    
     acceptance_rate = function(){
       estimate_acceptance_rate(
         private$acceptance_counter,
@@ -256,15 +261,52 @@ dj <- R6::R6Class(
       return(private$duration)
     },
     
-    plot_par = function(par, lag = 20, downsample = TRUE, phase = "sample", chain = NULL){
+    ### Plots ###
+    
+    plot_par = function(par, lag = 20, downsample = TRUE, phase = "sample", chain = NULL, return_elements = FALSE){
       create_par_plot(
         par = par,
         output_df = private$output_df,
         lag = lag,
         downsample = downsample,
         phase = phase,
+        chain = chain,
+        return_elements = return_elements
+      )
+    },
+    
+    plot_cor = function(parx, pary, downsample = TRUE, phase = "sample", chain = NULL){
+      create_cor_plot(
+        parx = parx,
+        pary = pary,
+        output_df = private$output_df,
+        downsample = downsample,
+        phase = phase,
         chain = chain
       )
+    },
+    
+    plot_credible = function(show = NULL, phase = "sample", param_names = NULL){
+      if(is.null(show)){
+        show = private$theta_names
+      }
+      create_credible_plot(
+        output_df = private$output_df,
+        show = show,
+        phase = phase,
+        param_names = NULL
+      )
+    },
+    
+    plot_cor_mat = function(show, phase = "sample", param_names = NULL){
+      if(is.null(show)){
+        show = private$theta_names
+      }
+      create_cor_mat_plot(
+        output_df = private$output_df,
+        show = show,
+        phase = phase,
+        param_names = param_names)
     }
   )
 )
