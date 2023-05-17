@@ -2,6 +2,7 @@
 #'
 #' @description 
 #' Create a new dj object to run an mcmc
+#' @export
 dj <- R6::R6Class(
   "dj",
   
