@@ -1,5 +1,4 @@
 # define default init values
-
 set_init <- function(df_params, chains){
   use_init <- ("init" %in% names(df_params))
   if(use_init){
@@ -16,10 +15,7 @@ set_init <- function(df_params, chains){
 
 check_init <- function(df_params, chains){
   for (i in 1:nrow(df_params)) {
-    if (length(df_params$init[[i]]) != 1) {
-      assert_length(df_params$init[[i]], chains, message = paste0("must define one df_params$init value per parameter, ",
-                                                                  "or alternatively a list of values one for each chain"))
-    }
+    stopifnot(length(df_params$init[[i]]) == chains)
   }
 }
 

@@ -36,8 +36,12 @@ define_params <- function(...) {
   x <- list(...)
   
   # check input format of arguments
-  assert_gr(length(x), 0, message = "input cannot be empty")
-  assert_in(names(x), c("name", "min", "max", "init", "block"))
+  stopifnot(length(x) > 0)
+  if(!all(c("name", "min", "max") %in% names(x))){
+    stop("Columns: name, min, max, must all be present in df_params")
+  }
+  
+  
   use_init <- ("init" %in% names(x))
   use_block <- ("block" %in% names(x))
   n_cols <- 3 + use_init + use_block
@@ -52,7 +56,7 @@ define_params <- function(...) {
   if (use_block) {
     arg_names <- c(arg_names, "block")
   }
-  assert_eq(names(x), rep(arg_names, n_param))
+  stopifnot(identical(names(x), rep(arg_names, n_param)))
   
   # create params dataframe
   v <- n_cols*(0:(n_param - 1))
@@ -79,9 +83,10 @@ define_params <- function(...) {
 check_params <- function(x) {
   
   # check dataframe has correct elements
-  assert_dataframe(x)
-  assert_in(c("name", "min", "max"), names(x),
-            message = "df_params must contain the columns 'name', 'min', 'max'")
+  stopifnot(is.data.frame(x))
+  if(!all(c("name", "min", "max") %in% names(x))){
+    stop("df_params must contain the columns 'name', 'min', 'max'")
+  }
   if (any(duplicated(x$name))) {
     stop("parameter names must be unique")
   }
@@ -89,38 +94,44 @@ check_params <- function(x) {
   use_block <- ("block" %in% names(x))
   
   # coerce init and block to list
-  if (use_init) {
+  if(use_init) {
     if (!is.list(x$init)) {
       x$init <- as.list(x$init)
     }
   }
-  if (use_block) {
+  if(use_block) {
     if (!is.list(x$block)) {
       x$block <- as.list(x$block)
     }
   }
   
   # check each row in turn
-  for (i in seq_len(nrow(x))) {
-    
+  for(i in seq_len(nrow(x))) {
     # check format
-    assert_single_string(x$name[i], message = "parameter names must be character strings")
-    assert_single_numeric(x$min[i], message = "min values must be single values")
-    assert_single_numeric(x$max[i], message = "min values must be single values")
-    if (use_init) {
-      assert_vector_numeric(x$init[[i]], message = "init values must be numeric")
-    }
-    if (use_block) {
-      assert_vector_numeric(x$block[[i]], message = "block values must be numeric")
-    }
+    stopifnot(is.character(x$name[i]))
+    stopifnot(is.numeric(x$min[i]))
+    stopifnot(is.numeric(x$max[i]))
     
-    # check order
-    assert_leq(x$min[i], x$max[i], message = "min values must be less than or equal to max values")
-    if (use_init) {
-      assert_greq(x$init[[i]], x$min[i], message = "init values must be greater than or equal to min values")
-      assert_leq(x$init[[i]], x$max[i], message = "init values must be less than or equal to max values")
+    if(use_init) {
+      stopifnot(is.numeric(x$init[[i]]))
     }
+    if(use_block) {
+      stopifnot(is.numeric(x$block[[i]]))
+    }
+    stopifnot(
+      x$min[i] <= x$max[i]
+    )
+    stopifnot(
+      all(x$init[[i]] >= x$min[i])
+    )
+    stopifnot(
+      all(x$init[[i]] <= x$max[i])
+    )
   }
   
   return(x)
+}
+
+get_transform_type <- function(theta_min, theta_max){
+  as.integer(2 * is.finite(theta_min) + is.finite(theta_max))
 }

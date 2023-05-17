@@ -1,78 +1,12 @@
-
-#------------------------------------------------
-#' @title Plot Metropolis coupling acceptance rates
-#'
-#' @description Plot Metropolis coupling acceptance rates between all rungs.
-#'
-#' @inheritParams plot_rung_loglike
-#' @param chain which chain to plot. If \code{NULL} then plot all chains.
-#'
-#' @import ggplot2 dplyr
-#' @importFrom grDevices grey
-#' @export
-
-plot_mc_acceptance <- function(x, chain = NULL, phase = "sampling", x_axis_type = 1) {
-  
-  # check inputs
-  assert_class(x, "drjacoby_output")
-  if (!is.null(chain)) {
-    assert_single_pos_int(chain, zero_allowed = FALSE)
-    assert_in(chain, unique(x$output$chain))
-  }
-  assert_in(phase, c("burnin", "sampling"))
-  assert_single_pos_int(x_axis_type)
-  assert_in(x_axis_type, 1:2)
-  
-  # get useful quantities
-  thermo_power <- x$diagnostics$rung_details$thermodynamic_power
-  thermo_power_mid <- thermo_power[-1] - diff(thermo_power)/2
-  rungs <- length(thermo_power)
-  
-  # exit if rungs = 1
-  if (rungs == 1) {
-    stop("no metropolis coupling when rungs = 1")
-  }
-  
-  # define x-axis type
-  if (x_axis_type == 1) {
-    breaks_vec <- 1:rungs
-    x_vec <- (2:rungs) - 0.5
-    x_lab <- "rung"
-  } else {
-    breaks_vec <- thermo_power
-    x_vec <- thermo_power_mid
-    x_lab <- "thermodynamic power"
-  }
-  
-  # get chain properties
-  phase_get <- phase
-  if (is.null(chain)) {
-    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, .data$phase == phase_get) %>%
-      dplyr::pull(.data$value)
-  } else {
-    chain_get <- chain
-    mc_accept <- dplyr::filter(x$diagnostics$mc_accept, .data$phase == phase_get, .data$chain == chain_get) %>%
-      dplyr::pull(.data$value)
-  }
-  
-  # get data into ggplot format and define temperature colours
-  df <- data.frame(x_vec = x_vec, mc_accept = mc_accept, col = thermo_power_mid)
-  
-  # produce plot
-  plot1 <- ggplot(df) + 
-    geom_vline(aes(xintercept = x), col = grey(0.9), data = data.frame(x = breaks_vec)) +
-    scale_y_continuous(limits = c(0,1), expand = c(0,0)) + 
-    geom_point(aes(x = x_vec, y = mc_accept, color = col)) + 
-    xlab(x_lab) + ylab("coupling acceptance rate") + 
-    scale_colour_gradientn(colours = c("red", "blue"), name = "thermodynamic\npower", limits = c(0,1)) +
-    theme_bw() + 
-    theme(panel.grid.minor.x = element_blank(),
-          panel.grid.major.x = element_blank())
-  
-  return(plot1)
+# return 95% quantile
+#' @importFrom stats quantile
+#' @noRd
+quantile_95 <- function(x) {
+  ret <- quantile(x, probs = c(0.025, 0.5, 0.975))
+  names(ret) <- c("Q2.5", "Q50", "Q97.5")
+  return(ret)
 }
 
-#------------------------------------------------
 #' @title Plot parameter estimates
 #'
 #' @description Produce a series of plots corresponding to each parameter,
@@ -90,9 +24,6 @@ plot_mc_acceptance <- function(x, chain = NULL, phase = "sampling", x_axis_type 
 #'   efficient.
 #' @param display boolean. Whether to show plots, if \code{FALSE} then plotting
 #'   objects are returned without displaying.
-#'
-#' @export
-
 create_par_plot <- function(
     par,
     output_df,
@@ -140,7 +71,7 @@ create_par_plot <- function(
   # Trace plots
   p2 <- ggplot2::ggplot(data, ggplot2::aes(x = .data$iteration, y = .data$y, col = as.factor(.data$chain))) + 
     ggplot2::geom_line() +
-    scale_color_discrete(name = "Chain") +
+    ggplot2::scale_color_discrete(name = "Chain") +
     ggplot2::xlab("Iteration") +
     ggplot2::ylab(par) +
     ggplot2::theme_bw()
@@ -171,7 +102,6 @@ create_par_plot <- function(
   return(pc2)
 }
 
-#------------------------------------------------
 #' @title Plot parameter correlation
 #'
 #' @description Plots correlation between two parameters
@@ -216,12 +146,11 @@ create_cor_plot <- function(
     ggplot2::geom_point(alpha = 0.5) + 
     ggplot2::xlab(parx) +
     ggplot2::ylab(pary) +
-    scale_color_discrete(name = "Chain") +
+    ggplot2::scale_color_discrete(name = "Chain") +
     ggplot2::theme_bw()
   
 }
 
-#------------------------------------------------
 #' @title Plot 95\% credible intervals
 #'
 #' @description Plots posterior 95\% credible intervals over specified set of
@@ -264,16 +193,6 @@ create_credible_plot <- function(output_df, show, phase, param_names) {
   
 }
 
-# return 95% quantile
-#' @importFrom stats quantile
-#' @noRd
-quantile_95 <- function(x) {
-  ret <- quantile(x, probs = c(0.025, 0.5, 0.975))
-  names(ret) <- c("Q2.5", "Q50", "Q97.5")
-  return(ret)
-}
-
-#------------------------------------------------
 #' @title Plot posterior correlation matrix
 #'
 #' @description Produces a matrix showing the correlation between all parameters

@@ -34,29 +34,6 @@ acf_data <- function(x, lag){
   stats::acf(x, plot = FALSE, lag.max = lag)$acf
 }
 
-#' @title MC coupling rates
-#'
-#' @export
-mc_acceptance <- function(mcmc_runs, chains, rungs, burnin, samples){
-  mc_accept_burnin <- (dplyr::bind_rows(
-    sapply(mcmc_runs, '[', 'swap_acceptance_burnin')
-  ) / burnin) |>
-    dplyr::rename(value = swap_acceptance_burnin) |>
-    dplyr::mutate(
-      phase = "burnin",
-      chain = rep(1:chains, each = (rungs - 1))
-    )
-  mc_accept_sampling <- (dplyr::bind_rows(
-    sapply(mcmc_runs, '[', 'swap_acceptance_sampling')
-  ) / samples) |>
-    dplyr::rename(value = swap_acceptance_sampling) |>
-    dplyr::mutate(
-      phase = "sampling",
-      chain = rep(1:chains, each = (rungs - 1))
-    )
-  dplyr::bind_rows(mc_accept_burnin, mc_accept_sampling)
-}
-
 #' Gelman-Rubin statistic
 #' 
 #' Estimate sthe Gelman-Rubin (rhat) convergence statistic for a single parameter
@@ -75,9 +52,9 @@ mc_acceptance <- function(mcmc_runs, chains, rungs, burnin, samples){
 gelman_rubin <- function(par_matrix, chains, samples){
   
   # Check that >1 chains and >1 samples
-  assert_gr(chains, 1)
-  assert_gr(samples, 1)
-  
+  stopifnot(chains > 1)
+  stopifnot(samples > 1)
+
   # Coerce to matrix
   par_matrix <- as.data.frame(par_matrix)
   
