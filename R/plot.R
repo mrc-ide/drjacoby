@@ -8,7 +8,7 @@ quantile_95 <- function(x) {
 }
 
 #' Subset data for plotting
-#' @output_df MCMC output data.frame
+#' @param output_df MCMC output data.frame
 #' @param chain Select chain(s)
 #' @param phase Select phases can be from: all, tune, burn, sample
 #' @noRd
@@ -27,23 +27,7 @@ plot_data_subset <- function(output_df, chain, phase){
   return(data)
 }
 
-#' @title Plot parameter estimates
-#'
-#' @description Produce a series of plots corresponding to each parameter,
-#'   including the raw trace, the posterior histogram and an autocorrelation
-#'   plot. Plotting objects can be cycled through interactively, or can be
-#'   returned as an object allowing them to be viewed/edited by the user.
-#'
-#' @inheritParams plot_rung_loglike
-#' @param show optional vector of parameter names to plot. Parameters matching
-#'   show will be included.
-#' @param hide optional vector of parameter names to filter out. Parameters
-#'   matching hide will be hidden.
-#' @param lag maximum lag. Must be an integer between 1 and 500.
-#' @param downsample boolean. Whether to downsample chain to make plotting more
-#'   efficient.
-#' @param display boolean. Whether to show plots, if \code{FALSE} then plotting
-#'   objects are returned without displaying.
+
 create_par_plot <- function(
     par,
     output_df,
@@ -116,16 +100,6 @@ create_par_plot <- function(
   return(pc2)
 }
 
-#' @title Plot parameter correlation
-#'
-#' @description Plots correlation between two parameters
-#'
-#' @inheritParams plot_rung_loglike
-#' @param parameter1 name of parameter first parameter.
-#' @param parameter2 name of parameter second parameter.
-#' @param downsample whether to downsample output to speed up plotting.
-#'
-#' @export
 create_cor_plot <- function(
     parx,
     pary,
@@ -159,29 +133,14 @@ create_cor_plot <- function(
   
 }
 
-#' @title Plot 95\% credible intervals
-#'
-#' @description Plots posterior 95\% credible intervals over specified set of
-#'   parameters (defauls to all parameters).
-#' 
-#' @inheritParams plot_rung_loglike
-#' @param show vector of parameter names to plot.
-#' @param param_names optional vector of names to replace the default parameter names.
-#'
-#' @export
-
-create_credible_plot <- function(output_df, show, chain, phase, param_names) {
-  
-  if (is.null(param_names)) {
-    param_names <- show
-  }
+create_credible_plot <- function(output_df, pars, chain, phase, param_names) {
   
   data <- plot_data_subset(
     output_df = output_df,
     chain = chain,
     phase = phase
   )
-  data <- data[, show, drop = FALSE]
+  data <- data[, pars, drop = FALSE]
   
   # get quantiles
   df_plot <- as.data.frame(t(apply(data, 2, quantile_95)))
@@ -198,30 +157,14 @@ create_credible_plot <- function(output_df, show, chain, phase, param_names) {
   
 }
 
-#' @title Plot posterior correlation matrix
-#'
-#' @description Produces a matrix showing the correlation between all parameters
-#'   from posterior draws.
-#' 
-#' @inheritParams plot_rung_loglike
-#' @param show Vector of parameter names to plot.
-#' @param param_names Optional vector of names to replace the default parameter names.
-#'
-#' @importFrom stats cor
-#' @export
-
-create_cor_mat_plot <- function(output_df, show, chain, phase, param_names) {
-  
-  if (is.null(param_names)) {
-    param_names <- show
-  }
+create_cor_mat_plot <- function(output_df, pars, chain, phase, param_names) {
   
   data <- plot_data_subset(
     output_df = output_df,
     chain = chain,
     phase = phase
   )
-  data <- data[, show, drop = FALSE]
+  data <- data[, pars, drop = FALSE]
   n <- ncol(data)
   
   # get correlation matrix into dataframe for ggplot

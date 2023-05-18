@@ -59,7 +59,10 @@ dj <- R6::R6Class(
     #' Initialise the dj object.
     #' @param data a named list or data frame or data values.
     #' @param df_params a data.frame of parameters (see \code{?define_params}).
-    #' @param loglike,logprior the log-likelihood and log-prior functions used in
+    #' @param loglikelihood the log-likelihood function used in
+    #'   the MCMC. Can either be passed in as R functions (not in quotes), or as
+    #'   character strings naming compiled cpp11 functions (in quotes).
+    #' @param logprior the log-prior function used in
     #'   the MCMC. Can either be passed in as R functions (not in quotes), or as
     #'   character strings naming compiled cpp11 functions (in quotes).
     #' @param chains the number of independent replicates of the MCMC to run.
@@ -122,6 +125,8 @@ dj <- R6::R6Class(
     },
     
     ### Print ###
+    #' @description
+    #' Print mcmc object summary
     print = function(){
       # print summary
       cat("drjacoby object:\n")
@@ -174,7 +179,7 @@ dj <- R6::R6Class(
     #' Run burn in. Runs the burn in phase of the MCMC to allow where 
     #' proposal standard deviations to be tuned towards a target acceptance rate
     #' and chains to converge.
-    #' @param iterations Number of tuning iterations to run
+    #' @param iterations Number of burn-in iterations to run
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
     burn = function(iterations, target_acceptance = 0.44, silent = FALSE){
@@ -238,6 +243,10 @@ dj <- R6::R6Class(
     },
     
     ### Sampling ###
+    #' @description
+    #' Run sampling in. Runs the sampling phase of the MCMC.
+    #' @param iterations Number of sampling iterations to run
+    #' @param silent print progress (boolean)
     sample = function(iterations, silent = FALSE){
       stopifnot(is.integer(iterations))
       
@@ -287,6 +296,9 @@ dj <- R6::R6Class(
     },
     
     ### Output ###
+    #' @description
+    #' Get mcmc output data.frame
+    #' @param phase optional phase selection
     output = function(phase = NULL){
       output_df <- dplyr::bind_rows(private$output_df)
       if(!is.null(phase)){
@@ -296,6 +308,8 @@ dj <- R6::R6Class(
     },
     
     ### Diagnostics ###
+    #' @description
+    #' Get acceptance rates
     acceptance_rate = function(){
       estimate_acceptance_rate(
         private$acceptance_counter,
@@ -305,26 +319,47 @@ dj <- R6::R6Class(
       )
     },
     
+    #' @description
+    #' Get DIC estimate
     dic = function(){
       output_df <- dplyr::bind_rows(private$output_df)
       estimate_dic(output_df)
     },
     
+    #' @description
+    #' Get effective sample size estimates
     ess = function(){
       output_df <- dplyr::bind_rows(private$output_df)
       estimate_ess(output_df, private$theta_names)
     },
     
+    #' @description
+    #' Get rhat estimates
     rhat = function(){
       output_df <- dplyr::bind_rows(private$output_df)
       estimate_rhat(output_df, private$theta_names, private$chains, private$iteration_counter)
     },
     
+    #' @description
+    #' Get run-time data
     timing = function(){
       return(private$duration)
     },
     
     ### Plots ###
+    
+    #' @description Produce a parameter plot of the named parameter,
+    #'   including the raw trace, the posterior histogram and an autocorrelation
+    #'   plot. The combined plot or a list of plot elements can be returned.
+    #'
+    #' @param par The name of the parameter
+    #' @param lag Maximum lag. Must be an integer between 1 and 500.
+    #' @param downsample boolean. Whether to downsample chain to make plotting more
+    #'   efficient.
+    #' @param phase Optional selection of phases, can be from: all, tune, burn and sample
+    #' @param chain Optional selection of chains
+    #' @param return_elements boolean. If \code{TRUE} a list of plotting objects 
+    #'   are returned without displaying.
     plot_par = function(par, lag = 20, downsample = TRUE, phase = "sample", chain = NULL, return_elements = FALSE){
       create_par_plot(
         par = par,
@@ -337,6 +372,14 @@ dj <- R6::R6Class(
       )
     },
     
+    #' @description Plots the correlation between two parameters
+    #'
+    #' @param parx Name of parameter 1
+    #' @param pary Name of parameter 2
+    #' @param downsample boolean. Whether to downsample chain to make plotting more
+    #'   efficient.
+    #' @param phase Optional selection of phases, can be from: all, tune, burn and sample
+    #' @param chain Optional selection of chains
     plot_cor = function(parx, pary, downsample = TRUE, phase = "sample", chain = NULL){
       create_cor_plot(
         parx = parx,
@@ -348,26 +391,40 @@ dj <- R6::R6Class(
       )
     },
     
-    plot_credible = function(show = NULL, phase = "sample", chain = NULL, param_names = NULL){
-      if(is.null(show)){
-        show = private$theta_names
+    #' @description Plots posterior 95\% credible intervals over specified set of
+    #'   parameters (defauls to all parameters).
+    #'
+    #' @param pars Vector of parameter names
+    #' @param phase Optional selection of phases, can be from: all, tune, burn and sample
+    #' @param chain Optional selection of chains
+    #' @param param_names Optional vector of prameter names for plotting labels
+    plot_credible = function(pars = NULL, phase = "sample", chain = NULL, param_names = NULL){
+      if(is.null(pars)){
+        pars = private$theta_names
       }
       create_credible_plot(
         output_df = private$output_df,
-        show = show,
+        pars = pars,
         chain = chain,
         phase = phase,
         param_names = NULL
       )
     },
     
-    plot_cor_mat = function(show, phase = "sample", chain = NULL, param_names = NULL){
-      if(is.null(show)){
-        show = private$theta_names
+    #' @description Produces a matrix showing the correlation between all parameters
+    #'   from posterior draws.
+    #'   
+    #' @param pars Vector of parameter names
+    #' @param phase Optional selection of phases, can be from: all, tune, burn and sample
+    #' @param chain Optional selection of chains
+    #' @param param_names Optional vector of prameter names for plotting labels
+    plot_cor_mat = function(pars, phase = "sample", chain = NULL, param_names = NULL){
+      if(is.null(pars)){
+        pars = private$theta_names
       }
       create_cor_mat_plot(
         output_df = private$output_df,
-        show = show,
+        pars = pars,
         chain = chain,
         phase = phase,
         param_names = param_names)

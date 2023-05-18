@@ -58,6 +58,14 @@ Initialise the dj object.
 
 \item{\code{df_params}}{a data.frame of parameters (see \code{?define_params}).}
 
+\item{\code{loglikelihood}}{the log-likelihood function used in
+the MCMC. Can either be passed in as R functions (not in quotes), or as
+character strings naming compiled cpp11 functions (in quotes).}
+
+\item{\code{logprior}}{the log-prior function used in
+the MCMC. Can either be passed in as R functions (not in quotes), or as
+character strings naming compiled cpp11 functions (in quotes).}
+
 \item{\code{chains}}{the number of independent replicates of the MCMC to run.}
 
 \item{\code{misc}}{optional list object passed to likelihood and prior. This can be
@@ -65,10 +73,6 @@ useful for passing values that are not strictly data, for example passing a
 lookup table to the prior function.}
 
 \item{\code{seed}}{Seed for reproducible random number generation. Must be an integer}
-
-\item{\code{loglike, logprior}}{the log-likelihood and log-prior functions used in
-the MCMC. Can either be passed in as R functions (not in quotes), or as
-character strings naming compiled cpp11 functions (in quotes).}
 }
 \if{html}{\out{</div>}}
 }
@@ -80,6 +84,7 @@ A new `dj` object.
 \if{html}{\out{<a id="method-dj-print"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-print}{}}}
 \subsection{Method \code{print()}}{
+Print mcmc object summary
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$print()}\if{html}{\out{</div>}}
 }
@@ -133,7 +138,7 @@ and chains to converge.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{iterations}}{Number of tuning iterations to run}
+\item{\code{iterations}}{Number of burn-in iterations to run}
 
 \item{\code{target_acceptance}}{Target acceptance rate}
 
@@ -146,24 +151,43 @@ and chains to converge.
 \if{html}{\out{<a id="method-dj-sample"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-sample}{}}}
 \subsection{Method \code{sample()}}{
+Run sampling in. Runs the sampling phase of the MCMC.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$sample(iterations, silent = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{iterations}}{Number of sampling iterations to run}
+
+\item{\code{silent}}{print progress (boolean)}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-output"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-output}{}}}
 \subsection{Method \code{output()}}{
+Get mcmc output data.frame
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$output(phase = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{phase}}{optional phase selection}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-acceptance_rate"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-acceptance_rate}{}}}
 \subsection{Method \code{acceptance_rate()}}{
+Get acceptance rates
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$acceptance_rate()}\if{html}{\out{</div>}}
 }
@@ -173,6 +197,7 @@ and chains to converge.
 \if{html}{\out{<a id="method-dj-dic"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-dic}{}}}
 \subsection{Method \code{dic()}}{
+Get DIC estimate
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$dic()}\if{html}{\out{</div>}}
 }
@@ -182,6 +207,7 @@ and chains to converge.
 \if{html}{\out{<a id="method-dj-ess"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-ess}{}}}
 \subsection{Method \code{ess()}}{
+Get effective sample size estimates
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$ess()}\if{html}{\out{</div>}}
 }
@@ -191,6 +217,7 @@ and chains to converge.
 \if{html}{\out{<a id="method-dj-rhat"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-rhat}{}}}
 \subsection{Method \code{rhat()}}{
+Get rhat estimates
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$rhat()}\if{html}{\out{</div>}}
 }
@@ -200,6 +227,7 @@ and chains to converge.
 \if{html}{\out{<a id="method-dj-timing"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-timing}{}}}
 \subsection{Method \code{timing()}}{
+Get run-time data
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$timing()}\if{html}{\out{</div>}}
 }
@@ -209,6 +237,9 @@ and chains to converge.
 \if{html}{\out{<a id="method-dj-plot_par"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-plot_par}{}}}
 \subsection{Method \code{plot_par()}}{
+Produce a parameter plot of the named parameter,
+  including the raw trace, the posterior histogram and an autocorrelation
+  plot. The combined plot or a list of plot elements can be returned.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$plot_par(
   par,
@@ -220,38 +251,104 @@ and chains to converge.
 )}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{par}}{The name of the parameter}
+
+\item{\code{lag}}{Maximum lag. Must be an integer between 1 and 500.}
+
+\item{\code{downsample}}{boolean. Whether to downsample chain to make plotting more
+efficient.}
+
+\item{\code{phase}}{Optional selection of phases, can be from: all, tune, burn and sample}
+
+\item{\code{chain}}{Optional selection of chains}
+
+\item{\code{return_elements}}{boolean. If \code{TRUE} a list of plotting objects 
+are returned without displaying.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-plot_cor"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-plot_cor}{}}}
 \subsection{Method \code{plot_cor()}}{
+Plots the correlation between two parameters
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$plot_cor(parx, pary, downsample = TRUE, phase = "sample", chain = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{parx}}{Name of parameter 1}
+
+\item{\code{pary}}{Name of parameter 2}
+
+\item{\code{downsample}}{boolean. Whether to downsample chain to make plotting more
+efficient.}
+
+\item{\code{phase}}{Optional selection of phases, can be from: all, tune, burn and sample}
+
+\item{\code{chain}}{Optional selection of chains}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-plot_credible"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-plot_credible}{}}}
 \subsection{Method \code{plot_credible()}}{
+Plots posterior 95\% credible intervals over specified set of
+  parameters (defauls to all parameters).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$plot_credible(
-  show = NULL,
+  pars = NULL,
   phase = "sample",
   chain = NULL,
   param_names = NULL
 )}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{pars}}{Vector of parameter names}
+
+\item{\code{phase}}{Optional selection of phases, can be from: all, tune, burn and sample}
+
+\item{\code{chain}}{Optional selection of chains}
+
+\item{\code{param_names}}{Optional vector of prameter names for plotting labels}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-plot_cor_mat"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-plot_cor_mat}{}}}
 \subsection{Method \code{plot_cor_mat()}}{
+Produces a matrix showing the correlation between all parameters
+  from posterior draws.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$plot_cor_mat(show, phase = "sample", chain = NULL, param_names = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$plot_cor_mat(pars, phase = "sample", chain = NULL, param_names = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{pars}}{Vector of parameter names}
+
+\item{\code{phase}}{Optional selection of phases, can be from: all, tune, burn and sample}
+
+\item{\code{chain}}{Optional selection of chains}
+
+\item{\code{param_names}}{Optional vector of prameter names for plotting labels}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-clone"></a>}}
