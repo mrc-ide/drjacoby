@@ -348,25 +348,27 @@ dj <- R6::R6Class(
       )
     },
     
-    plot_credible = function(show = NULL, phase = "sample", param_names = NULL){
+    plot_credible = function(show = NULL, phase = "sample", chain = NULL, param_names = NULL){
       if(is.null(show)){
         show = private$theta_names
       }
       create_credible_plot(
         output_df = private$output_df,
         show = show,
+        chain = chain,
         phase = phase,
         param_names = NULL
       )
     },
     
-    plot_cor_mat = function(show, phase = "sample", param_names = NULL){
+    plot_cor_mat = function(show, phase = "sample", chain = NULL, param_names = NULL){
       if(is.null(show)){
         show = private$theta_names
       }
       create_cor_mat_plot(
         output_df = private$output_df,
         show = show,
+        chain = chain,
         phase = phase,
         param_names = param_names)
     }

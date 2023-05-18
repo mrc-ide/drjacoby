@@ -4,7 +4,7 @@
 \alias{create_cor_mat_plot}
 \title{Plot posterior correlation matrix}
 \usage{
-create_cor_mat_plot(output_df, show, phase, param_names)
+create_cor_mat_plot(output_df, show, chain, phase, param_names)
 }
 \arguments{
 \item{show}{Vector of parameter names to plot.}

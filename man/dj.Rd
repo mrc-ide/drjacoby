@@ -235,7 +235,12 @@ and chains to converge.
 \if{latex}{\out{\hypertarget{method-dj-plot_credible}{}}}
 \subsection{Method \code{plot_credible()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$plot_credible(show = NULL, phase = "sample", param_names = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$plot_credible(
+  show = NULL,
+  phase = "sample",
+  chain = NULL,
+  param_names = NULL
+)}\if{html}{\out{</div>}}
 }
 
 }
@@ -244,7 +249,7 @@ and chains to converge.
 \if{latex}{\out{\hypertarget{method-dj-plot_cor_mat}{}}}
 \subsection{Method \code{plot_cor_mat()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$plot_cor_mat(show, phase = "sample", param_names = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$plot_cor_mat(show, phase = "sample", chain = NULL, param_names = NULL)}\if{html}{\out{</div>}}
 }
 
 }

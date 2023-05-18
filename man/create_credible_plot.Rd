@@ -4,7 +4,7 @@
 \alias{create_credible_plot}
 \title{Plot 95\% credible intervals}
 \usage{
-create_credible_plot(output_df, show, phase, param_names)
+create_credible_plot(output_df, show, chain, phase, param_names)
 }
 \arguments{
 \item{show}{vector of parameter names to plot.}

@@ -7,6 +7,26 @@ quantile_95 <- function(x) {
   return(ret)
 }
 
+#' Subset data for plotting
+#' @output_df MCMC output data.frame
+#' @param chain Select chain(s)
+#' @param phase Select phases can be from: all, tune, burn, sample
+#' @noRd
+plot_data_subset <- function(output_df, chain, phase){
+  data <- dplyr::bind_rows(output_df)
+  
+  # Phase subset
+  if(phase != "all"){
+    data <- data[data$phase %in% phase, ]
+  }
+  
+  # Chain subset
+  if(!is.null(chain)){
+    data <- data[data$chain %in% chain, ]
+  }
+  return(data)
+}
+
 #' @title Plot parameter estimates
 #'
 #' @description Produce a series of plots corresponding to each parameter,
@@ -33,17 +53,11 @@ create_par_plot <- function(
     chain,
     return_elements) {
   
-  # deal with phase = "both" situation
-  if (phase == "both") {
-    phase <- c("burn", "sample")
-  }
-  
-  # subset based on chain and phase
-  data <- dplyr::bind_rows(output_df)
-  if(!is.null(chain)){
-    data <- data[data$chain %in% chain, ]
-  }
-  data <- data[data$phase %in% phase, ]
+  data <- plot_data_subset(
+    output_df = output_df,
+    chain = chain,
+    phase = phase
+  )
   data <- data[,c("chain", "iteration", par)]
   
   # get autocorrelation (on full data, before downsampling)
@@ -121,17 +135,11 @@ create_cor_plot <- function(
     chain)  
 {
   
-  # deal with phase = "both" situation
-  if (phase == "both") {
-    phase <- c("burn", "sample")
-  }
-  
-  # subset based on chain and phase
-  data <- dplyr::bind_rows(output_df)
-  if(!is.null(chain)){
-    data <- data[data$chain %in% chain, ]
-  }
-  data <- data[data$phase %in% phase, ]
+  data <- plot_data_subset(
+    output_df = output_df,
+    chain = chain,
+    phase = phase
+  )
   data <- data[,c("chain", "iteration", parx, pary)]
   colnames(data) <- c("chain", "iteration", "x", "y")
   
@@ -162,20 +170,17 @@ create_cor_plot <- function(
 #'
 #' @export
 
-create_credible_plot <- function(output_df, show, phase, param_names) {
+create_credible_plot <- function(output_df, show, chain, phase, param_names) {
   
   if (is.null(param_names)) {
     param_names <- show
   }
   
-  # deal with phase = "both" situation
-  if (phase == "both") {
-    phase <- c("burn", "sample")
-  }
-  
-  # subset based on phase
-  data <- dplyr::bind_rows(output_df)
-  data <- data[data$phase %in% phase, ]
+  data <- plot_data_subset(
+    output_df = output_df,
+    chain = chain,
+    phase = phase
+  )
   data <- data[, show, drop = FALSE]
   
   # get quantiles
@@ -205,20 +210,17 @@ create_credible_plot <- function(output_df, show, phase, param_names) {
 #' @importFrom stats cor
 #' @export
 
-create_cor_mat_plot <- function(output_df, show, phase, param_names) {
+create_cor_mat_plot <- function(output_df, show, chain, phase, param_names) {
   
   if (is.null(param_names)) {
     param_names <- show
   }
   
-  # deal with phase = "both" situation
-  if (phase == "both") {
-    phase <- c("burn", "sample")
-  }
-  
-  # subset based on phase
-  data <- dplyr::bind_rows(output_df)
-  data <- data[data$phase %in% phase, ]
+  data <- plot_data_subset(
+    output_df = output_df,
+    chain = chain,
+    phase = phase
+  )
   data <- data[, show, drop = FALSE]
   n <- ncol(data)
   
