@@ -192,7 +192,6 @@ dj <- R6::R6Class(
       private$target_acceptance <- target_acceptance
       
       burnin = TRUE
-      
       for(chain in 1:private$chains){
         raw_output <- mcmc(
           chain,
@@ -238,7 +237,7 @@ dj <- R6::R6Class(
         private$iteration_counter[2, chain] = private$iteration_counter[2, chain] + iterations
         private$proposal_sd = raw_output$proposal_sd
         private$acceptance_counter[[chain]] = matrix(as.integer(raw_output$acceptance), nrow = length(private$theta_names), ncol = private$rungs)
-        private$theta[[chain]] = private$output_df[[chain]][nrow(private$output_df[[chain]]),private$theta_names]
+        private$theta[[chain]] = unlist(private$output_df[[chain]][nrow(private$output_df[[chain]]),private$theta_names])
       }
     },
     
@@ -252,7 +251,6 @@ dj <- R6::R6Class(
       
       private$sample_called <- TRUE
       burnin = FALSE
-      
       for(chain in 1:private$chains){
         raw_output <- mcmc(
           chain,
@@ -291,7 +289,7 @@ dj <- R6::R6Class(
         # Update internal states
         private$duration[3, chain] = private$duration[3, chain] + raw_output$dur
         private$iteration_counter[3, chain] = private$iteration_counter[3, chain] + iterations
-        private$theta[[chain]] = private$output_df[[chain]][nrow(private$output_df[[chain]]),private$theta_names]
+        private$theta[[chain]] = unlist(private$output_df[[chain]][nrow(private$output_df[[chain]]),private$theta_names])
       }
     },
     
@@ -402,12 +400,15 @@ dj <- R6::R6Class(
       if(is.null(pars)){
         pars = private$theta_names
       }
+      if(is.null(param_names)){
+        param_names <- pars
+      }
       create_credible_plot(
         output_df = private$output_df,
         pars = pars,
         chain = chain,
         phase = phase,
-        param_names = NULL
+        param_names = param_names
       )
     },
     
@@ -421,6 +422,9 @@ dj <- R6::R6Class(
     plot_cor_mat = function(pars, phase = "sample", chain = NULL, param_names = NULL){
       if(is.null(pars)){
         pars = private$theta_names
+      }
+      if(is.null(param_names)){
+        param_names <- pars
       }
       create_cor_mat_plot(
         output_df = private$output_df,

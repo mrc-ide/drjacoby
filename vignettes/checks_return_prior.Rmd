@@ -14,9 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, echo = FALSE}
-# set random seed
-set.seed(1)
-
 # load the drjacoby package
 library(drjacoby)
 ```
@@ -38,13 +35,14 @@ df_params <- define_params(name = "real_line", min = -Inf, max = Inf,
 ## Run MCMC
 
 ```{r}
-mcmc <- run_mcmc(data = list(x = -1),
-                 df_params = df_params,
-                 loglike = loglike_null,
-                 logprior = logprior_return,
-                 burnin = 1e3L,
-                 samples = 1e4L,
-                 chains = 10L)
+mcmc <- dj$new(data = list(x = -1),
+               df_params = df_params,
+               loglike = loglike_null,
+               logprior = logprior_return,
+               chains = 10L,
+               seed = 1)
+mcmc$burn(iterations = 100L)
+mcmc$sample(iterations = 1000L)
 ```
 
 ## Plots

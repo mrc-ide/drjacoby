@@ -3,11 +3,7 @@
 
 double phi_to_theta(double phi, int transformation_type, double theta_min, double theta_max) {
 
-  double theta;
-
-  if(transformation_type == 0){
-    theta = phi;
-  }
+  double theta = phi; //default if transform type = 0
   if(transformation_type == 1){
     theta = theta_max - exp(phi);
   }
@@ -22,11 +18,7 @@ double phi_to_theta(double phi, int transformation_type, double theta_min, doubl
 
 double theta_to_phi(double theta, int transformation_type, double theta_min, double theta_max) {
 
-  double phi;
-
-  if(transformation_type == 0){
-    phi = theta;
-  }
+  double phi = theta; //default if transform type = 0
   if(transformation_type == 1){
     phi = log(theta_max - theta);
   }
