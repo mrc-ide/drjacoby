@@ -41,32 +41,36 @@ mcmc <- dj$new(data = list(x = -1),
                logprior = logprior_return,
                chains = 10L,
                seed = 1)
-mcmc$burn(iterations = 100L)
-mcmc$sample(iterations = 1000L)
+mcmc$burn(iterations = 1000L, silent = TRUE)
+mcmc$sample(iterations = 10000L, silent = TRUE)
 ```
 
 ## Plots
 
 ```{r, fig.width=6, fig.height=5}
-output_sub <- subset(mcmc$output, phase == "sampling")
+output_sub <- mcmc$output(phase = "sample")
 
-# real_line
-hist(output_sub$real_line, breaks = 100, probability = TRUE, col = "black", main = "real_line")
+# Real line
+hist(output_sub$real_line, breaks = 100, probability = TRUE,
+     col = "black", main = "Real line", xlab = "")
 x <- seq(-5, 5, l = 1001)
 lines(x, dnorm(x), col = 2, lwd = 2)
 
-# neg_line
-hist(output_sub$neg_line, breaks = 100, probability = TRUE, col = "black", main = "neg_line")
+# Negative line
+hist(output_sub$neg_line, breaks = 100, probability = TRUE,
+     col = "black", main = "Negative line", xlab = "")
 x <- seq(-100, 0, l = 1001)
 lines(x, dgamma(-x, shape = 5, scale = 5), col = 2, lwd = 2)
 
-# pos_line
-hist(output_sub$pos_line, breaks = 100, probability = TRUE, col = "black", main = "pos_line")
+# Positive line
+hist(output_sub$pos_line, breaks = 100, probability = TRUE,
+     col = "black", main = "Positive line", xlab = "")
 x <- seq(0, 100, l = 1001)
 lines(x, dgamma(x, shape = 5, scale = 5), col = 2, lwd = 2)
 
-# unit_interval
-hist(output_sub$unit_interval, breaks = seq(0, 1, 0.01), probability = TRUE, col = "black", main = "unit_interval")
+# Unit interval
+hist(output_sub$unit_interval, breaks = seq(0, 1, 0.01), probability = TRUE,
+     col = "black", main = "Unit interval", xlab = "")
 x <- seq(0, 10, l = 1001)
 lines(x, dbeta(x, shape1 = 3, shape2 = 3), col = 2, lwd = 2)
 ```
