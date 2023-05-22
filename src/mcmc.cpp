@@ -21,7 +21,7 @@ list mcmc(
     const int iterations,
     const bool silent,
     // Parameters
-    doubles theta_init,
+    doubles_matrix<> theta_init,
     strings theta_names,
     integers transform_type,
     doubles theta_min,
@@ -33,13 +33,13 @@ list mcmc(
     function lp_f,
     writable::list misc,
     // Tuning and acceptance
-    doubles_matrix<> proposal_sd_init, // TODO: New element to pass in and out
-    integers_matrix<> acceptance_init, // TODO: New element to pass in and out
+    doubles_matrix<> proposal_sd_init,
+    integers_matrix<> acceptance_init,
     double target_acceptance,
     // PT
     int swap,
     doubles beta_init,
-    const integers swap_acceptance_init, // TODO: New element to pass in and out
+    const integers swap_acceptance_init,
     // Blocks
     list blocks_list,
     const int n_unique_blocks,
@@ -62,7 +62,7 @@ list mcmc(
   //////////////////////////////////////////////////////////////////////////////
   
   // Initialisise variables ////////////////////////////////////////////////////
-  const int n_par = theta_init.size();
+  const int n_par = theta_names.size();
   const int n_rungs = beta_init.size();
   int iteration_counter = iteration_counter_init + 1;
   double mh;
@@ -77,7 +77,7 @@ list mcmc(
   theta.resize(n_rungs, std::vector<double>(n_par));
   for(int i = 0; i < n_rungs; ++i){
     for(int j = 0; j < n_par; ++j){
-      theta[i][j] = theta_init[j];
+      theta[i][j] = theta_init(i,j);
     }
   }
   // Initialise vector for proposal theta
@@ -85,7 +85,7 @@ list mcmc(
   // and therefore must be a named vector, which is why it is writeable::doubles
   writable::doubles theta_prop(n_par);
   for(int p = 0; p < n_par; ++p){
-    theta_prop[p] = theta_init[p];
+    theta_prop[p] = theta_init(0,p);
   }
   theta_prop.names() = theta_names;
   
@@ -140,24 +140,30 @@ list mcmc(
   }
   out(0, n_par + 1) = lp[0];
   out(0, n_par + 2) = ll[0];
+  
+  // Initialise matrix for theta all rung output (for restarting)
+  // double theta_out[n_rungs][n_par];
+  writable::doubles_matrix<> theta_out(n_rungs, n_par);
+  writable::doubles_matrix<> proposal_sd_out(n_rungs, n_par);
+  writable::integers_matrix<> acceptance_out(n_rungs, n_par);
   //////////////////////////////////////////////////////////////////////////////
   
   // Tuning ////////////////////////////////////////////////////////////////////
   // Initialise matrix for proposal sd
   // double[n_par][n_rungs]
   std::vector<std::vector<double>> proposal_sd;
-  proposal_sd.resize(n_par, std::vector<double>(n_rungs));
-  for(int i = 0; i < n_par; ++i){
-    for(int j = 0; j < n_rungs; ++j){
+  proposal_sd.resize(n_rungs, std::vector<double>(n_par));
+  for(int i = 0; i < n_rungs; ++i){
+    for(int j = 0; j < n_par; ++j){
       proposal_sd[i][j] = proposal_sd_init(i,j);
     }
   }
-  
+
   // Initialise acceptance count matrix
   std::vector<std::vector<int>> acceptance;
-  acceptance.resize(n_par, std::vector<int>(n_rungs));
-  for(int i = 0; i < n_par; ++i){
-    for(int j = 0; j < n_rungs; ++j){
+  acceptance.resize(n_rungs, std::vector<int>(n_par));
+  for(int i = 0; i < n_rungs; ++i){
+    for(int j = 0; j < n_par; ++j){
       acceptance[i][j] = acceptance_init(i,j);
     }
   }
@@ -205,7 +211,7 @@ list mcmc(
       for(int p = 0; p < n_par; ++p){
         if(infer_parameter[p] == 1){
           // Propose new value of phi
-          phi_prop[p] = dust::random::normal(state, phi[index][p], proposal_sd[p][r]);
+          phi_prop[p] = dust::random::normal(state, phi[index][p], proposal_sd[r][p]);
           // Transform new phi_prop -> theta_prop
           theta_prop[p] = phi_to_theta(phi_prop[p], transform_type[p], theta_min[p], theta_max[p]);
           
@@ -224,19 +230,30 @@ list mcmc(
           lp_prop = cpp11::as_cpp<double>(lp_f(theta_prop, misc));
           
           // Check for NA/NaN/Inf in likelihood or prior
-          if(!std::isfinite(lp_prop) || std::isnan(lp_prop)){
+          if(!std::isfinite(lp_prop) || std::isnan(lp_prop) || 
+             !std::isfinite(sum(block_ll_prop)) || std::isnan(sum(block_ll_prop))){
+             
+             
+             // Extract the theta, proposal sd and acceptance rates for output
+             for(int i = 0; i < n_rungs; ++i){
+               for(int j = 0; j < n_par; ++j){
+                 index = rung_index[i];
+                 theta_out(i,j) = theta[index][j];
+                 proposal_sd_out(i,j) = proposal_sd[i][j];
+                 acceptance_out(i,j) = acceptance[i][j];
+               }
+             }
+             
             return writable::list({
-              "error"_nm = "NA or Inf returned by log prior function",
-                "theta_prop"_nm = theta_prop
+                "error"_nm = "NA or Inf returned by log prior function",
+                "phi_prop"_nm = phi_prop,
+                "theta_prop"_nm = theta_prop,
+                "rung_index"_nm = rung_index,
+                "proposal_sd"_nm = proposal_sd_out,
+                "theta"_nm = theta_out,
+                "output"_nm = out
             });
           }
-          if(!std::isfinite(sum(block_ll_prop)) || std::isnan(sum(block_ll_prop))){
-            return writable::list({
-              "error"_nm = "NA or Inf returned by log likelihood function",
-                "theta_prop"_nm = theta_prop
-            });
-          }
-          
           // get parameter transformation adjustment
           adjustment = get_adjustment(theta[index][p], theta_prop[p], transform_type[p], theta_min[p], theta_max[p]);
           // calculate Metropolis-Hastings ratio
@@ -257,9 +274,9 @@ list mcmc(
             lp[r] = lp_prop;
             // Robbins monroe step
             if(burnin){
-              proposal_sd[p][r] = exp(log(proposal_sd[p][r]) + (1 - target_acceptance) / sqrt(iteration_counter));
+              proposal_sd[r][p] = exp(log(proposal_sd[r][p]) + (1 - target_acceptance) / sqrt(iteration_counter));
             }
-            acceptance[p][r] = acceptance[p][r] + 1;
+            acceptance[r][p] = acceptance[r][p] + 1;
           } else {
             // Revert theta prop
             theta_prop[p] =  theta[index][p];
@@ -267,7 +284,7 @@ list mcmc(
             phi_prop[p] = phi[index][p];
             // Robbins monroe step
             if(burnin){
-              proposal_sd[p][r] = exp(log(proposal_sd[p][r]) - target_acceptance / sqrt(iteration_counter));
+              proposal_sd[r][p] = exp(log(proposal_sd[r][p]) - target_acceptance / sqrt(iteration_counter));
             }
           }
         }
@@ -293,9 +310,9 @@ list mcmc(
         double loglike1 = ll[r];
         double loglike2 = ll[r - 1];
         
-        double acceptance = (loglike2*rung_beta1 + loglike1*rung_beta2) - (loglike1*rung_beta1 + loglike2*rung_beta2);
+        double accept = (loglike2*rung_beta1 + loglike1*rung_beta2) - (loglike1*rung_beta1 + loglike2*rung_beta2);
         // accept or reject move
-        bool accept_move = log(dust::random::random_real<double>(state)) < acceptance;
+        bool accept_move = log(dust::random::random_real<double>(state)) < accept;
         
         if(accept_move){
           int ri1 = rung_index[r];
@@ -314,12 +331,14 @@ list mcmc(
     iteration_counter ++;
   }
   
-  // Extract the cold chain proposal sd and acceptance rates for output
-  std::vector<double> proposal_sd_out(n_par);
-  std::vector<double> acceptance_out(n_par);
-  for(int i = 0; i < n_par; ++i){
-    proposal_sd_out[i] = proposal_sd[i][0];
-    acceptance_out[i] = acceptance[i][0];
+  // Extract the theta, proposal sd and acceptance rates for output
+  for(int i = 0; i < n_rungs; ++i){
+    for(int j = 0; j < n_par; ++j){
+      index = rung_index[i];
+      theta_out(i,j) = theta[index][j];
+      proposal_sd_out(i,j) = proposal_sd[i][j];
+      acceptance_out(i,j) = acceptance[i][j];
+    }
   }
   
   // end timer
@@ -327,7 +346,8 @@ list mcmc(
   
   // Return outputs in a list
   return writable::list({
-    "output"_nm = out,
+      "output"_nm = out,
+      "theta"_nm = theta_out,
       "proposal_sd"_nm = proposal_sd_out,
       "iteration_counter"_nm = iteration_counter,
       "acceptance"_nm = acceptance_out,

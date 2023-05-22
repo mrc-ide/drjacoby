@@ -76,7 +76,32 @@ define_params <- function(...) {
   return(ret)
 }
 
-#------------------------------------------------
+
+initial <- function(df_params, chains, rungs){
+  # If not initial values are are supplied, draw random values from the
+  # range
+  if(!"init" %in% names(df_params)){
+    df_params$init <- draw_init(df_params, chains)
+  }
+  # Ensure df_params$init is always a list
+  if (!is.list(df_params$init)) {
+    df_params$init <- as.list(df_params$init)
+  }
+  # Check init values all provided
+  for (i in 1:nrow(df_params)) {
+    stopifnot(length(df_params$init[[i]]) == chains)
+  }
+  # Convert list of vectors into list of matrices, with nrow = n rungs
+  initial <- list()
+  for(i in 1:chains){
+    chain_inits <- sapply(df_params$init, "[", i)
+    initial[[i]]<- matrix(chain_inits, ncol = length(chain_inits), nrow = rungs, byrow = TRUE)
+  }
+  return(initial)
+}
+
+
+
 # Check that params dataframe is formatted correctly, and return in standardised
 # format (init and block coerced to list)
 #' @noRd
@@ -94,11 +119,6 @@ check_params <- function(x) {
   use_block <- ("block" %in% names(x))
   
   # coerce init and block to list
-  if(use_init) {
-    if (!is.list(x$init)) {
-      x$init <- as.list(x$init)
-    }
-  }
   if(use_block) {
     if (!is.list(x$block)) {
       x$block <- as.list(x$block)
@@ -136,28 +156,7 @@ get_transform_type <- function(theta_min, theta_max){
   as.integer(2 * is.finite(theta_min) + is.finite(theta_max))
 }
 
-# define default init values
-set_init <- function(df_params, chains){
-  use_init <- ("init" %in% names(df_params))
-  if(use_init){
-    check_init(df_params, chains)
-  } else {
-    df_params$init <- get_init(df_params, chains)
-  }
-  init <- lapply(1:chains, function(x){
-    sapply(df_params$init, '[', x)
-  }
-  )
-  return(init)
-}
-
-check_init <- function(df_params, chains){
-  for (i in 1:nrow(df_params)) {
-    stopifnot(length(df_params$init[[i]]) == chains)
-  }
-}
-
-get_init <- function(df_params, chains){
+draw_init <- function(df_params, chains){
   init_list <- list()
   for (i in 1:nrow(df_params)) {
     transform_type <- get_transform_type(df_params[i,]$min, df_params[i,]$max)

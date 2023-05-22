@@ -14,9 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, echo = FALSE}
-# set random seed
-set.seed(1)
-
 # load the drjacoby package
 library(drjacoby)
 ```
@@ -47,25 +44,23 @@ df_params <- define_params(name = "mu", min = -L, max = L,
 ## Single temperature rung (no Metropolis coupling)
 
 ```{r}
-mcmc <- run_mcmc(data = list(x = -1),
-                 df_params = df_params,
-                 loglike = loglike_double_well,
-                 logprior = logprior_null,
-                 burnin = 1e3L,
-                 samples = 1e5L,
-                 chains = 1L,
-                 rungs = 1L)
+mcmc <- dj$new(data = list(x = -1),
+               df_params = df_params,
+               loglike = loglike_double_well,
+               logprior = logprior_null,
+               chains = 1L)
+mcmc$burn(iterations = 10000L, silent = TRUE)
+mcmc$sample(iterations = 10000L, silent = TRUE)
 ```
 
-```{r}
+```{r, fig.width=6, fig.height=5}
 # trace plot
-plot_par(mcmc, show = "mu")
+mcmc$plot_par("mu")
 ```
 
 ```{r}
 # extract posterior draws
-output_sub <- subset(mcmc$output, phase == "sampling")
-mu_draws <- output_sub$mu
+mu_draws <- mcmc$output(phase = "sample")$mu
 
 # get analytical solution
 x <- seq(-L, L, l = 1001)
@@ -81,28 +76,27 @@ lines(x, fx, col = 2, lwd = 2)
 ## Multiple temperature rungs
 
 ```{r}
-mcmc <- run_mcmc(data = list(x = -1),
-                 df_params = df_params,
-                 loglike = loglike_double_well,
-                 logprior = logprior_null,
-                 burnin = 1e3L,
-                 samples = 1e5L,
-                 chains = 1L,
-                 rungs = 11L)
+mcmc <- dj$new(data = list(x = -1),
+               df_params = df_params,
+               loglike = loglike_double_well,
+               logprior = logprior_null,
+               chains = 1L)
+mcmc$tune(beta = seq(1, 0, -0.1)^2)
+mcmc$burn(iterations = 1000L, silent = TRUE)
+mcmc$sample(iterations = 10000L, silent = TRUE)
 ```
 
 ```{r, fig.width=6, fig.height=5}
 # trace plot
-plot_par(mcmc, show = "mu")
+mcmc$plot_par("mu")
 
 # coupling acceptance plot
-plot_mc_acceptance(mcmc)
+# plot_mc_acceptance(mcmc)
 ```
 
 ```{r, fig.width=6, fig.height=5}
 # extract posterior draws
-output_sub <- subset(mcmc$output, phase == "sampling")
-mu_draws <- output_sub$mu
+mu_draws <- mcmc$output(phase = "sample")$mu
 
 # overlay plots
 hist(mu_draws, breaks = seq(-L, L, l = 201), probability = TRUE, main = "", col = "black")

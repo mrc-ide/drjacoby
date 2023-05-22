@@ -80,22 +80,28 @@ dj <- R6::R6Class(
       stopifnot(is.list(misc))
       stopifnot(is.integer(chains))
       stopifnot(chains >= 1)
+      if(!is.null(seed)){
+        set.seed(seed)
+      }
       
+      private$chains = chains
+      private$rng_ptr = dust::dust_rng_pointer$new(seed = seed, n_streams = private$chains)
       private$data = data
       private$df_params = df_params
       private$misc = misc
       private$loglikelihood = loglikelihood
       private$logprior = logprior
       
-      private$theta = set_init(df_params, chains)
+      # Initial values
+      private$theta = initial(df_params, chains = private$chains, rungs = private$rungs)
       private$theta_names = unlist(df_params$name)
       private$theta_min = unlist(df_params$min)
       private$theta_max = unlist(df_params$max)
       private$theta_transform_type = get_transform_type(private$theta_min,  private$theta_max)
-      private$proposal_sd = matrix(0.1, nrow = length(private$theta_names), ncol = private$rungs)
+      private$proposal_sd = matrix(0.1, nrow = private$rungs, ncol = length(private$theta_names))
       private$infer_parameter = as.integer(!(private$theta_min == private$theta_max))
       
-      private$chains = chains
+      
       private$iteration_counter = matrix(
         0,
         nrow = 3,
@@ -118,10 +124,10 @@ dj <- R6::R6Class(
       private$n_unique_blocks = length(unique(unlist(private$blocks)))
       
       private$acceptance_counter = lapply(1:private$chains, function(x){
-        matrix(0L, nrow = length(private$theta_names), ncol = private$rungs)
+        matrix(0L, nrow = private$rungs, ncol = length(private$theta_names))
       })
       private$output_df <- vector("list", private$chains)
-      private$rng_ptr = dust::dust_rng_pointer$new(seed = seed, n_streams = private$chains)
+     
     },
     
     ### Print ###
@@ -153,9 +159,20 @@ dj <- R6::R6Class(
     #' @param max_rungs The maximum number of rungs
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
-    tune = function(iterations, beta = seq(1, 0, -0.1), max_rungs = 100, target_acceptance = 0.44, silent = FALSE){
+    tune = function(iterations, swap = 1L, beta = seq(1, 0, -0.1), max_rungs = 100, target_acceptance = 0.44, silent = FALSE){
       private$tune_called <- TRUE
       
+      # Infer rung number
+      private$rungs = length(beta)
+      private$beta = beta
+      private$swap = swap
+      # Update default initial values
+      private$theta = initial(df_params, chains = private$chains, rungs = private$rungs)
+      private$proposal_sd = matrix(0.1, nrow = private$rungs, ncol = length(private$theta_names))
+      private$acceptance_counter = lapply(1:private$chains, function(x){
+        matrix(0L, nrow = private$rungs, ncol = length(private$theta_names))
+      })
+      private$swap_acceptance_counter = rep(0L, private$rungs)
       # As well as updating internal elements as in burnin,
       # the following will all need to be updated if this function is called:
       ## private$rungs
@@ -190,9 +207,9 @@ dj <- R6::R6Class(
       
       private$burn_called <- TRUE
       private$target_acceptance <- target_acceptance
-      
       burnin = TRUE
       for(chain in 1:private$chains){
+        
         raw_output <- mcmc(
           chain,
           burnin,
@@ -219,6 +236,7 @@ dj <- R6::R6Class(
           private$iteration_counter[2, chain],
           private$rng_ptr
         )
+        
         # Check for error return
         if("error" %in% names(raw_output)){
           self$error_debug = raw_output
@@ -236,8 +254,9 @@ dj <- R6::R6Class(
         private$duration[2, chain] = private$duration[2, chain] + raw_output$dur
         private$iteration_counter[2, chain] = private$iteration_counter[2, chain] + iterations
         private$proposal_sd = raw_output$proposal_sd
-        private$acceptance_counter[[chain]] = matrix(as.integer(raw_output$acceptance), nrow = length(private$theta_names), ncol = private$rungs)
-        private$theta[[chain]] = unlist(private$output_df[[chain]][nrow(private$output_df[[chain]]),private$theta_names])
+        private$acceptance_counter[[chain]] = raw_output$acceptance
+        private$theta[[chain]] = raw_output$theta
+        private$swap_acceptance_counter = raw_output$swap_acceptance
       }
     },
     
@@ -251,7 +270,9 @@ dj <- R6::R6Class(
       
       private$sample_called <- TRUE
       burnin = FALSE
+      
       for(chain in 1:private$chains){
+        
         raw_output <- mcmc(
           chain,
           burnin,
@@ -278,6 +299,11 @@ dj <- R6::R6Class(
           private$iteration_counter[3, chain],
           private$rng_ptr
         )
+        # Check for error return
+        if("error" %in% names(raw_output)){
+          self$error_debug = raw_output
+          stop("Error in mcmc, check $error_debug")
+        }
         # Update user output
         private$output_df[[chain]] <- append_output(
           current = private$output_df[[chain]],
@@ -286,10 +312,12 @@ dj <- R6::R6Class(
           theta_names = private$theta_names,
           chain = chain
         )
+        
         # Update internal states
         private$duration[3, chain] = private$duration[3, chain] + raw_output$dur
         private$iteration_counter[3, chain] = private$iteration_counter[3, chain] + iterations
-        private$theta[[chain]] = unlist(private$output_df[[chain]][nrow(private$output_df[[chain]]),private$theta_names])
+        private$theta[[chain]] = raw_output$theta
+        private$swap_acceptance_counter = raw_output$swap_acceptance
       }
     },
     
