@@ -36,7 +36,7 @@ create_par_plot <- function(
     phase,
     chain,
     return_elements) {
-  
+
   data <- plot_data_subset(
     output_df = output_df,
     chain = chain,
@@ -47,6 +47,7 @@ create_par_plot <- function(
   # get autocorrelation (on full data, before downsampling)
   ac_data <- as.data.frame(apply(data[, par, drop = FALSE], 2, acf_data, lag = lag))
   ac_data$lag <- 0:lag
+  ac_data[,par] <- pmax(ac_data[,par], 0)
   names(ac_data) <- c("lag", "Autocorrelation")
   
   # downsample
@@ -82,7 +83,7 @@ create_par_plot <- function(
     ggplot2::theme_bw() +
     ggplot2::ylab("Autocorrelation") +
     ggplot2::xlab("Lag") +
-    ggplot2::ylim(min(0, min(ac_data$Autocorrelation)), 1)
+    ggplot2::ylim(0, 1)
   
   if(return_elements){
     out <- list(

@@ -133,7 +133,7 @@ dj <- R6::R6Class(
         matrix(0L, nrow = private$rungs, ncol = length(private$theta_names))
       })
       private$output_df <- vector("list", private$chains)
-     
+      
     },
     
     ### Print ###
@@ -376,7 +376,16 @@ dj <- R6::R6Class(
     #' @description
     #' Get run-time data
     timing = function(){
-      return(private$duration)
+      seconds <- private$duration
+      seconds <- rbind(seconds, Total = colSums(seconds))
+      iterations <- private$iteration_counter
+      iterations <- rbind(iterations, All = colSums(iterations))
+      iterations_per_second <- round(iterations / seconds)
+      return(
+        list(
+          seconds = seconds,
+          iterations_per_second = iterations_per_second)
+      )
     },
     
     ### Plots ###
