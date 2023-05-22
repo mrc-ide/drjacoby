@@ -32,7 +32,8 @@ data_list <- list(x = rnorm(n))
 Parameters dataframe:
 
 ```{r}
-df_params <- define_params(name = "mu", min = -1, max = 1)
+df_params <- define_params(name = "mu", min = -1, max = 1,
+                           name= "sigma", min = 1, max = 1)
 ```
 
 ## MCMC

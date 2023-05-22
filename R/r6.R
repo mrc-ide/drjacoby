@@ -89,7 +89,13 @@ dj <- R6::R6Class(
       private$data = data
       private$df_params = df_params
       private$misc = misc
+      if(is.character(loglikelihood)){
+        loglikelihood = get(loglikelihood)
+      }
       private$loglikelihood = loglikelihood
+      if(is.character(logprior)){
+        logprior = get(logprior)
+      }
       private$logprior = logprior
       
       # Initial values

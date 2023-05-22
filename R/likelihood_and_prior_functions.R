@@ -17,7 +17,7 @@ loglike_normal <-  function(params, data, misc) {
     stats::dnorm(
       x = data[["x"]],
       mean = params["mu"],
-      sd = 1,
+      sd = params["sigma"],
       log = TRUE
     )
   )

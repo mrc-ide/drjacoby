@@ -6,7 +6,7 @@ using namespace cpp11;
 // namespace writable = cpp11::writable;
 
 [[cpp11::register]]
-double loglike_cpp11(doubles params, list data, list misc){
+double loglike_normal_cpp11(const doubles params, const list data, const list misc){
   // extract parameters
   double mu = params["mu"];
   double sigma = params["sigma"];
@@ -25,14 +25,8 @@ double loglike_cpp11(doubles params, list data, list misc){
 }
 
 [[cpp11::register]]
-double logprior_cpp11(doubles params, list misc){
-  
-  // extract parameters
-  double sigma = params["sigma"];
-  
-  // calculate logprior
-  double ret = -log(20.0) + Rf_dnorm4(sigma, 0.0, 1.0, true);
-  
+double logprior_null_cpp11(const doubles params, const list misc){
+  double ret = 0;
   // return as SEXP
   return(ret);
 }

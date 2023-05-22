@@ -31,6 +31,8 @@ navbar:
           href: articles/checks_double_well.html
         - text: "Multilevel blocks"
           href: articles/checks_multilevel_blocks.html
+        - text: "cpp11 functions"
+          href: articles/checks_cpp.html
     - text: "Functions"
       href: reference/index.html
   right:

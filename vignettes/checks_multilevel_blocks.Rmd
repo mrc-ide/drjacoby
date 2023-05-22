@@ -14,9 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, echo = FALSE}
-# set random seed
-set.seed(1)
-
 # load the drjacoby package
 library(drjacoby)
 ```
@@ -54,13 +51,13 @@ df_params <- define_params(name = "mu_1", min = -L, max = L, block = c(1, 6),
 ## MCMC
 
 ```{r cars}
-mcmc <- run_mcmc(data = data_list,
-                 df_params = df_params,
-                 loglike = loglike_block,
-                 logprior = logprior_null,
-                 burnin = 1e3L,
-                 samples = 1e5L,
-                 chains = 10L)
+mcmc <- dj$new(data = data_list,
+               df_params = df_params,
+               loglike = loglike_block,
+               logprior = logprior_null,
+               chains = 10L)
+mcmc$burn(iterations = 1000L, silent = TRUE)
+mcmc$sample(iterations = 10000L, silent = TRUE)
 ```
 
 ## Plots
@@ -73,7 +70,7 @@ Green = analytical solution assuming independent groups (no second level)
 
 ```{r, fig.width=6, fig.height=5}
 # extract sampling draws
-output_sub <- subset(mcmc$output, phase == "sampling")
+output_sub <- mcmc$output(phase = "sample")
 
 for (i in 1:5) {
   # get posterior draws

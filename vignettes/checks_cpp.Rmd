@@ -1,0 +1,70 @@
+---
+title: "Normal model"
+author: "Bob Verity and Pete Winskill"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Normal model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE}
+# load the drjacoby package
+library(drjacoby)
+```
+
+**Purpose:** to check providing cpp11 loglikelihood and logprior functions works.
+
+## Model
+
+A vector of data `x` drawn from a normal distribution with unknown mean `mu` and known variance of 1.0.
+
+```{r}
+n <- 1e2
+data_list <- list(x = rnorm(n))
+```
+
+Parameters dataframe:
+
+```{r}
+df_params <- define_params(name = "mu", min = -1, max = 1,
+                           name= "sigma", min = 1, max = 1)
+```
+
+## MCMC
+
+```{r cars}
+# Source the cpp11 functions
+fpath <- system.file("extdata", "cpp_likelihood_and_prior_functions.cpp", package = "drjacoby")
+cpp11::cpp_source(fpath)
+
+mcmc <- dj$new(data = data_list,
+               df_params = df_params,
+               loglike = "loglike_normal_cpp11",
+               logprior = "logprior_null_cpp11",
+               chains = 10L,
+               seed = 1)
+mcmc$burn(iterations = 1000L, silent = TRUE)
+mcmc$sample(iterations = 10000L, silent = TRUE)
+```
+
+## Posterior plots
+
+```{r, fig.width=6, fig.height=5}
+# extract sampling draws
+mu_draws <- output_sub <- mcmc$output(phase = "sample")$mu
+
+# calculate analytical solution
+x <- seq(-1, 1, l = 1001)
+fx <- dnorm(x, mean = mean(data_list$x), sd = sqrt(1/n))
+
+# histogram and overlay analytical
+hist(mu_draws, breaks = seq(-1, 1, 0.01), probability = TRUE,
+     col = "black", main = "Normal model", xlab = "")
+lines(x, fx, col = 2, lwd = 4)
+```
