@@ -187,6 +187,7 @@ dj <- R6::R6Class(
       ## private$swap_acceptance_counter
       ## private$proposal_sd - to increase ncol to match rungs
       ## private$acceptance_counter  - to increase ncol to match rungs
+      ## private$swap_acceptance_counter - to increase length to match rungs
       ## private$iteration_counter - keep track of total iterations for tuning phase
       
       # Will also need to add in below new versions of:
