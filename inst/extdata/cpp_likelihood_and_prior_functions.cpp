@@ -20,13 +20,17 @@ double loglike_normal_cpp11(const doubles params, const list data, const list mi
     ret += Rf_dnorm4(x[i], mu, sigma, 1);
   }
   
-  // return as SEXP
   return(ret);
 }
 
 [[cpp11::register]]
 double logprior_null_cpp11(const doubles params, const list misc){
   double ret = 0;
-  // return as SEXP
+  return(ret);
+}
+
+[[cpp11::register]]
+double loglike_null_cpp11(const doubles params, const list data, const list misc){
+  double ret = 0;
   return(ret);
 }
