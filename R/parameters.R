@@ -166,7 +166,7 @@ draw_init <- function(df_params, chains){
   init_list <- list()
   for (i in 1:nrow(df_params)) {
     transform_type <- get_transform_type(df_params[i,]$min, df_params[i,]$max)
-    p <- runif(chains)
+    p <- stats::runif(chains)
     if (transform_type == 0) {
       init_list[[i]] <- log(p) - log(1 - p)
     } else if (transform_type == 1) {

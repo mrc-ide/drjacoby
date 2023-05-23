@@ -1,6 +1,6 @@
 estimate_dic <- function(output){
   deviance <- -2 * output[output$phase == "sample", "loglikelihood"]
-  dic  <- mean(deviance) + 0.5 * var(deviance)
+  dic  <- mean(deviance) + 0.5 * stats::var(deviance)
   return(dic)
 }
 

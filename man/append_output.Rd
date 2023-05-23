@@ -9,7 +9,7 @@ append_output(current, new, phase, theta_names, chain)
 \arguments{
 \item{current}{Any current output (from previous steps)}
 
-\item{new}{NEw output from cpp mcmc call}
+\item{new}{New output from cpp mcmc call}
 
 \item{phase}{Phase: tune, burn or sample}
 

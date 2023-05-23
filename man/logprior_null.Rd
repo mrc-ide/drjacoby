@@ -6,6 +6,11 @@
 \usage{
 logprior_null(params, misc)
 }
+\arguments{
+\item{params}{parmeter vector}
+
+\item{misc}{misc list}
+}
 \description{
 Null log prior function
 }

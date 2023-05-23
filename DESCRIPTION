@@ -14,6 +14,8 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
+Suggests: 
+    testthat (>= 3.0.0)
 Remotes:
   mrc-ide/dust
 LinkingTo: 
@@ -23,4 +25,9 @@ LinkingTo:
 SystemRequirements: C++11
 BugReports: https://github.com/mrc-ide/drjacoby/issues
 Imports: 
+    coda,
+    cowplot,
+    cpp11,
+    decor,
+    dust,
     R6

@@ -13,7 +13,10 @@ quantile_95 <- function(x) {
 #' @param phase Select phases can be from: all, tune, burn, sample
 #' @noRd
 plot_data_subset <- function(output_df, chain, phase){
-  data <- dplyr::bind_rows(output_df)
+  data <- output_df
+  if(!is.data.frame(data)){
+    data <- do.call("rbind", data)
+  }
   
   # Phase subset
   if(phase != "all"){
@@ -36,7 +39,7 @@ create_par_plot <- function(
     phase,
     chain,
     return_elements) {
-
+  
   data <- plot_data_subset(
     output_df = output_df,
     chain = chain,
@@ -150,7 +153,8 @@ create_credible_plot <- function(output_df, pars, chain, phase, param_names) {
   # produce plot
   ggplot2::ggplot(data = df_plot) +
     ggplot2::geom_point(ggplot2::aes(x = .data$param, y = .data$Q50)) +
-    ggplot2::geom_segment(ggplot2::aes(x = .data$param, y = .data$Q2.5, xend = .data$param, yend = .data$Q97.5)) +
+    ggplot2::geom_segment(ggplot2::aes(x = .data$param, y = .data$Q2.5,
+                                       xend = .data$param, yend = .data$Q97.5)) +
     ggplot2::xlab("") +
     ggplot2::ylab("95% CrI") +
     ggplot2::theme_bw() +
@@ -169,7 +173,7 @@ create_cor_mat_plot <- function(output_df, pars, chain, phase, param_names) {
   n <- ncol(data)
   
   # get correlation matrix into dataframe for ggplot
-  m <- cor(data)
+  m <- stats::cor(data)
   df_plot <- data.frame(x = rep(names(data), each = n),
                         xi = rep(1:n, each = n),
                         y = names(data),
@@ -184,12 +188,14 @@ create_cor_mat_plot <- function(output_df, pars, chain, phase, param_names) {
   max_plot <- ceiling(max_range * 10) / 10
   
   # produce plot
-  ggplot2::ggplot(df_plot) + ggplot2::theme_bw() +
+  ggplot2::ggplot(data = df_plot) + 
     ggplot2::geom_raster(ggplot2::aes(x = .data$x, y = .data$y, fill = .data$z)) +
     ggplot2::scale_fill_gradientn(colours = c("red", "white", "blue"),
                                   values = c(0, 0.5, 1),
                                   limits = c(-max_plot, max_plot),
                                   name = "correlation") +
-    ggplot2::xlab("") + ggplot2::ylab("")
+    ggplot2::xlab("") + 
+    ggplot2::ylab("") +
+    ggplot2::theme_bw()
   
 }

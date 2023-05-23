@@ -6,6 +6,11 @@
 \usage{
 logprior_return(params, misc)
 }
+\arguments{
+\item{params}{parmeter vector}
+
+\item{misc}{misc list}
+}
 \description{
 Log prior function for return prior check
 }

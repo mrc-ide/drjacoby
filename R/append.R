@@ -1,7 +1,7 @@
 #' Append output from the cpp mcmc to R6 object
 #'
 #' @param current Any current output (from previous steps)
-#' @param new NEw output from cpp mcmc call
+#' @param new New output from cpp mcmc call
 #' @param phase Phase: tune, burn or sample
 #' @param theta_names Vector of parameter names
 #' @param chain Chain

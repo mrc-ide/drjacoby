@@ -156,6 +156,7 @@ dj <- R6::R6Class(
     #' target acceptance rates and chain convergence are not guaranteed  - run
     #' \code{$burn()} to burn in further.
     #' @param iterations Number of tuning iterations to run
+    #' @param swap integer 0 = no swapping, 1 = standard swapping, 2 = super cool new swapping
     #' @param beta Initial beta schedule
     #' @param max_rungs The maximum number of rungs
     #' @param target_acceptance Target acceptance rate
@@ -326,16 +327,20 @@ dj <- R6::R6Class(
     ### Output ###
     #' @description
     #' Get mcmc output data.frame
+    #' @param chain option chain(s) selection
     #' @param phase optional phase selection
     output = function(chain = NULL, phase = NULL){
-      output_df <- dplyr::bind_rows(private$output_df)
+      data <- private$output_df
+      if(!is.data.frame(data)){
+        data <- do.call("rbind", data)
+      }
       if(!is.null(phase)){
-        return(output_df[output_df$phase %in% phase, ])
+        return(data[data$phase %in% phase, ])
       }
       if(!is.null(chain)){
-        return(output_df[output_df$chain %in% chain, ])
+        return(data[data$chain %in% chain, ])
       }
-      return(output_df)
+      return(data)
     },
     
     ### Diagnostics ###

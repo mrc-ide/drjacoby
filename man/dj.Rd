@@ -101,6 +101,7 @@ target acceptance rates and chain convergence are not guaranteed  - run
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$tune(
   iterations,
+  swap = 1L,
   beta = seq(1, 0, -0.1),
   max_rungs = 100,
   target_acceptance = 0.44,
@@ -112,6 +113,8 @@ target acceptance rates and chain convergence are not guaranteed  - run
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{iterations}}{Number of tuning iterations to run}
+
+\item{\code{swap}}{integer 0 = no swapping, 1 = standard swapping, 2 = super cool new swapping}
 
 \item{\code{beta}}{Initial beta schedule}
 
@@ -172,12 +175,14 @@ Run sampling in. Runs the sampling phase of the MCMC.
 \subsection{Method \code{output()}}{
 Get mcmc output data.frame
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$output(phase = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$output(chain = NULL, phase = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{chain}}{option chain(s) selection}
+
 \item{\code{phase}}{optional phase selection}
 }
 \if{html}{\out{</div>}}

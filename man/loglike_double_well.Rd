@@ -6,6 +6,13 @@
 \usage{
 loglike_double_well(params, data, misc)
 }
+\arguments{
+\item{params}{parmeter vector}
+
+\item{data}{data list}
+
+\item{misc}{misc list}
+}
 \description{
 Double well log likelihood function
 }

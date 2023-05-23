@@ -1,16 +1,21 @@
 #' @title Null log likelihood function
+#' @param params parmeter vector
+#' @param data data list
+#' @param misc misc list
 #' @export
 loglike_null <- function(params, data, misc){
   return(0)
 }
 
 #' @title Null log prior function
+#' @inheritParams loglike_null
 #' @export
 logprior_null <- function(params, misc){
   return(0)
 }
 
 #' @title Simple normal log likelihood function
+#' @inheritParams loglike_null
 #' @export
 loglike_normal <-  function(params, data, misc) {
   ret <- sum(
@@ -25,6 +30,7 @@ loglike_normal <-  function(params, data, misc) {
 }
 
 #' @title Double well log likelihood function
+#' @inheritParams loglike_null
 #' @export
 loglike_double_well <-  function(params, data, misc) {
   mu <- params["mu"]
@@ -35,24 +41,26 @@ loglike_double_well <-  function(params, data, misc) {
 }
 
 #' @title Log prior function for return prior check
+#' @inheritParams loglike_null
 #' @export
 logprior_return <- function(params, misc){
- ret <- dnorm(x = params["real_line"], mean = 0.0, sd = 1.0, log = TRUE) +
-    dgamma(x = -params["neg_line"], shape = 5.0, scale = 5.0, log = TRUE) +
-    dgamma(x = params["pos_line"], shape = 5.0, scale = 5.0, log = TRUE) +
-    dbeta(x = params["unit_interval"], shape1 = 3.0, shape2 = 3.0, log = TRUE)
+ ret <- stats::dnorm(x = params["real_line"], mean = 0.0, sd = 1.0, log = TRUE) +
+   stats::dgamma(x = -params["neg_line"], shape = 5.0, scale = 5.0, log = TRUE) +
+   stats::dgamma(x = params["pos_line"], shape = 5.0, scale = 5.0, log = TRUE) +
+   stats::dbeta(x = params["unit_interval"], shape1 = 3.0, shape2 = 3.0, log = TRUE)
  return(ret)
 }
 
 #' @title Blocked log likelihood function
+#' @inheritParams loglike_null
 #' @export
 loglike_block <- function(params, data, misc){
   block <- misc[["block"]]
   if(block == 6){
-    out <- sum(dnorm(params[1:5], mean = 0, sd = 1, log = TRUE))
+    out <- sum(stats::dnorm(params[1:5], mean = 0, sd = 1, log = TRUE))
   } else {
     x <- data[[block]]
-    out <- sum(dnorm(x, mean = params[block], sd = 1, log = TRUE))
+    out <- sum(stats::dnorm(x, mean = params[block], sd = 1, log = TRUE))
   }
   return(out)
 }

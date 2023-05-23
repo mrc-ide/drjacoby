@@ -6,6 +6,13 @@
 \usage{
 loglike_null(params, data, misc)
 }
+\arguments{
+\item{params}{parmeter vector}
+
+\item{data}{data list}
+
+\item{misc}{misc list}
+}
 \description{
 Null log likelihood function
 }

@@ -1,4 +1,5 @@
 test_that("Cpp likelihood and prior", {
+  library(cpp11)
   # define true parameter values
   mu_true <- 3
   sigma_true <- 2
