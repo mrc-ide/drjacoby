@@ -6,6 +6,7 @@
 #include <chrono>
 
 double sum(std::vector<double> x);
+bool value_check(const double x);
 double chrono_timer(std::chrono::high_resolution_clock::time_point &t0, std::string message_before, bool print_diff); 
   
 #endif

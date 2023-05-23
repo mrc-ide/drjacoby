@@ -45,8 +45,8 @@ cpp11::cpp_source(fpath)
 
 mcmc <- dj$new(data = data_list,
                df_params = df_params,
-               loglike = "loglike_normal_cpp11",
-               logprior = "logprior_null_cpp11",
+               loglike = loglike_normal_cpp11,
+               logprior = logprior_null_cpp11,
                chains = 10L,
                seed = 1)
 mcmc$burn(iterations = 1000L, silent = TRUE)

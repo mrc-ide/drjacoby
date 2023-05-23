@@ -21,7 +21,7 @@ test_that("Cpp likelihood and R prior, and vice versa", {
   mcmc1 <- dj$new(
     data = data_list,
     df_params = df_params,
-    loglike = "loglike_null_cpp11",
+    loglike = loglike_null_cpp11,
     logprior = logprior_null,
     chains = 1L
   )
@@ -37,7 +37,7 @@ test_that("Cpp likelihood and R prior, and vice versa", {
     data = data_list,
     df_params = df_params,
     loglike = loglike_null,
-    logprior = "logprior_null_cpp11",
+    logprior = logprior_null_cpp11,
     chains = 1L
   )
   

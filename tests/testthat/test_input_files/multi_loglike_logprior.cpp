@@ -1,5 +1,8 @@
-#include <Rcpp.h>
-using namespace Rcpp;
+#include "cpp11.hpp"
+#include "cpp11/doubles.hpp"
+#include "Rmath.h"
+using namespace cpp11;
+
 
 // Silly example so we can show that our loglike function can call others internally
 double none(){
@@ -7,58 +10,20 @@ double none(){
   return x;
 }
 
-// Log likelihood
-// [[Rcpp::export]]
-SEXP loglike(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc) {
+[[cpp11::register]]
+double logprior_normal_cpp11_multi(const doubles params, const list data, const list misc) {
+  // extract parameters
+  double mu = params["mu"];
+  double sigma = params["sigma"];
   
   // unpack data
-  std::vector<double> x = Rcpp::as< std::vector<double> >(data["x"]);
+  doubles x = data["x"];
   
-  // unpack params
-  double mu = params["mu"];
-  double sigma = params["sigma"];
-  
-  // calculate log-likelihood
+  // sum log-likelihood over all data
   double ret = 0.0;
-  for (unsigned int i = 0; i < x.size(); ++i) {
-    ret += R::dnorm(x[i], mu, sigma, 1) + none();
+  for (int i = 0; i < x.size(); ++i) {
+    ret += Rf_dnorm4(x[i], mu, sigma, 1) + none();
   }
   
-  // catch underflow
-  if (!std::isfinite(ret)) {
-    const double OVERFLO_DOUBLE = DBL_MAX/100.0;
-    ret = -OVERFLO_DOUBLE;
-  }
-  
-  return Rcpp::wrap(ret);
-}
-
-// Log prior
-// [[Rcpp::export]]
-SEXP logprior(Rcpp::NumericVector params, Rcpp::List misc) {
-  
-  // unpack params
-  double mu = params["mu"];
-  double sigma = params["sigma"];
-  
-  // calculate logprior
-  double ret = none();
-  
-  // return as SEXP
-  return Rcpp::wrap(ret);
-}
-
-// [[Rcpp::export]]  
-SEXP create_xptr(std::string function_name) {  
-  typedef SEXP (*funcPtr_likelihood)(Rcpp::NumericVector params, Rcpp::List data, Rcpp::List misc);  
-  typedef SEXP (*funcPtr_prior)(Rcpp::NumericVector params, Rcpp::List misc);  
-  
-  if (function_name == "loglike"){
-    return(Rcpp::XPtr<funcPtr_likelihood>(new funcPtr_likelihood(&loglike)));
-  } 
-  if (function_name == "logprior"){
-    return(Rcpp::XPtr<funcPtr_prior>(new funcPtr_prior(&logprior)));
-  } 
-  
-  stop("cpp function %i not found", function_name);
+  return ret;
 }

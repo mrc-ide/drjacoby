@@ -185,7 +185,7 @@ create_cor_mat_plot <- function(output_df, pars, chain, phase, param_names) {
   
   # produce plot
   ggplot2::ggplot(df_plot) + ggplot2::theme_bw() +
-    ggplot2::geom_raster(ggplot2::aes_(x = ~x, y = ~y, fill = ~z)) +
+    ggplot2::geom_raster(ggplot2::aes(x = .data$x, y = .data$y, fill = .data$z)) +
     ggplot2::scale_fill_gradientn(colours = c("red", "white", "blue"),
                                   values = c(0, 0.5, 1),
                                   limits = c(-max_plot, max_plot),

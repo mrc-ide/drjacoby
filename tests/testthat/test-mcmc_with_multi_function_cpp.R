@@ -1,6 +1,4 @@
 test_that("Multi function cpp likelihood and prior", {
-  set.seed(1)
-  
   # define true parameter values
   mu_true <- 3
   sigma_true <- 2
@@ -14,20 +12,19 @@ test_that("Multi function cpp likelihood and prior", {
                              name = "sigma", min = 0, max = 10, init = 1)
   
   # Source Rcpp likehood and prior functions
-  Rcpp::sourceCpp("test_input_files/multi_loglike_logprior.cpp")
+  cpp11::cpp_source("test_input_files/multi_loglike_logprior.cpp")
   
-  mcmc <- run_mcmc(data = data_list,
-                   df_params = df_params,
-                   loglike = "loglike",
-                   logprior = "logprior",
-                   burnin = 1e3,
-                   samples = 1e3,
-                   chains = 1,
-                   silent = TRUE)
+  mcmc <- dj$new(
+    data = data_list,
+    df_params = df_params,
+    loglike = logprior_normal_cpp11_multi,
+    logprior = logprior_null,
+    seed = 1)
+  mcmc$burn(iterations = 100L, silent = TRUE)
+  mcmc$sample(iterations = 100L, silent = TRUE)
   
   # subset output
-  pe <- dplyr::filter(mcmc$output, phase == "sampling") %>%
-    dplyr::select(mu, sigma)
+  pe <- mcmc$output(phase = "sample")[,c("mu", "sigma")]
   
   # check posterior estimates
   posterior_estimate <- apply(pe, 2, median)

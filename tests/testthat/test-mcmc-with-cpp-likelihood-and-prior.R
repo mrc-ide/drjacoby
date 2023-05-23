@@ -15,18 +15,18 @@ test_that("Cpp likelihood and prior", {
   fpath <- system.file("extdata", "cpp_likelihood_and_prior_functions.cpp", package = "drjacoby")
   cpp11::cpp_source(fpath)
   # Source Rcpp likehood and prior functions
-  cpp11::cpp_source("tests/testthat/test_input_files/loglike_logprior.cpp")
+  cpp11::cpp_source("test_input_files/loglike_logprior.cpp")
   
   # run MCMC
   cpp_mcmc_null <- dj$new(
     data = data_list,
     df_params = df_params,
-    loglike = "loglike_null_cpp11",
-    logprior = "logprior_normal_cpp11",
+    loglike = loglike_null_cpp11,
+    logprior = logprior_normal_cpp11,
     chains = 1L,
     seed = 1)
   cpp_mcmc_null$burn(iterations = 100L, silent = TRUE)
-  cpp_mcmc_null$sample(iterations = 100L, silent = TRUE)
+  cpp_mcmc_null$sample(iterations = 1000L, silent = TRUE)
   
   # subset output
   pe <- cpp_mcmc_null$output()[,c("mu", "sigma")]
@@ -40,11 +40,11 @@ test_that("Cpp likelihood and prior", {
   cpp_mcmc_data <- dj$new(
     data = data_list,
     df_params = df_params,
-    loglike = "loglike_normal_cpp11",
-    logprior = "logprior_null_cpp11",
+    loglike = loglike_normal_cpp11,
+    logprior = logprior_null_cpp11,
     seed = 1)
   cpp_mcmc_data$burn(iterations = 100L, silent = TRUE)
-  cpp_mcmc_data$sample(iterations = 100L, silent = TRUE)
+  cpp_mcmc_data$sample(iterations = 1000L, silent = TRUE)
   
   # subset output
   pe <- cpp_mcmc_data$output()[,c("mu", "sigma")]
@@ -58,12 +58,12 @@ test_that("Cpp likelihood and prior", {
   cpp_mcmc_chains <- dj$new(
     data = data_list,
     df_params = df_params,
-    loglike = "loglike_normal_cpp11",
-    logprior = "logprior_null_cpp11",
+    loglike = loglike_normal_cpp11,
+    logprior = logprior_null_cpp11,
     chains = 2L,
     seed = 1)
   cpp_mcmc_chains$burn(iterations = 100L, silent = TRUE)
-  cpp_mcmc_chains$sample(iterations = 100L, silent = TRUE)
+  cpp_mcmc_chains$sample(iterations = 1000L, silent = TRUE)
   
   # subset output to chain1 and check posterior estimates
   pe <- cpp_mcmc_chains$output(chain = 1)[,c("mu", "sigma")]
@@ -81,12 +81,12 @@ test_that("Cpp likelihood and prior", {
   mcmc_out_MC <- dj$new(
     data = data_list,
     df_params = df_params,
-    loglike = "loglike_normal_cpp11",
-    logprior = "logprior_null_cpp11",
+    loglike = loglike_normal_cpp11,
+    logprior = logprior_null_cpp11,
     seed = 1)
   mcmc_out_MC$tune(beta = seq(1, 0, -0.1), silent = TRUE)
   mcmc_out_MC$burn(iterations = 100L, silent = TRUE)
-  mcmc_out_MC$sample(iterations = 100L, silent = TRUE)
+  mcmc_out_MC$sample(iterations = 1000L, silent = TRUE)
   
   # subset output
   pe <- mcmc_out_MC$output()[,c("mu", "sigma")]

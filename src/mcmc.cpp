@@ -229,11 +229,8 @@ list mcmc(
           // Update proposal prior
           lp_prop = cpp11::as_cpp<double>(lp_f(theta_prop, misc));
           
-          // Check for NA/NaN/Inf in likelihood or prior
-          if(!std::isfinite(lp_prop) || std::isnan(lp_prop) || 
-             !std::isfinite(sum(block_ll_prop)) || std::isnan(sum(block_ll_prop))){
-             
-             
+          // Check for NA/NaN/+Inf in likelihood or prior
+          if(value_check(lp_prop) ||  value_check(sum(block_ll_prop))){
              // Extract the theta, proposal sd and acceptance rates for output
              for(int i = 0; i < n_rungs; ++i){
                for(int j = 0; j < n_par; ++j){

@@ -90,13 +90,7 @@ dj <- R6::R6Class(
       private$data = data
       private$df_params = df_params
       private$misc = misc
-      if(is.character(loglikelihood)){
-        loglikelihood = get(loglikelihood)
-      }
       private$loglikelihood = loglikelihood
-      if(is.character(logprior)){
-        logprior = get(logprior)
-      }
       private$logprior = logprior
       
       # Initial values
@@ -174,7 +168,7 @@ dj <- R6::R6Class(
       private$beta = beta
       private$swap = swap
       # Update default initial values
-      private$theta = initial(df_params, chains = private$chains, rungs = private$rungs)
+      private$theta = initial(private$df_params, chains = private$chains, rungs = private$rungs)
       private$proposal_sd = matrix(0.1, nrow = private$rungs, ncol = length(private$theta_names))
       private$acceptance_counter = lapply(1:private$chains, function(x){
         matrix(0L, nrow = private$rungs, ncol = length(private$theta_names))
