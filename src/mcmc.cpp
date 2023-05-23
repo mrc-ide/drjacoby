@@ -58,7 +58,7 @@ list mcmc(
   
   // Initialise RNG ////////////////////////////////////////////////////////////
   auto rng = dust::random::r::rng_pointer_get<dust::random::xoshiro256plus>(rng_ptr);
-  auto& state = rng->state(chain - 1);
+  auto& state = rng->state(0);
   //////////////////////////////////////////////////////////////////////////////
   
   // Initialisise variables ////////////////////////////////////////////////////
@@ -350,6 +350,7 @@ list mcmc(
       "acceptance"_nm = acceptance_out,
       "rung_index"_nm = rung_index,
       "swap_acceptance"_nm = swap_acceptance,
-      "dur"_nm = dur
+      "dur"_nm = dur,
+      "rng_ptr"_nm = rng_ptr
   });
 }
