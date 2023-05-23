@@ -333,10 +333,13 @@ dj <- R6::R6Class(
     #' @description
     #' Get mcmc output data.frame
     #' @param phase optional phase selection
-    output = function(phase = NULL){
+    output = function(chain = NULL, phase = NULL){
       output_df <- dplyr::bind_rows(private$output_df)
       if(!is.null(phase)){
-        return(output_df[output_df$phase == phase, ])
+        return(output_df[output_df$phase %in% phase, ])
+      }
+      if(!is.null(chain)){
+        return(output_df[output_df$chain %in% chain, ])
       }
       return(output_df)
     },

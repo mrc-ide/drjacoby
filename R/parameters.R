@@ -87,6 +87,12 @@ initial <- function(df_params, chains, rungs){
   if (!is.list(df_params$init)) {
     df_params$init <- as.list(df_params$init)
   }
+  # If length of init is 1, repeat for each chain
+  for (i in 1:nrow(df_params)) {
+    if(length(df_params$init[[i]]) == 1){
+      df_params$init[[i]] = rep(df_params$init[[i]], chains)
+    }
+  }
   # Check init values all provided
   for (i in 1:nrow(df_params)) {
     stopifnot(length(df_params$init[[i]]) == chains)

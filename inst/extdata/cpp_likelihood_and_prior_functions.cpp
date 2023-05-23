@@ -1,9 +1,7 @@
 #include "cpp11.hpp"
 #include "cpp11/doubles.hpp"
 #include "Rmath.h"
-// #include <vector>
 using namespace cpp11;
-// namespace writable = cpp11::writable;
 
 [[cpp11::register]]
 double loglike_normal_cpp11(const doubles params, const list data, const list misc){
