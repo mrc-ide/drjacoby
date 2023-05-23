@@ -80,6 +80,7 @@ dj <- R6::R6Class(
       stopifnot(is.list(misc))
       stopifnot(is.integer(chains))
       stopifnot(chains >= 1)
+      stopifnot(!"block" %in% names(misc))
       if(!is.null(seed)){
         set.seed(seed)
       }

@@ -1,43 +1,4 @@
-context("test-mcmc-with-r-likelihood-and-prior")
-
-#------------------------------------------------
-test_that("define_params() working as expected", {
-  
-  # expect error if bad name
-  expect_error(define_params(name = "mu", min = -10, max = 10, foo = 5))
-  
-  # expect error if duplicated names
-  expect_error(define_params(name = "mu", min = -10, max = 10,
-                             name = "mu", min = -10, max = 10))
-  
-  # expect error if missing some args
-  expect_error(define_params(name = "mu1", min = -10, max = 10, init = 5,
-                             name = "mu2", min = -10, max = 10))
-  
-  # expect blocks in correct format
-  df_params <- define_params(name = "mu", min = -10, max = 10, block = 1,
-                             name = "sigma", min = 0, max = Inf, block = 1)
-  expect_equal(df_params$block, list(block = 1, block = 1))
-  
-  # correctly defined dataframe
-  df_params <- define_params(name = "mu", min = -10, max = 10, init = 5,
-                             name = "sigma", min = 0, max = Inf, init = 1)
-  
-  # same parameters dataframe using base R method
-  df_params_base <- data.frame(name = c("mu", "sigma"),
-                               min = c(-10, 0),
-                               max = c(10, Inf))
-  df_params_base$init <- list(init = 5, init = 1)
-  
-  # check identical
-  expect_identical(df_params, df_params_base)
-  
-})
-
-#------------------------------------------------
 test_that("R likelihood and prior", {
-  set.seed(1)
-  
   # define true parameter values
   mu_true <- 3
   sigma_true <- 2
@@ -67,75 +28,60 @@ test_that("R likelihood and prior", {
   }
   
   # run MCMC
-  r_mcmc_null <- run_mcmc(data = data_list,
-                          df_params = df_params,
-                          loglike = r_loglike_null,
-                          logprior = r_logprior_strong,
-                          burnin = 1e3,
-                          samples = 1e3,
-                          silent = TRUE)
+  r_mcmc_null <- dj$new(
+    data = data_list,
+    df_params = df_params,
+    loglike = r_loglike_null,
+    logprior = r_logprior_strong,
+    seed = 1)
+  r_mcmc_null$burn(iterations = 1000L, silent = TRUE)
+  r_mcmc_null$sample(iterations = 1000L, silent = TRUE)
   
   # subset output
-  pe <- dplyr::filter(r_mcmc_null$output, phase == "sampling") %>%
-    dplyr::select(mu, sigma)
+  pe <- r_mcmc_null$output()[,c("mu", "sigma")]
   
   # check posterior estimates
   posterior_estimate <- apply(pe, 2, median)
   expect_lt(posterior_estimate["mu"] - 6, 0.1)
   expect_lt(posterior_estimate["sigma"] - 1, 0.1)
   
-  # Test parameter names are ordered correctly
-  namei <- match(df_params$name, names(r_mcmc_null$output))
-  namei <- 1 + namei - min(namei)
-  expect_equal(namei, 1:length(namei))
+  expect_equal(
+    names(r_mcmc_null$output()),
+    c("iteration", "mu", "sigma", "logprior", "loglikelihood", "phase", "chain")
+  )
   
   # run MCMC with null prior
-  r_mcmc_data <- run_mcmc(data = data_list,
-                          df_params = df_params,
-                          loglike = r_loglike,
-                          logprior = r_logprior_null,
-                          burnin = 1e3,
-                          samples = 1e3,
-                          silent = TRUE)
+  r_mcmc_data <- dj$new(
+    data = data_list,
+    df_params = df_params,
+    loglike = r_loglike,
+    logprior = r_logprior_null,
+    seed = 1)
+  r_mcmc_data$burn(iterations = 1000L, silent = TRUE)
+  r_mcmc_data$sample(iterations = 1000L, silent = TRUE)
   
   # subset output
-  pe <- dplyr::filter(r_mcmc_data$output, phase == "sampling") %>%
-    dplyr::select(mu, sigma)
+  pe <- r_mcmc_data$output()[,c("mu", "sigma")]
   
   # check posterior estimates
   posterior_estimate2 <- apply(pe, 2, median)
   expect_lt(posterior_estimate2[1] - 3, 0.25)
   expect_lt(posterior_estimate2[2] - 2, 0.25)
   
-  # Test parameter names are ordered correctly
-  namei <- match(df_params$name, names(r_mcmc_data$output))
-  namei <- 1 + namei - min(namei)
-  expect_equal(namei, 1:length(namei))
-  
-  ## Sample chains
-  sampled <- sample_chains(r_mcmc_data, 100)
-  expect_type(sampled, "list")
-  expect_equal(nrow(sampled), 100)
-  expect_equal(ncol(sampled), 3)
-  expect_error(sample_chains(r_mcmc_data, 1000000))
-  expect_error(sample_chains(r_mcmc_data, -1))
-  expect_error(sample_chains(1, 100))
-  expect_type(r_mcmc_data, "list")
-  expect_message(print(r_mcmc_data))
-  expect_message(summary(r_mcmc_data))
-  
+  expect_equal(
+    names(r_mcmc_data$output()),
+    c("iteration", "mu", "sigma", "logprior", "loglikelihood", "phase", "chain")
+  )
 })
 
 #------------------------------------------------
 test_that("Run with multiple chains", {
-  set.seed(1)
-  
   # define data
   data_list <- list(x = rnorm(10))
   
   # define parameters dataframe with multiple init values
   df_params <- define_params(name = "mu", min = -10, max = 10, init = c(-5, 5),
-                             name = "sigma", min = 0, max = Inf, init = 1)
+                             name = "sigma", min = 0, max = Inf, init = c(1, 2))
   
   # log likelihood and log prior
   r_loglike <- function(params, data, misc) {
@@ -147,36 +93,36 @@ test_that("Run with multiple chains", {
   }
   
   # check for error when init does not match chain number
-  expect_error(run_mcmc(data = data_list,
-                        df_params = df_params,
-                        loglike = r_loglike,
-                        logprior = r_logprior,
-                        burnin = 1e2,
-                        samples = 1e2,
-                        chains = 3,
-                        silent = TRUE))
+  expect_error(dj$new(
+    data = data_list,
+    df_params = df_params,
+    loglike = r_loglike,
+    logprior = r_logprior,
+    chains = 3L),
+    "length(df_params$init[[i]]) == chains is not TRUE",
+    fixed = TRUE
+  )
   
   # run with correct number of chains
-  mcmc <- run_mcmc(data = data_list,
-                   df_params = df_params,
-                   loglike = r_loglike,
-                   logprior = r_logprior,
-                   burnin = 1e2,
-                   samples = 1e2,
-                   chains = 2,
-                   silent = TRUE)
+  mcmc <- dj$new(
+    data = data_list,
+    df_params = df_params,
+    loglike = r_loglike,
+    logprior = r_logprior,
+    chains = 2L,
+    seed = 1)
+  mcmc$burn(iterations = 100L, silent = TRUE)
+  mcmc$sample(iterations = 100L, silent = TRUE)
   
   # check that first values in output match initial values over all chains
-  first_it <- subset(mcmc$output, iteration == 1)
+  output <- mcmc$output()
+  first_it <- output[output$iteration == 1, ]
   expect_equal(first_it$mu, df_params$init[[1]])
-  expect_equal(first_it$sigma, rep(df_params$init[[2]], 2))
+  expect_equal(first_it$sigma, df_params$init[[2]])
   
 })
 
-#------------------------------------------------
 test_that("All parameter transformation types", {
-  set.seed(1)
-  
   # define data
   data_list <- list(x = rnorm(10))
   
@@ -199,31 +145,20 @@ test_that("All parameter transformation types", {
   }
   
   # should run without error
-  mcmc <- run_mcmc(data = data_list,
-                   df_params = df_params,
-                   loglike = r_loglike,
-                   logprior = r_logprior,
-                   burnin = 1e2,
-                   samples = 1e2,
-                   chains = 3,
-                   silent = TRUE)
-  
-  # should run without error
-  expect_silent(run_mcmc(data = data_list,
-                         df_params = df_params,
-                         loglike = r_loglike,
-                         logprior = r_logprior,
-                         burnin = 1e2,
-                         samples = 1e2,
-                         chains = 3,
-                         silent = TRUE))
-  
+  expect_silent({
+    mcmc <- dj$new(
+      data = data_list,
+      df_params = df_params,
+      loglike = r_loglike,
+      logprior = r_logprior,
+      chains = 3L)
+    mcmc$burn(iterations = 100L, silent = TRUE)
+    mcmc$sample(iterations = 100L, silent = TRUE)
+  })
 })
 
 #------------------------------------------------
 test_that("Checks on misc input", {
-  set.seed(1)
-  
   # define data
   data_list <- list(x = rnorm(10))
   
@@ -239,21 +174,24 @@ test_that("Checks on misc input", {
   }
   
   # expect error if misc not a list
-  expect_error(run_mcmc(data = data_list,
-                        df_params = df_params,
-                        loglike = r_loglike,
-                        logprior = r_logprior,
-                        misc = 5,
-                        burnin = 1e2,
-                        samples = 1e2))
+  expect_error(dj$new(
+    data = data_list,
+    df_params = df_params,
+    loglike = r_loglike,
+    logprior = r_logprior,
+    misc = 5),
+    "is.list(misc) is not TRUE",
+    fixed = TRUE)
   
   # expect error if misc contains element "block"
-  expect_error(run_mcmc(data = data_list,
-                        df_params = df_params,
-                        loglike = r_loglike,
-                        logprior = r_logprior,
-                        misc = list("block" = 5),
-                        burnin = 1e2,
-                        samples = 1e2))
+  expect_error(dj$new(
+    data = data_list,
+    df_params = df_params,
+    loglike = r_loglike,
+    logprior = r_logprior,
+    misc = list("block" = 5),
+    "!block %in% names(misc) is not TRUE",
+    fixed = TRUE
+  ))
   
 })
