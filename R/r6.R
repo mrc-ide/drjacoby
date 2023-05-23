@@ -215,15 +215,17 @@ dj <- R6::R6Class(
         stop("Cannot call burn after sample has been called")
       }
       
+      # Define the apply function
       apply_func <- noclusterApply
       if(!is.null(cl)){
         apply_func <- parallel::clusterApply
       }
       
-      
+      # Set burn parameters
       private$burn_called <- TRUE
       private$target_acceptance <- target_acceptance
       burnin <- TRUE
+      
       # Gather chain elements into input list
       chain_input <- list()
       for(i in 1:private$chains){
@@ -237,6 +239,7 @@ dj <- R6::R6Class(
         )
       }
       
+      # Run chains
       chain_output <- apply_func(cl, 
                                  chain_input, run_mcmc,
                                  burnin = burnin,
@@ -259,7 +262,7 @@ dj <- R6::R6Class(
                                  n_unique_blocks = private$n_unique_blocks
       )
       
-      # Update R6 object with mcmcm outputs
+      # Update R6 object with mcmc outputs
       for(i in 1:private$chains){
         # Check for error return
         if("error" %in% names(chain_output[[i]])){
@@ -292,11 +295,13 @@ dj <- R6::R6Class(
     sample = function(iterations, silent = FALSE, cl = NULL){
       stopifnot(is.integer(iterations))
       
+      # Define the apply function
       apply_func <- noclusterApply
       if(!is.null(cl)){
         apply_func <- parallel::clusterApply
       }
       
+      # Set sample parameters
       private$sample_called <- TRUE
       burnin = FALSE
       
@@ -312,6 +317,8 @@ dj <- R6::R6Class(
           rng_ptr = private$rng_ptr[[i]]
         )
       }
+      
+      # Run chains
       chain_output <- apply_func(cl, 
                                  chain_input, run_mcmc,
                                  burnin = burnin,
@@ -334,7 +341,7 @@ dj <- R6::R6Class(
                                  n_unique_blocks = private$n_unique_blocks
       )
       
-      # Update R6 object with mcmcm outputs
+      # Update R6 object with mcmc outputs
       for(i in 1:private$chains){
         # Check for error return
         if("error" %in% names(chain_output[[i]])){
