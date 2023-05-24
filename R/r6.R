@@ -88,7 +88,6 @@ dj <- R6::R6Class(
       private$chains = chains
       private$rng_ptr = dust::dust_rng_distributed_pointer(
         seed = seed,
-        n_streams = private$chains,
         n_nodes = private$chains
       )
       
@@ -264,6 +263,8 @@ dj <- R6::R6Class(
       
       # Update R6 object with mcmc outputs
       for(i in 1:private$chains){
+        # Update the pointer
+        private$rng_ptr[[i]] <- chain_output[[i]]$rng_ptr
         # Check for error return
         if("error" %in% names(chain_output[[i]])){
           self$error_debug = chain_output[[i]]
