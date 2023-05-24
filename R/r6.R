@@ -19,7 +19,6 @@ dj <- R6::R6Class(
     loglikelihood = NULL,
     logprior = NULL,
     
-    theta = NULL,
     theta_names = NULL,
     theta_min =  NULL,
     theta_max =  NULL,
@@ -27,24 +26,18 @@ dj <- R6::R6Class(
     infer_parameter = NULL,
     
     chains = NULL,
+    chain_objects = NULL,
     
     blocks = NULL,
     n_unique_blocks = NULL,
     
-    proposal_sd = NULL,
     target_acceptance = NULL,
-    acceptance_counter = NULL,
-    
     rungs = 1,
     beta = 1,
     swap = 0L,
     swap_acceptance_counter = rep(0L, 1),
     
-    iteration_counter = NULL,
-    duration = NULL,
-    
-    output_df = NULL,
-    rng_ptr = NULL
+    output_df = NULL
   ),
   
   public = list(
@@ -85,55 +78,68 @@ dj <- R6::R6Class(
         set.seed(seed)
       }
       
+      # Shared elements
       private$chains = chains
-      private$rng_ptr = dust::dust_rng_distributed_pointer(
-        seed = seed,
-        n_nodes = private$chains
-      )
-      
       private$data = data
       private$df_params = df_params
       private$misc = misc
       private$loglikelihood = loglikelihood
       private$logprior = logprior
-      
-      # Initial values
-      private$theta = initial(df_params, chains = private$chains, rungs = private$rungs)
       private$theta_names = unlist(df_params$name)
       private$theta_min = unlist(df_params$min)
       private$theta_max = unlist(df_params$max)
       private$theta_transform_type = get_transform_type(private$theta_min,  private$theta_max)
-      private$proposal_sd = lapply(1:private$chains, function(x){
-        matrix(0.1, nrow = private$rungs, ncol = length(private$theta_names))
-      })
       private$infer_parameter = as.integer(!(private$theta_min == private$theta_max))
-      
-      
-      private$iteration_counter = matrix(
-        0,
-        nrow = 3,
-        ncol = private$chains,
-        dimnames = list(
-          c("Tune", "Burn", "Sample"),
-          paste0("Chain_", 1:private$chains)
-        ))
-      
-      private$duration = matrix(
-        0,
-        nrow = 3,
-        ncol = private$chains,
-        dimnames = list(
-          c("Tune", "Burn", "Sample"),
-          paste0("Chain_", 1:private$chains)
-        ))
-      
       private$blocks = set_blocks(df_params)
       private$n_unique_blocks = length(unique(unlist(private$blocks)))
+      private$output_df <- vector("list", private$chains)
       
-      private$acceptance_counter = lapply(1:private$chains, function(x){
+      # Chain-specific elements
+      theta = initial(df_params, chains = private$chains, rungs = private$rungs)
+      
+      proposal_sd = lapply(1:private$chains, function(x){
+        matrix(0.1, nrow = private$rungs, ncol = length(private$theta_names))
+      })
+        
+      acceptance_counter = lapply(1:private$chains, function(x){
         matrix(0L, nrow = private$rungs, ncol = length(private$theta_names))
       })
-      private$output_df <- vector("list", private$chains)
+      
+      iteration_counter = lapply(1:private$chains, function(x){
+        matrix(0, nrow = 3, ncol = 1, dimnames = list(
+          c("Tune", "Burn", "Sample"),
+          paste0("Chain_", x)
+        )
+        )
+      })
+      
+      duration = lapply(1:private$chains, function(x){
+        matrix(0, nrow = 3, ncol = 1, dimnames = list(
+          c("Tune", "Burn", "Sample"),
+          paste0("Chain_", x)
+        )
+        )
+      })
+      
+      rng_ptr = dust::dust_rng_distributed_pointer(
+        seed = seed,
+        n_nodes = private$chains
+      )
+      
+      chain_objects <- list()
+      for(i in 1:private$chains){
+        chain_objects[[i]] <- list(
+          chain = i,
+          theta = theta[[i]],
+          proposal_sd = proposal_sd[[i]],
+          acceptance_counter = acceptance_counter[[i]],
+          iteration_counter = iteration_counter[[i]],
+          duration = duration[[i]],
+          rng_ptr = rng_ptr[[i]]
+        )
+      }
+      
+      private$chain_objects = chain_objects
     },
     
     ### Print ###
@@ -168,7 +174,7 @@ dj <- R6::R6Class(
     #' @param silent print progress (boolean)
     tune = function(iterations, swap = 1L, beta = seq(1, 0, -0.1), max_rungs = 100, target_acceptance = 0.44, silent = FALSE){
       private$tune_called <- TRUE
-      
+      phase <- 1
       # Infer rung number
       private$rungs = length(beta)
       private$beta = beta
@@ -224,23 +230,12 @@ dj <- R6::R6Class(
       private$burn_called <- TRUE
       private$target_acceptance <- target_acceptance
       burnin <- TRUE
-      
-      # Gather chain elements into input list
-      chain_input <- list()
-      for(i in 1:private$chains){
-        chain_input[[i]] <- list(
-          chain = i,
-          theta = private$theta[[i]],
-          acceptance_counter = private$acceptance_counter[[i]],
-          iteration_counter = private$iteration_counter[2, i],
-          proposal_sd = private$proposal_sd[[i]],
-          rng_ptr = private$rng_ptr[[i]]
-        )
-      }
+      phase <- 2
       
       # Run chains
       chain_output <- apply_func(cl, 
-                                 chain_input, run_mcmc,
+                                 private$chain_objects, run_mcmc,
+                                 phase = phase,
                                  burnin = burnin,
                                  iterations = iterations,
                                  silent = silent,
@@ -263,8 +258,6 @@ dj <- R6::R6Class(
       
       # Update R6 object with mcmc outputs
       for(i in 1:private$chains){
-        # Update the pointer
-        private$rng_ptr[[i]] <- chain_output[[i]]$rng_ptr
         # Check for error return
         if("error" %in% names(chain_output[[i]])){
           self$error_debug = chain_output[[i]]
@@ -279,12 +272,12 @@ dj <- R6::R6Class(
           chain = i
         )
         # Update internal states
-        private$duration[2, i] = private$duration[2, i] + chain_output[[i]]$dur
-        private$iteration_counter[2, i] = private$iteration_counter[2, i] + iterations
-        private$proposal_sd[[i]] = chain_output[[i]]$proposal_sd
-        private$acceptance_counter[[i]] = chain_output[[i]]$acceptance
-        private$theta[[i]] = chain_output[[i]]$theta
-        private$swap_acceptance_counter = chain_output[[i]]$swap_acceptance
+        private$chain_objects[[i]]$duration[phase] = private$chain_objects[[i]]$duration[phase] + chain_output[[i]]$dur
+        private$chain_objects[[i]]$iteration_counter[phase] = private$chain_objects[[i]]$iteration_counter[phase] + iterations
+        private$chain_objects[[i]]$proposal_sd = chain_output[[i]]$proposal_sd
+        private$chain_objects[[i]]$acceptance_counter = chain_output[[i]]$acceptance
+        private$chain_objects[[i]]$theta = chain_output[[i]]$theta
+        private$chain_objects[[i]]$swap_acceptance_counter = chain_output[[i]]$swap_acceptance
       }
     },
     
@@ -305,23 +298,11 @@ dj <- R6::R6Class(
       # Set sample parameters
       private$sample_called <- TRUE
       burnin = FALSE
-      
-      # Gather chain elements into input list
-      chain_input <- list()
-      for(i in 1:private$chains){
-        chain_input[[i]] <- list(
-          chain = i,
-          theta = private$theta[[i]],
-          acceptance_counter = private$acceptance_counter[[i]],
-          iteration_counter = private$iteration_counter[3, i],
-          proposal_sd = private$proposal_sd[[i]],
-          rng_ptr = private$rng_ptr[[i]]
-        )
-      }
-      
+      phase <- 3
       # Run chains
       chain_output <- apply_func(cl, 
-                                 chain_input, run_mcmc,
+                                 private$chain_objects, run_mcmc,
+                                 phase = phase,
                                  burnin = burnin,
                                  iterations = iterations,
                                  silent = silent,
@@ -358,10 +339,10 @@ dj <- R6::R6Class(
           chain = i
         )
         # Update internal states
-        private$duration[2, i] = private$duration[2, i] + chain_output[[i]]$dur
-        private$iteration_counter[2, i] = private$iteration_counter[2, i] + iterations
-        private$theta[[i]] = chain_output[[i]]$theta
-        private$swap_acceptance_counter = chain_output[[i]]$swap_acceptance
+        private$chain_objects[[i]]$duration[phase] = private$chain_objects[[i]]$duration[phase] + chain_output[[i]]$dur
+        private$chain_objects[[i]]$iteration_counter[phase] = private$chain_objects[[i]]$iteration_counter[phase] + iterations
+        private$chain_objects[[i]]$theta = chain_output[[i]]$theta
+        private$chain_objects[[i]]$swap_acceptance_counter = chain_output[[i]]$swap_acceptance
       }
     },
     
