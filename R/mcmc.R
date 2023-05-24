@@ -1,7 +1,7 @@
 run_mcmc <- function(chain_input, burnin, phase, iterations, silent, theta_names, theta_transform_type,
                      theta_min, theta_max, infer_parameter, data, loglikelihood,
                      logprior, misc, target_acceptance, swap,
-                     beta, swap_acceptance_counter, blocks, n_unique_blocks){
+                     beta, blocks, n_unique_blocks){
   
   raw_output <- mcmc(
     chain_input$chain,
@@ -23,7 +23,7 @@ run_mcmc <- function(chain_input, burnin, phase, iterations, silent, theta_names
     target_acceptance,
     swap,
     beta,
-    swap_acceptance_counter,
+    chain_input$swap_acceptance_counter,
     blocks,
     n_unique_blocks,
     chain_input$iteration_counter[phase],

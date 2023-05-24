@@ -59,7 +59,7 @@ mcmc$sample(iterations = 10000L, silent = TRUE)
 mcmc$plot_par("mu")
 ```
 
-```{r}
+```{r, fig.width=6, fig.height=5}
 # extract posterior draws
 mu_draws <- mcmc$output(phase = "sample")$mu
 

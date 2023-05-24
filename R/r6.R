@@ -35,7 +35,6 @@ dj <- R6::R6Class(
     rungs = 1,
     beta = 1,
     swap = 0L,
-    swap_acceptance_counter = rep(0L, 1),
     
     output_df = NULL
   ),
@@ -109,6 +108,10 @@ dj <- R6::R6Class(
         )
       })
       
+      swap_acceptance_counter = lapply(1:private$chains, function(x){
+        rep(0L, private$rungs)
+      })
+      
       duration = lapply(1:private$chains, function(x){
         matrix(0, nrow = 3, ncol = 1, dimnames = list(
           c("Tune", "Burn", "Sample"),
@@ -129,6 +132,7 @@ dj <- R6::R6Class(
           theta = theta[[i]],
           proposal_sd = proposal_sd[[i]],
           acceptance_counter = acceptance_counter[[i]],
+          swap_acceptance_counter = swap_acceptance_counter[[i]],
           iteration_counter = iteration_counter[[i]],
           duration = duration[[i]],
           rng_ptr = rng_ptr[[i]]
@@ -175,13 +179,27 @@ dj <- R6::R6Class(
       private$rungs = length(beta)
       private$beta = beta
       private$swap = swap
-      # Update default initial values
-      private$theta = initial(private$df_params, chains = private$chains, rungs = private$rungs)
-      private$proposal_sd = matrix(0.1, nrow = private$rungs, ncol = length(private$theta_names))
-      private$acceptance_counter = lapply(1:private$chains, function(x){
+      # Update default initial values for new number of rungs:
+      theta = initial(df_params, chains = private$chains, rungs = private$rungs)
+      
+      proposal_sd = lapply(1:private$chains, function(x){
+        matrix(0.1, nrow = private$rungs, ncol = length(private$theta_names))
+      })
+      
+      acceptance_counter = lapply(1:private$chains, function(x){
         matrix(0L, nrow = private$rungs, ncol = length(private$theta_names))
       })
-      private$swap_acceptance_counter = rep(0L, private$rungs)
+      
+      swap_acceptance_counter = lapply(1:private$chains, function(x){
+        rep(0L, private$rungs)
+      })
+      
+      for(i in 1:private$chains){
+        private$chain_objects[[i]]$theta = theta[[i]]
+        private$chain_objects[[i]]$proposal_sd = proposal_sd[[i]]
+        private$chain_objects[[i]]$acceptance_counter = acceptance_counter[[i]]
+        private$chain_objects[[i]]$swap_acceptance_counter = swap_acceptance_counter[[i]]
+      }
       # As well as updating internal elements as in burnin,
       # the following will all need to be updated if this function is called:
       ## private$rungs
@@ -248,7 +266,6 @@ dj <- R6::R6Class(
                                  target_acceptance = private$target_acceptance,
                                  swap = private$swap,
                                  beta = private$beta,
-                                 swap_acceptance_counter = private$swap_acceptance_counter,
                                  blocks = private$blocks,
                                  n_unique_blocks = private$n_unique_blocks
       )
@@ -319,7 +336,6 @@ dj <- R6::R6Class(
                                  target_acceptance = private$target_acceptance,
                                  swap = private$swap,
                                  beta = private$beta,
-                                 swap_acceptance_counter = private$swap_acceptance_counter,
                                  blocks = private$blocks,
                                  n_unique_blocks = private$n_unique_blocks
       )

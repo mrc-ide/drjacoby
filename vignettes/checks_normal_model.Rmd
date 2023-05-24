@@ -44,8 +44,7 @@ mcmc <- dj$new(data = data_list,
                df_params = df_params,
                loglike = loglike_normal,
                logprior = logprior_null,
-               chains = 10L,
-               seed = 1)
+               chains = 10L)
 mcmc$burn(iterations = 1000L, silent = TRUE)
 mcmc$sample(iterations = 10000L, silent = TRUE)
 ```
