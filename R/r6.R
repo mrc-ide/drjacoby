@@ -62,9 +62,8 @@ dj <- R6::R6Class(
     #' @param misc optional list object passed to likelihood and prior. This can be
     #'   useful for passing values that are not strictly data, for example passing a
     #'   lookup table to the prior function.
-    #' @param seed Seed for reproducible random number generation. Must be an integer
     #' @return A new `dj` object.
-    initialize = function(data, df_params, loglikelihood, logprior, chains = 1L, misc = list(), seed = NULL){
+    initialize = function(data, df_params, loglikelihood, logprior, chains = 1L, misc = list()){
       
       Sys.setenv(RSTUDIO = "1") # To get progress bar to show on Windows (progress package outstanding issue)
       stopifnot(is.list(data))
@@ -74,10 +73,7 @@ dj <- R6::R6Class(
       stopifnot(is.integer(chains))
       stopifnot(chains >= 1)
       stopifnot(!"block" %in% names(misc))
-      if(!is.null(seed)){
-        set.seed(seed)
-      }
-      
+
       # Shared elements
       private$chains = chains
       private$data = data
@@ -122,7 +118,7 @@ dj <- R6::R6Class(
       })
       
       rng_ptr = dust::dust_rng_distributed_pointer(
-        seed = seed,
+        seed = NULL,
         n_nodes = private$chains
       )
       
