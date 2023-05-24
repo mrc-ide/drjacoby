@@ -221,8 +221,9 @@ dj <- R6::R6Class(
       }
       
       # Define the apply function
+      is_parallel <- !is.null(cl)
       apply_func <- noclusterApply
-      if(!is.null(cl)){
+      if(is_parallel){
         apply_func <- parallel::clusterApply
       }
       
@@ -255,7 +256,7 @@ dj <- R6::R6Class(
                                  blocks = private$blocks,
                                  n_unique_blocks = private$n_unique_blocks
       )
-      
+
       # Update R6 object with mcmc outputs
       for(i in 1:private$chains){
         # Check for error return
@@ -278,6 +279,9 @@ dj <- R6::R6Class(
         private$chain_objects[[i]]$acceptance_counter = chain_output[[i]]$acceptance
         private$chain_objects[[i]]$theta = chain_output[[i]]$theta
         private$chain_objects[[i]]$swap_acceptance_counter = chain_output[[i]]$swap_acceptance
+        if (is_parallel) {
+          private$chain_objects[[i]]$rng_ptr <- chain_output[[i]]$rng_ptr
+        }
       }
     },
     
@@ -290,8 +294,9 @@ dj <- R6::R6Class(
       stopifnot(is.integer(iterations))
       
       # Define the apply function
+      is_parallel <- !is.null(cl)
       apply_func <- noclusterApply
-      if(!is.null(cl)){
+      if(is_parallel){
         apply_func <- parallel::clusterApply
       }
       
@@ -343,6 +348,9 @@ dj <- R6::R6Class(
         private$chain_objects[[i]]$iteration_counter[phase] = private$chain_objects[[i]]$iteration_counter[phase] + iterations
         private$chain_objects[[i]]$theta = chain_output[[i]]$theta
         private$chain_objects[[i]]$swap_acceptance_counter = chain_output[[i]]$swap_acceptance
+        if (is_parallel) {
+          private$chain_objects[[i]]$rng_ptr <- chain_output[[i]]$rng_ptr
+        }
       }
     },
     
