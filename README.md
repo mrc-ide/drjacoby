@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# DrJacoby <img src="R_ignore/images/logo3.png" width="120" align="right" />
+# DrJacoby <img src="man/figures/logo3.png" width="120" align="right" />
 
 <!-- badges: start -->
 
@@ -21,9 +21,9 @@ situations. Full details can be found on the drjacoby
 
 So far, *drjacoby* has been used in the following projects:
 
--   The paper [Estimates of the severity of coronavirus disease 2019: a
-    model-based analysis](https://doi.org/10.1016/S1473-3099(20)30243-7)
-    used *drjacoby* **version 1.0.1**
--   The report [COVID-19 Infection Fatality Ratio: Estimates from
-    Seroprevalence](https://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/covid-19/report-34-ifr/)
-    used *drjacoby* **version 1.2.0**
+- The paper [Estimates of the severity of coronavirus disease 2019: a
+  model-based analysis](https://doi.org/10.1016/S1473-3099(20)30243-7)
+  used *drjacoby* **version 1.0.1**
+- The report [COVID-19 Infection Fatality Ratio: Estimates from
+  Seroprevalence](https://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/covid-19/report-34-ifr/)
+  used *drjacoby* **version 1.2.0**
