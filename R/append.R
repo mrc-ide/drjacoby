@@ -18,3 +18,31 @@ append_output <- function(current, new, phase, theta_names, chain){
   }
   return(new)
 }
+
+#' Extract names element from nested list
+#'
+#' @param x Nested list
+#' @param name name
+chain_element <- function(x, name){
+  lapply(x, `[[`, name)  
+}
+
+#' Column bind all elements of list
+#'
+#' @param x List
+list_c_bind <- function(x){
+  if(!is.data.frame(x)){
+    x <- do.call("cbind", x)
+  }
+  return(x)
+}
+
+#' Row bind all elements of list
+#'
+#' @param x List
+list_r_bind <- function(x){
+  if(!is.data.frame(x)){
+    x <- do.call("rbind", x)
+  }
+  return(x)
+}

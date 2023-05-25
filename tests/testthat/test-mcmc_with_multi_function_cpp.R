@@ -1,4 +1,5 @@
 test_that("Multi function cpp likelihood and prior", {
+  set.seed(1)
   # define true parameter values
   mu_true <- 3
   sigma_true <- 2
@@ -18,8 +19,7 @@ test_that("Multi function cpp likelihood and prior", {
     data = data_list,
     df_params = df_params,
     loglike = logprior_normal_cpp11_multi,
-    logprior = logprior_null,
-    seed = 1)
+    logprior = logprior_null)
   mcmc$burn(iterations = 100L, silent = TRUE)
   mcmc$sample(iterations = 100L, silent = TRUE)
   

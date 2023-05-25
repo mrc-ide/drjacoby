@@ -1,5 +1,5 @@
 test_that("Cpp likelihood and prior", {
-  library(cpp11)
+  set.seed(1)
   # define true parameter values
   mu_true <- 3
   sigma_true <- 2
@@ -24,8 +24,7 @@ test_that("Cpp likelihood and prior", {
     df_params = df_params,
     loglike = loglike_null_cpp11,
     logprior = logprior_normal_cpp11,
-    chains = 1L,
-    seed = 1)
+    chains = 1L)
   cpp_mcmc_null$burn(iterations = 100L, silent = TRUE)
   cpp_mcmc_null$sample(iterations = 1000L, silent = TRUE)
   
@@ -42,8 +41,7 @@ test_that("Cpp likelihood and prior", {
     data = data_list,
     df_params = df_params,
     loglike = loglike_normal_cpp11,
-    logprior = logprior_null_cpp11,
-    seed = 1)
+    logprior = logprior_null_cpp11)
   cpp_mcmc_data$burn(iterations = 100L, silent = TRUE)
   cpp_mcmc_data$sample(iterations = 1000L, silent = TRUE)
   
@@ -61,8 +59,7 @@ test_that("Cpp likelihood and prior", {
     df_params = df_params,
     loglike = loglike_normal_cpp11,
     logprior = logprior_null_cpp11,
-    chains = 2L,
-    seed = 1)
+    chains = 2L)
   cpp_mcmc_chains$burn(iterations = 100L, silent = TRUE)
   cpp_mcmc_chains$sample(iterations = 1000L, silent = TRUE)
   
@@ -83,8 +80,7 @@ test_that("Cpp likelihood and prior", {
     data = data_list,
     df_params = df_params,
     loglike = loglike_normal_cpp11,
-    logprior = logprior_null_cpp11,
-    seed = 1)
+    logprior = logprior_null_cpp11)
   mcmc_out_MC$tune(beta = seq(1, 0, -0.1), silent = TRUE)
   mcmc_out_MC$burn(iterations = 100L, silent = TRUE)
   mcmc_out_MC$sample(iterations = 1000L, silent = TRUE)

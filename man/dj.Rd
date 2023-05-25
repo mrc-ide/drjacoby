@@ -40,15 +40,7 @@ Create a new dj object to run an mcmc
 \subsection{Method \code{new()}}{
 Initialise the dj object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$new(
-  data,
-  df_params,
-  loglikelihood,
-  logprior,
-  chains = 1L,
-  misc = list(),
-  seed = NULL
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$new(data, df_params, loglikelihood, logprior, chains = 1L, misc = list())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -71,8 +63,6 @@ character strings naming compiled cpp11 functions (in quotes).}
 \item{\code{misc}}{optional list object passed to likelihood and prior. This can be
 useful for passing values that are not strictly data, for example passing a
 lookup table to the prior function.}
-
-\item{\code{seed}}{Seed for reproducible random number generation. Must be an integer}
 }
 \if{html}{\out{</div>}}
 }
@@ -167,6 +157,8 @@ Run sampling in. Runs the sampling phase of the MCMC.
 \item{\code{iterations}}{Number of sampling iterations to run}
 
 \item{\code{silent}}{print progress (boolean)}
+
+\item{\code{cl}}{parallel cluster object}
 }
 \if{html}{\out{</div>}}
 }

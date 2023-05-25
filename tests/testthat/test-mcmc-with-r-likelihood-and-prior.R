@@ -1,4 +1,5 @@
 test_that("R likelihood and prior", {
+  set.seed(1)
   # define true parameter values
   mu_true <- 3
   sigma_true <- 2
@@ -32,8 +33,7 @@ test_that("R likelihood and prior", {
     data = data_list,
     df_params = df_params,
     loglike = r_loglike_null,
-    logprior = r_logprior_strong,
-    seed = 1)
+    logprior = r_logprior_strong)
   r_mcmc_null$burn(iterations = 1000L, silent = TRUE)
   r_mcmc_null$sample(iterations = 1000L, silent = TRUE)
   
@@ -55,8 +55,7 @@ test_that("R likelihood and prior", {
     data = data_list,
     df_params = df_params,
     loglike = r_loglike,
-    logprior = r_logprior_null,
-    seed = 1)
+    logprior = r_logprior_null)
   r_mcmc_data$burn(iterations = 1000L, silent = TRUE)
   r_mcmc_data$sample(iterations = 1000L, silent = TRUE)
   
@@ -109,8 +108,7 @@ test_that("Run with multiple chains", {
     df_params = df_params,
     loglike = r_loglike,
     logprior = r_logprior,
-    chains = 2L,
-    seed = 1)
+    chains = 2L)
   mcmc$burn(iterations = 100L, silent = TRUE)
   mcmc$sample(iterations = 100L, silent = TRUE)
   

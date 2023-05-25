@@ -15,7 +15,9 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
 Suggests: 
-    testthat (>= 3.0.0)
+    roxygen2,
+    testthat (>= 3.0.0),
+    knitr
 Remotes:
   mrc-ide/dust
 LinkingTo: 
@@ -25,9 +27,12 @@ LinkingTo:
 SystemRequirements: C++11
 BugReports: https://github.com/mrc-ide/drjacoby/issues
 Imports: 
+    ggplot2,
     coda,
     cowplot,
     cpp11,
     decor,
     dust,
-    R6
+    R6,
+    parallel,
+    rlang (>= 0.4.11)

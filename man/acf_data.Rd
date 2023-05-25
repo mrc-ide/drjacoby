@@ -6,6 +6,11 @@
 \usage{
 acf_data(x, lag)
 }
+\arguments{
+\item{x}{samples}
+
+\item{lag}{lag}
+}
 \description{
 Estimate autocorrelation
 }

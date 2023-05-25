@@ -1,6 +1,5 @@
-context("test-mcmc-with-mixed-likelihood-and-prior")
-
 test_that("Cpp likelihood and R prior, and vice versa", {
+  set.seed(1)
   # define true parameter values
   mu_true <- 3
   sigma_true <- 2

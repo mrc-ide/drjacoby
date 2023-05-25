@@ -21,14 +21,39 @@ estimate_rhat <- function(output, parameter_names, n_chains, samples){
 }
 
 estimate_acceptance_rate <- function(acceptance_counter, iteration_counter, chains, theta_names){
-    cold_acceptance <- sapply(1:chains, function(x){
-      acceptance_counter[[x]][1,]
-    })
-    return(cold_acceptance / iteration_counter[2,])
+  # Extract only cold chain rates
+  for(i in 1:chains){
+    for(j in 1:3){
+      acceptance_counter[[i]][[j]] <- acceptance_counter[[i]][[j]][1,]
+    }
+  }
+  ar <- lapply(acceptance_counter, list_r_bind)
+  for(i in 1:chains){
+    its <- iteration_counter[,i]
+    ar[[i]] <- apply(ar[[i]], 2, function(x, y){
+      x / y
+    }, y = its)
+    colnames(ar[[i]]) <- theta_names
+  }
+  names(ar) <- paste0("Chain_", 1:chains)
+  return(ar)
+}
+
+estimate_timing  <- function(seconds, iterations){
+  seconds <- rbind(seconds, Total = colSums(seconds))
+  iterations <- rbind(iterations, All = colSums(iterations))
+  iterations_per_second <- round(iterations / seconds)
+  return(
+    list(
+      seconds = seconds,
+      iterations_per_second = iterations_per_second)
+  )
 }
 
 #' @title Estimate autocorrelation
 #'
+#' @param x samples
+#' @param lag lag
 #' @export
 acf_data <- function(x, lag){
   stats::acf(x, plot = FALSE, lag.max = lag)$acf
@@ -54,7 +79,7 @@ gelman_rubin <- function(par_matrix, chains, samples){
   # Check that >1 chains and >1 samples
   stopifnot(chains > 1)
   stopifnot(samples > 1)
-
+  
   # Coerce to matrix
   par_matrix <- as.data.frame(par_matrix)
   
