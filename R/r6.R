@@ -181,6 +181,9 @@ dj <- R6::R6Class(
     tune = function(iterations, swap = 1L, beta = seq(1, 0, -0.1), max_rungs = 100, target_acceptance = 0.44, silent = FALSE){
       private$tune_called <- TRUE
       phase <- 1
+      
+      ### TODO: Bob, any time you assign a new beta the following will need to be
+      ### updated
       # Infer rung number
       private$rungs = length(beta)
       private$beta = beta
@@ -210,23 +213,10 @@ dj <- R6::R6Class(
         private$chain_objects[[i]]$acceptance_counter = acceptance_counter[[i]]
         private$chain_objects[[i]]$swap_acceptance_counter = swap_acceptance_counter[[i]]
       }
-      # As well as updating internal elements as in burnin,
-      # the following will all need to be updated if this function is called:
-      ## private$rungs
-      ## private$beta
-      ## private$swap = FALSE
-      ## private$swap_acceptance_counter
-      ## private$proposal_sd - to increase ncol to match rungs
-      ## private$acceptance_counter  - to increase ncol to match rungs
-      ## private$swap_acceptance_counter - to increase length to match rungs
-      ## private$iteration_counter - keep track of total iterations for tuning phase
-      
-      # Will also need to add in below new versions of:
-      ## plot_mc_acceptance() 
-      ## mc_acceptance() 
-      # With internal functions
-      ## create_mc_acceptance_plot()
-      ## estimates_mc_acceptance()
+      ### TODO: Bob, include the beta-schedule tuning function here:
+      ### tune_beta()
+      ### TODO: Bob ,when runing is ok, you may want to update the R6 state as with
+      ### "Update internal states" in the burn function
     },
     
     ### Burn in ###

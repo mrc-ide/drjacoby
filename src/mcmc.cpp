@@ -323,7 +323,7 @@ list mcmc(
       }
     }
     if(swap == 2){
-      // Bob to implement efficient swapping routine
+      // TODO: Bob, Implement efficient swapping routine
     }
     iteration_counter ++;
   }
