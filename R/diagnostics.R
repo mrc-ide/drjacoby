@@ -20,29 +20,33 @@ estimate_rhat <- function(output, parameter_names, n_chains, samples){
   return(rhat_est)
 }
 
-estimate_acceptance_rate <- function(acceptance_counter, iteration_counter, chains, theta_names){
+estimate_acceptance_rate <- function(acceptance_counter, iteration_counter, chains, theta_names, phases){
+  iteration_counter <- list_c_bind(iteration_counter)
   # Extract only cold chain rates
+  ar <- list()
   for(i in 1:chains){
-    for(j in 1:3){
-      acceptance_counter[[i]][[j]] <- acceptance_counter[[i]][[j]][1,]
-    }
-  }
-  ar <- lapply(acceptance_counter, list_r_bind)
-  for(i in 1:chains){
+    count <- as.matrix(acceptance_counter[[i]][,1,])
     its <- iteration_counter[,i]
-    ar[[i]] <- apply(ar[[i]], 2, function(x, y){
+    rate <- apply(count, 2, function(x, y){
       x / y
     }, y = its)
-    colnames(ar[[i]]) <- theta_names
+    colnames(rate) <- theta_names
+    rownames(rate) <- phases
+    ar[[i]] <- rate
   }
   names(ar) <- paste0("Chain_", 1:chains)
+  
   return(ar)
 }
 
-estimate_timing  <- function(seconds, iterations){
-  seconds <- rbind(seconds, Total = colSums(seconds))
-  iterations <- rbind(iterations, All = colSums(iterations))
+estimate_timing  <- function(seconds, iterations, phases, chains){
+  seconds <- rbind(seconds, colSums(seconds))
+  iterations <- rbind(iterations, colSums(iterations))
+  rownames(seconds) <- c(phases, "Total")
+  colnames(seconds) <- paste0("Chain_", 1:chains)
   iterations_per_second <- round(iterations / seconds)
+  rownames(iterations_per_second) <- c(phases, "All")
+  colnames(iterations_per_second) <- paste0("Chain_", 1:chains)
   return(
     list(
       seconds = seconds,

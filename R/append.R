@@ -46,3 +46,34 @@ list_r_bind <- function(x){
   }
   return(x)
 }
+
+create_swap_acceptance_counter = function(chains, rungs){
+  lapply(1:chains, function(x){
+    matrix(0L, nrow = 3, ncol = max(rungs - 1, 1))
+  })
+}
+
+create_iteration_counter = function(chains){
+  iteration_counter = lapply(1:chains, function(x){
+    rep(0L, 3, ncol = 1)
+  })
+}
+
+create_duration_log = function(chains){
+  lapply(1:chains, function(x){
+    matrix(0, nrow = 3, ncol = 1)
+  })
+}
+
+create_acceptance_counter <- function(chains, rungs, n_par){
+  lapply(1:chains, function(x){
+    array(0L, dim = c(3, rungs, n_par)
+    )
+  })
+}
+
+create_proposal_sd_log <- function(chains, rungs, n_par, init_sd = 0.1){
+  lapply(1:chains, function(x){
+    matrix(init_sd, nrow = rungs, ncol = n_par)
+  })
+}
