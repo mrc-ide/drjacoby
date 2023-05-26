@@ -50,6 +50,15 @@ estimate_timing  <- function(seconds, iterations){
   )
 }
 
+estimate_mc_acceptance_rate <- function(swap_acceptance_counter, iteration_counter){
+  swap_acceptance_rate <- apply(swap_acceptance_counter, 2, function(x){
+    x / iteration_counter
+  })
+  rownames(swap_acceptance_rate) <- rownames(swap_acceptance_counter)
+  swap_acceptance_rate  
+}
+
+
 #' @title Estimate autocorrelation
 #'
 #' @param x samples

@@ -22,7 +22,7 @@ run_mcmc <- function(chain_input, burnin, phase, iterations, silent, theta_names
     target_acceptance,
     swap,
     beta,
-    chain_input$swap_acceptance_counter,
+    chain_input$swap_acceptance_counter[phase, ],
     blocks,
     n_unique_blocks,
     chain_input$iteration_counter[phase],

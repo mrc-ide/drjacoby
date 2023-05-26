@@ -73,7 +73,7 @@ dj <- R6::R6Class(
       stopifnot(is.integer(chains))
       stopifnot(chains >= 1)
       stopifnot(!"block" %in% names(misc))
-
+      
       # Shared elements
       private$chains = chains
       private$data = data
@@ -97,7 +97,7 @@ dj <- R6::R6Class(
       proposal_sd = lapply(1:private$chains, function(x){
         matrix(0.1, nrow = private$rungs, ncol = private$n_par)
       })
-        
+      
       acceptance_counter = lapply(1:private$chains, function(x){
         list(
           Tune = matrix(0L, nrow = private$rungs, ncol = private$n_par),
@@ -115,7 +115,10 @@ dj <- R6::R6Class(
       })
       
       swap_acceptance_counter = lapply(1:private$chains, function(x){
-        rep(0L, private$rungs)
+        matrix(0L, nrow = 3, ncol = max(private$rungs - 1, 1), dimnames = list(
+          c("Tune", "Burn", "Sample")
+        )
+        )
       })
       
       duration = lapply(1:private$chains, function(x){
@@ -179,8 +182,12 @@ dj <- R6::R6Class(
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
     tune = function(iterations, swap = 1L, beta = seq(1, 0, -0.1), max_rungs = 100, target_acceptance = 0.44, silent = FALSE){
+      if(private$chains > 1){
+        stop("To use parallel tempering please set the number of chains = 1")
+      }
       private$tune_called <- TRUE
       phase <- 1
+      
       
       ### TODO: Bob, any time you assign a new beta the following will need to be
       ### updated
@@ -204,7 +211,10 @@ dj <- R6::R6Class(
       })
       
       swap_acceptance_counter = lapply(1:private$chains, function(x){
-        rep(0L, private$rungs)
+        matrix(0L, nrow = 3, ncol = max(private$rungs - 1, 1), dimnames = list(
+          c("Tune", "Burn", "Sample")
+        )
+        )
       })
       
       for(i in 1:private$chains){
@@ -269,7 +279,7 @@ dj <- R6::R6Class(
                                  blocks = private$blocks,
                                  n_unique_blocks = private$n_unique_blocks
       )
-
+      
       # Update R6 object with mcmc outputs
       for(i in 1:private$chains){
         # Check for error return
@@ -285,13 +295,16 @@ dj <- R6::R6Class(
           theta_names = private$theta_names,
           chain = i
         )
+        
         # Update internal states
         private$chain_objects[[i]]$duration[phase] = private$chain_objects[[i]]$duration[phase] + chain_output[[i]]$dur
         private$chain_objects[[i]]$iteration_counter[phase] = private$chain_objects[[i]]$iteration_counter[phase] + iterations
         private$chain_objects[[i]]$proposal_sd = chain_output[[i]]$proposal_sd
         private$chain_objects[[i]]$acceptance_counter[[phase]] = chain_output[[i]]$acceptance
         private$chain_objects[[i]]$theta = chain_output[[i]]$theta
-        private$chain_objects[[i]]$swap_acceptance_counter = chain_output[[i]]$swap_acceptance
+        if(private$rungs > 1){
+          private$chain_objects[[i]]$swap_acceptance_counter[phase,] = chain_output[[i]]$swap_acceptance
+        }
         if (is_parallel) {
           private$chain_objects[[i]]$rng_ptr <- chain_output[[i]]$rng_ptr
         }
@@ -361,7 +374,9 @@ dj <- R6::R6Class(
         private$chain_objects[[i]]$iteration_counter[phase] = private$chain_objects[[i]]$iteration_counter[phase] + iterations
         private$chain_objects[[i]]$theta = chain_output[[i]]$theta
         private$chain_objects[[i]]$acceptance_counter[[phase]] = chain_output[[i]]$acceptance
-        private$chain_objects[[i]]$swap_acceptance_counter = chain_output[[i]]$swap_acceptance
+        if(private$rungs > 1){
+          private$chain_objects[[i]]$swap_acceptance_counter[phase,] = chain_output[[i]]$swap_acceptance
+        }
         if (is_parallel) {
           private$chain_objects[[i]]$rng_ptr <- chain_output[[i]]$rng_ptr
         }
@@ -397,6 +412,17 @@ dj <- R6::R6Class(
         private$chains,
         private$theta_names
       )
+    },
+    
+    #' @description
+    #' Get acceptance rates
+    mc_acceptance_rate = function(){
+      if(private$rungs == 1){
+        stop("Not available for a single rung")
+      }
+      swap_acceptance_counter <- private$chain_objects[[1]]$swap_acceptance_counter
+      iteration_counter <- private$chain_objects[[1]]$iteration_counter
+      estimate_mc_acceptance_rate(swap_acceptance_counter, iteration_counter)
     },
     
     #' @description
@@ -520,6 +546,25 @@ dj <- R6::R6Class(
         chain = chain,
         phase = phase,
         param_names = param_names)
+    },
+    
+    #' @description Plots the acceptance rate between rungs
+    #'
+    #' @param phase Optional selection of phases, can be from: tune, burn or sample
+    #' @param x_axis_type how to format the x-axis. 1 = integer rungs, 2 = values of
+    #'   the thermodynamic power.
+    plot_mc_acceptance_rate = function(phase = "sample", x_axis_type = 1){
+      if(private$rungs == 1){
+        stop("Not available for a single rung")
+      }
+      ar <- self$mc_acceptance_rate()
+      ar <- ar[grepl(phase, rownames(ar), ignore.case = TRUE),]
+      create_mc_acceptance_plot(
+        rungs = private$rungs,
+        beta = private$beta,
+        ar = ar,
+        x_axis_type = x_axis_type
+      )
     }
   )
 )

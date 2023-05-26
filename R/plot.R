@@ -199,3 +199,35 @@ create_cor_mat_plot <- function(output_df, pars, chain, phase, param_names) {
     ggplot2::theme_bw()
   
 }
+
+create_mc_acceptance_plot <- function(rungs, beta, ar, x_axis_type) {
+  beta_mid <- beta[-1] - diff(beta)/2
+  
+  # define x-axis type
+  if (x_axis_type == 1) {
+    breaks_vec <- 1:rungs
+    x_vec <- (2:rungs) - 0.5
+    x_lab <- "rung"
+  } else {
+    breaks_vec <- beta
+    x_vec <- beta_mid
+    x_lab <- "beta"
+  }
+  
+  # get data into ggplot format and define temperature colours
+  df <- data.frame(x_vec = x_vec, mc_accept = ar, col = beta_mid)
+  
+  # produce plot
+  mc_ar_plot <- ggplot2::ggplot(data = df) + 
+    ggplot2::geom_vline(data = data.frame(x = breaks_vec), ggplot2::aes(xintercept = .data$x), col = "grey90") +
+    ggplot2::scale_y_continuous(limits = c(0,1), expand = c(0,0)) + 
+    ggplot2::geom_point(ggplot2::aes(x = .data$x_vec, y = .data$mc_accept, color = .data$col)) + 
+    ggplot2::xlab(x_lab) + 
+    ggplot2::ylab("coupling acceptance rate") + 
+    ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0,1)) +
+    ggplot2::theme_bw() + 
+    ggplot2::theme(panel.grid.minor.x = ggplot2::element_blank(),
+                   panel.grid.major.x = ggplot2::element_blank())
+  
+  return(mc_ar_plot)
+}

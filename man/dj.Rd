@@ -23,6 +23,7 @@ Create a new dj object to run an mcmc
 \item \href{#method-dj-sample}{\code{dj$sample()}}
 \item \href{#method-dj-output}{\code{dj$output()}}
 \item \href{#method-dj-acceptance_rate}{\code{dj$acceptance_rate()}}
+\item \href{#method-dj-mc_acceptance_rate}{\code{dj$mc_acceptance_rate()}}
 \item \href{#method-dj-dic}{\code{dj$dic()}}
 \item \href{#method-dj-ess}{\code{dj$ess()}}
 \item \href{#method-dj-rhat}{\code{dj$rhat()}}
@@ -31,6 +32,7 @@ Create a new dj object to run an mcmc
 \item \href{#method-dj-plot_cor}{\code{dj$plot_cor()}}
 \item \href{#method-dj-plot_credible}{\code{dj$plot_credible()}}
 \item \href{#method-dj-plot_cor_mat}{\code{dj$plot_cor_mat()}}
+\item \href{#method-dj-plot_mc_acceptance_rate}{\code{dj$plot_mc_acceptance_rate()}}
 \item \href{#method-dj-clone}{\code{dj$clone()}}
 }
 }
@@ -193,6 +195,16 @@ Get acceptance rates
 
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-dj-mc_acceptance_rate"></a>}}
+\if{latex}{\out{\hypertarget{method-dj-mc_acceptance_rate}{}}}
+\subsection{Method \code{mc_acceptance_rate()}}{
+Get acceptance rates
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dj$mc_acceptance_rate()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-dic"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-dic}{}}}
 \subsection{Method \code{dic()}}{
@@ -345,6 +357,26 @@ Produces a matrix showing the correlation between all parameters
 \item{\code{chain}}{Optional selection of chains}
 
 \item{\code{param_names}}{Optional vector of prameter names for plotting labels}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-dj-plot_mc_acceptance_rate"></a>}}
+\if{latex}{\out{\hypertarget{method-dj-plot_mc_acceptance_rate}{}}}
+\subsection{Method \code{plot_mc_acceptance_rate()}}{
+Plots the acceptance rate between rungs
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dj$plot_mc_acceptance_rate(phase = "sample", x_axis_type = 1)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{phase}}{Optional selection of phases, can be from: tune, burn or sample}
+
+\item{\code{x_axis_type}}{how to format the x-axis. 1 = integer rungs, 2 = values of
+the thermodynamic power.}
 }
 \if{html}{\out{</div>}}
 }
