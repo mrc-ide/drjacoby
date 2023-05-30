@@ -19,7 +19,7 @@ plot_data_subset <- function(output_df, chain, phase){
   }
   
   # Phase subset
-  if(phase != "all"){
+  if(!is.null(phase)){
     data <- data[data$phase %in% phase, ]
   }
   

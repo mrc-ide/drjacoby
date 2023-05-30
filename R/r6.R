@@ -430,11 +430,11 @@ dj <- R6::R6Class(
     #' @param lag Maximum lag. Must be an integer between 1 and 500.
     #' @param downsample boolean. Whether to downsample chain to make plotting more
     #'   efficient.
-    #' @param phase Optional selection of phases, can be from: all, tune, burn and sample
+    #' @param phase Optional selection of phases, can be from: tune, burn and sample
     #' @param chain Optional selection of chains
     #' @param return_elements boolean. If \code{TRUE} a list of plotting objects 
     #'   are returned without displaying.
-    plot_par = function(par, lag = 20, downsample = TRUE, phase = "sample", chain = NULL, return_elements = FALSE){
+    plot_par = function(par, lag = 20, downsample = TRUE, phase = NULL, chain = NULL, return_elements = FALSE){
       create_par_plot(
         par = par,
         output_df = private$output_df,
@@ -452,7 +452,7 @@ dj <- R6::R6Class(
     #' @param pary Name of parameter 2
     #' @param downsample boolean. Whether to downsample chain to make plotting more
     #'   efficient.
-    #' @param phase Optional selection of phases, can be from: all, tune, burn and sample
+    #' @param phase Optional selection of phases, can be from: tune, burn and sample
     #' @param chain Optional selection of chains
     plot_cor = function(parx, pary, downsample = TRUE, phase = "sample", chain = NULL){
       create_cor_plot(
@@ -469,7 +469,7 @@ dj <- R6::R6Class(
     #'   parameters (defauls to all parameters).
     #'
     #' @param pars Vector of parameter names
-    #' @param phase Optional selection of phases, can be from: all, tune, burn and sample
+    #' @param phase Optional selection of phases, can be from: tune, burn and sample
     #' @param chain Optional selection of chains
     #' @param param_names Optional vector of prameter names for plotting labels
     plot_credible = function(pars = NULL, phase = "sample", chain = NULL, param_names = NULL){
@@ -492,7 +492,7 @@ dj <- R6::R6Class(
     #'   from posterior draws.
     #'   
     #' @param pars Vector of parameter names
-    #' @param phase Optional selection of phases, can be from: all, tune, burn and sample
+    #' @param phase Optional selection of phases, can be from: tune, burn and sample
     #' @param chain Optional selection of chains
     #' @param param_names Optional vector of prameter names for plotting labels
     plot_cor_mat = function(pars, phase = "sample", chain = NULL, param_names = NULL){

@@ -108,7 +108,7 @@ target acceptance rates and chain convergence are not guaranteed  - run
 
 \item{\code{swap}}{integer 0 = no swapping, 1 = standard swapping, 2 = super cool new swapping}
 
-\item{\code{beta}}{Initial beta schedule}
+\item{\code{beta}}{Initial beta schedule.}
 
 \item{\code{max_rungs}}{The maximum number of rungs}
 
@@ -179,7 +179,7 @@ Get mcmc output data.frame
 \describe{
 \item{\code{chain}}{option chain(s) selection}
 
-\item{\code{phase}}{optional phase selection}
+\item{\code{phase}}{optional phase selection, can be a vector chosen from "tune", "burn","sample"}
 }
 \if{html}{\out{</div>}}
 }
@@ -256,7 +256,7 @@ Produce a parameter plot of the named parameter,
   par,
   lag = 20,
   downsample = TRUE,
-  phase = "sample",
+  phase = NULL,
   chain = NULL,
   return_elements = FALSE
 )}\if{html}{\out{</div>}}
@@ -272,7 +272,7 @@ Produce a parameter plot of the named parameter,
 \item{\code{downsample}}{boolean. Whether to downsample chain to make plotting more
 efficient.}
 
-\item{\code{phase}}{Optional selection of phases, can be from: all, tune, burn and sample}
+\item{\code{phase}}{Optional selection of phases, can be from: tune, burn and sample}
 
 \item{\code{chain}}{Optional selection of chains}
 
@@ -301,7 +301,7 @@ Plots the correlation between two parameters
 \item{\code{downsample}}{boolean. Whether to downsample chain to make plotting more
 efficient.}
 
-\item{\code{phase}}{Optional selection of phases, can be from: all, tune, burn and sample}
+\item{\code{phase}}{Optional selection of phases, can be from: tune, burn and sample}
 
 \item{\code{chain}}{Optional selection of chains}
 }
@@ -328,7 +328,7 @@ Plots posterior 95\% credible intervals over specified set of
 \describe{
 \item{\code{pars}}{Vector of parameter names}
 
-\item{\code{phase}}{Optional selection of phases, can be from: all, tune, burn and sample}
+\item{\code{phase}}{Optional selection of phases, can be from: tune, burn and sample}
 
 \item{\code{chain}}{Optional selection of chains}
 
@@ -352,7 +352,7 @@ Produces a matrix showing the correlation between all parameters
 \describe{
 \item{\code{pars}}{Vector of parameter names}
 
-\item{\code{phase}}{Optional selection of phases, can be from: all, tune, burn and sample}
+\item{\code{phase}}{Optional selection of phases, can be from: tune, burn and sample}
 
 \item{\code{chain}}{Optional selection of chains}
 
