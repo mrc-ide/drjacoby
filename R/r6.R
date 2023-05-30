@@ -133,6 +133,7 @@ dj <- R6::R6Class(
       cat("  Tuning iterations: ", private$chain_objects[[1]]$iteration_counter[1], "\n", sep = "")
       cat("  Burn-in iterations: ",private$chain_objects[[1]]$iteration_counter[2], "\n", sep = "")
       cat("  Sampling iterations: ", private$chain_objects[[1]]$iteration_counter[3], "\n", sep = "")
+      cat("  Total compute time: ", round(sum(self$timing()$seconds[4,]), 4), " seconds", "\n", sep = "")
       # return invisibly
       invisible(self)
     },
@@ -147,13 +148,16 @@ dj <- R6::R6Class(
     #' \code{$burn()} to burn in further.
     #' @param iterations Number of tuning iterations to run
     #' @param swap integer 0 = no swapping, 1 = standard swapping, 2 = super cool new swapping
-    #' @param beta Initial beta schedule
+    #' @param beta Initial beta schedule.
     #' @param max_rungs The maximum number of rungs
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
     tune = function(iterations, swap = 1L, beta = seq(1, 0, -0.1), max_rungs = 100, target_acceptance = 0.44, silent = FALSE){
       if(private$chains > 1){
         stop("To use parallel tempering please set the number of chains = 1")
+      }
+      if(private$burn_called | private$sample_called){
+        stop("Cannot call tune after burn or sample have been called")
       }
       private$tune_called <- TRUE
       phase <- 1
@@ -341,14 +345,14 @@ dj <- R6::R6Class(
     #' @description
     #' Get mcmc output data.frame
     #' @param chain option chain(s) selection
-    #' @param phase optional phase selection
+    #' @param phase optional phase selection, can be a vector chosen from "tune", "burn","sample"
     output = function(chain = NULL, phase = NULL){
       data <- list_r_bind(private$output_df)
       if(!is.null(phase)){
-        return(data[data$phase %in% phase, ])
+        data <- data[data$phase %in% phase, ]
       }
       if(!is.null(chain)){
-        return(data[data$chain %in% chain, ])
+        data <- data[data$chain %in% chain, ]
       }
       return(data)
     },

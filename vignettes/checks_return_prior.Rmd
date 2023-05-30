@@ -74,3 +74,9 @@ hist(output_sub$unit_interval, breaks = seq(0, 1, 0.01), probability = TRUE,
 x <- seq(0, 10, l = 1001)
 lines(x, dbeta(x, shape1 = 3, shape2 = 3), col = 2, lwd = 2)
 ```
+
+## Timing
+
+```{r}
+mcmc$timing()
+```

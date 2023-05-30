@@ -92,3 +92,9 @@ for (i in 1:5) {
   lines(x, fx2, col = 3, lwd = 4)
 }
 ```
+
+## Timing
+
+```{r}
+mcmc$timing()
+```

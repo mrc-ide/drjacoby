@@ -103,3 +103,9 @@ mu_draws <- mcmc$output(phase = "sample")$mu
 hist(mu_draws, breaks = seq(-L, L, l = 201), probability = TRUE, main = "", col = "black")
 lines(x, fx, col = 2, lwd = 2)
 ```
+
+## Timing
+
+```{r}
+mcmc$timing()
+```

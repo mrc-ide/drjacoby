@@ -68,3 +68,9 @@ hist(mu_draws, breaks = seq(-1, 1, 0.01), probability = TRUE,
      col = "black", main = "Normal model", xlab = "")
 lines(x, fx, col = 2, lwd = 4)
 ```
+
+## Timing
+
+```{r}
+mcmc$timing()
+```
