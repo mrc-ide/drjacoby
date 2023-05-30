@@ -127,12 +127,12 @@ dj <- R6::R6Class(
     print = function(){
       # print summary
       cat("drjacoby object:\n")
+      cat("  Parameters: ", private$n_par, "\n", sep = "")
       cat("  Chains: ", private$chains, "\n", sep = "")
       cat("  Rungs: ", private$rungs, "\n", sep = "")
-      cat("  Tuning iterations: ", private$iteration_counter[1, 1], "\n", sep = "")
-      cat("  Burn-in iterations: ", private$iteration_counter[2, 1], "\n", sep = "")
-      cat("  Sampling iterations: ", private$iteration_counter[3, 1], "\n", sep = "")
-      cat("  Parameters: ", private$n_par, "\n", sep = "")
+      cat("  Tuning iterations: ", private$chain_objects[[1]]$iteration_counter[1], "\n", sep = "")
+      cat("  Burn-in iterations: ",private$chain_objects[[1]]$iteration_counter[2], "\n", sep = "")
+      cat("  Sampling iterations: ", private$chain_objects[[1]]$iteration_counter[3], "\n", sep = "")
       # return invisibly
       invisible(self)
     },
