@@ -158,7 +158,7 @@ list mcmc(
       proposal_sd[i][j] = proposal_sd_init(i,j);
     }
   }
-
+  
   // Initialise acceptance count matrix
   std::vector<std::vector<int>> acceptance;
   acceptance.resize(n_rungs, std::vector<int>(n_par));
@@ -231,18 +231,18 @@ list mcmc(
           
           // Check for NA/NaN/+Inf in likelihood or prior
           if(value_check(lp_prop) ||  value_check(sum(block_ll_prop))){
-             // Extract the theta, proposal sd and acceptance rates for output
-             for(int i = 0; i < n_rungs; ++i){
-               for(int j = 0; j < n_par; ++j){
-                 index = rung_index[i];
-                 theta_out(i,j) = theta[index][j];
-                 proposal_sd_out(i,j) = proposal_sd[i][j];
-                 acceptance_out(i,j) = acceptance[i][j];
-               }
-             }
-             
+            // Extract the theta, proposal sd and acceptance rates for output
+            for(int i = 0; i < n_rungs; ++i){
+              for(int j = 0; j < n_par; ++j){
+                index = rung_index[i];
+                theta_out(i,j) = theta[index][j];
+                proposal_sd_out(i,j) = proposal_sd[i][j];
+                acceptance_out(i,j) = acceptance[i][j];
+              }
+            }
+            
             return writable::list({
-                "error"_nm = "NA or Inf returned by log prior function",
+              "error"_nm = "NA or Inf returned by log prior function",
                 "phi_prop"_nm = phi_prop,
                 "theta_prop"_nm = theta_prop,
                 "rung_index"_nm = rung_index,
@@ -323,7 +323,27 @@ list mcmc(
       }
     }
     if(swap == 2){
-      // TODO: Bob, Implement efficient swapping routine
+      int start_r = n_rungs - (1 + (i % 2)); // Choose the starting rung (even or odd)
+      for(int r = start_r; r >0; r -= 2){; // Iterate over rungs in steps of 2
+        double rung_beta1 = beta[r];
+        double rung_beta2 = beta[r - 1];
+        double loglike1 = ll[r];
+        double loglike2 = ll[r - 1];
+        
+        double accept = (loglike2*rung_beta1 + loglike1*rung_beta2) - (loglike1*rung_beta1 + loglike2*rung_beta2);
+        // accept or reject move
+        bool accept_move = log(dust::random::random_real<double>(state)) < accept;
+        
+        if(accept_move){
+          int ri1 = rung_index[r];
+          int ri2 = rung_index[r - 1];
+          swap_acceptance[r - 1] += 1;
+          rung_index[r] = ri2;
+          rung_index[r - 1] = ri1;
+          ll[r] = loglike2;
+          ll[r - 1] = loglike1;
+        }
+      }
     }
     iteration_counter ++;
   }
@@ -343,7 +363,7 @@ list mcmc(
   
   // Return outputs in a list
   return writable::list({
-      "output"_nm = out,
+    "output"_nm = out,
       "theta"_nm = theta_out,
       "proposal_sd"_nm = proposal_sd_out,
       "iteration_counter"_nm = iteration_counter,

@@ -380,6 +380,9 @@ dj <- R6::R6Class(
       }
       swap_acceptance_counter <- private$chain_objects[[1]]$swap_acceptance_counter
       iteration_counter <- private$chain_objects[[1]]$iteration_counter
+      if(private$swap == 2){
+        iteration_counter = iteration_counter / 2
+      }
       estimate_mc_acceptance_rate(swap_acceptance_counter, iteration_counter)
     },
     
@@ -520,7 +523,7 @@ dj <- R6::R6Class(
         stop("Not available for a single rung")
       }
       ar <- self$mc_acceptance_rate()
-      ar <- ar[grepl(phase, rownames(ar), ignore.case = TRUE),]
+      ar <- ar[which(phase == private$phases),]
       create_mc_acceptance_plot(
         rungs = private$rungs,
         beta = private$beta,

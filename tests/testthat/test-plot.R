@@ -9,7 +9,7 @@ test_that("plots data subsetting works", {
   )
   
   expect_equal(
-    plot_data_subset(output_df = data, phase = "all", chain = NULL),
+    plot_data_subset(output_df = data, phase = NULL, chain = NULL),
     data
   )
   for(p in phases){
@@ -20,7 +20,7 @@ test_that("plots data subsetting works", {
   }
   for(c in chains){
     expect_equal(
-      plot_data_subset(output_df = data, phase = "all", chain = c),
+      plot_data_subset(output_df = data, phase = NULL, chain = c),
       data[data$chain == c, ]
     )
   }
