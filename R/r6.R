@@ -215,7 +215,7 @@ dj <- R6::R6Class(
         self$error_debug = chain_output[[1]]
         stop("Error in mcmc, check $error_debug")
       }
-      
+      #browser()
       ### Define final beta ###
       # Check all rung pairs have achieved some swaps
       private$tune_rejection_rate <- 1 - (chain_output[[1]]$swap_acceptance / (chain_output[[1]]$iteration_counter / 2))
@@ -234,10 +234,12 @@ dj <- R6::R6Class(
       private$beta_mid <- private$beta[- 1] - diff(private$beta) / 2
       
       # Re-initialise chain objects with the final rung number
-      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$tune_rungs)[[1]]
+      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$rungs)[[1]]
       private$chain_objects[[1]]$proposal_sd = create_proposal_sd_log(private$chains, private$tune_rungs, private$n_par)[[1]]
-      private$chain_objects[[1]]$acceptance_counter[[phase]] = matrix(0L, nrow = private$tune_rungs, ncol = private$n_par)
-      private$chain_objects[[1]]$swap_acceptance_counter[[phase]] <- rep(0L, private$tune_rungs - 1)
+      private$chain_objects[[1]]$swap_acceptance_counter[["burn"]] = rep(0L, private$rungs - 1)
+      private$chain_objects[[1]]$swap_acceptance_counter[["sample"]] = rep(0L, private$rungs - 1)
+      private$chain_objects[[1]]$acceptance_counter[["burn"]] = matrix(0L, nrow = private$rungs, ncol = private$n_par)
+      private$chain_objects[[1]]$acceptance_counter[["sample"]] = matrix(0L, nrow = private$rungs, ncol = private$n_par)
       
       # Update R6 object with mcmc outputs
       private$chain_objects[[1]]$duration[[phase]] = private$chain_objects[[1]]$duration[[phase]] + chain_output[[1]]$dur
@@ -246,6 +248,7 @@ dj <- R6::R6Class(
       ic <- index_closest(private$beta, private$tune_beta)
       private$chain_objects[[1]]$proposal_sd = chain_output[[1]]$proposal_sd[ic,]
       private$chain_objects[[1]]$acceptance_counter[[phase]] = chain_output[[1]]$acceptance[ic,]
+      private$chain_objects[[1]]$swap_acceptance_counter[[phase]] = chain_output[[1]]$swap_acceptance
     },
     
     ### Burn in ###
@@ -437,17 +440,12 @@ dj <- R6::R6Class(
     #' Get acceptance rates
     mc_acceptance_rate = function(phase = "sample"){
       stopifnot(phase %in% private$phases)
-      
-      if(phase == "tune"){
-        
-      }
-
-      swap_acceptance_counter <- private$chain_objects[[1]]$swap_acceptance_counter
-      iteration_counter <- private$chain_objects[[1]]$iteration_counter
+      swap_acceptance_counter <- private$chain_objects[[1]]$swap_acceptance_counter[[phase]]
+      iteration_counter <- private$chain_objects[[1]]$iteration_counter[[phase]]
       if(private$swap == 2){
         iteration_counter = iteration_counter / 2
       }
-      estimate_mc_acceptance_rate(swap_acceptance_counter, iteration_counter)
+      swap_acceptance_counter / iteration_counter
     },
     
     #' @description
