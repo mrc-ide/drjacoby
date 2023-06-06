@@ -159,7 +159,7 @@ dj <- R6::R6Class(
     #' @param max_rungs The maximum number of rungs
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
-    tune = function(target_rung_acceptance = 0.44, n_rungs = 50, iterations = 1000, initial_beta = NULL, swap = 1L,  target_acceptance = 0.44,  silent = FALSE){
+    tune = function(target_rung_acceptance = 0.5, n_rungs = 50, iterations = 1000, initial_beta = NULL, swap = 1L,  target_acceptance = 0.44,  silent = FALSE){
       if(private$chains > 1){
         stop("To use parallel tempering please set the number of chains = 1")
       }
