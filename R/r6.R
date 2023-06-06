@@ -134,13 +134,13 @@ dj <- R6::R6Class(
     print = function(){
       # print summary
       cat("drjacoby object:\n")
-      cat("  Parameters: ", private$n_par, "\n", sep = "")
-      cat("  Chains: ", private$chains, "\n", sep = "")
-      cat("  Rungs: ", private$rungs, "\n", sep = "")
-      cat("  Tuning iterations: ", private$chain_objects[[1]]$iteration_counter[1], "\n", sep = "")
-      cat("  Burn-in iterations: ",private$chain_objects[[1]]$iteration_counter[2], "\n", sep = "")
-      cat("  Sampling iterations: ", private$chain_objects[[1]]$iteration_counter[3], "\n", sep = "")
-      cat("  Total compute time: ", round(sum(self$timing()$seconds[4,]), 4), " seconds", "\n", sep = "")
+      cat(" \U0001F453  Parameters: ", private$n_par, "\n", sep = "")
+      cat(" \U0001F453  Chains: ", private$chains, "\n", sep = "")
+      cat(" \U0001F453  Rungs: ", private$rungs, "\n", sep = "")
+      cat(" \U0001F453  Tuning iterations: ", private$chain_objects[[1]]$iteration_counter[1], "\n", sep = "")
+      cat(" \U0001F453  Burn-in iterations: ",private$chain_objects[[1]]$iteration_counter[2], "\n", sep = "")
+      cat(" \U0001F453  Sampling iterations: ", private$chain_objects[[1]]$iteration_counter[3], "\n", sep = "")
+      cat(" \U0001F453  Total compute time: ", round(sum(self$timing()$seconds[4,]), 4), " seconds", "\n", sep = "")
       # return invisibly
       invisible(self)
     },
@@ -159,7 +159,7 @@ dj <- R6::R6Class(
     #' @param max_rungs The maximum number of rungs
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
-    tune = function(target_rung_acceptance = 0.5, n_rungs = 50, iterations = 1000, initial_beta = NULL, swap = 1L,  target_acceptance = 0.44,  silent = FALSE){
+    tune = function(target_rung_acceptance = 0.5, n_rungs = 50, iterations = 1000, initial_beta = NULL, swap = 2L,  target_acceptance = 0.44,  silent = FALSE){
       if(private$chains > 1){
         stop("To use parallel tempering please set the number of chains = 1")
       }
@@ -182,9 +182,8 @@ dj <- R6::R6Class(
       
       private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$tune_rungs)[[1]]
       private$chain_objects[[1]]$proposal_sd = create_proposal_sd_log(private$chains, private$tune_rungs, private$n_par)[[1]]
-      private$chain_objects[[1]]$acceptance_counter = create_acceptance_counter(private$chains, private$tune_rungs, private$n_par)[[1]]
-      private$chain_objects[[1]]$iteration_counter = create_iteration_counter(private$chains)[[1]]
-      private$chain_objects[[1]]$swap_acceptance_counter = create_swap_acceptance_counter(private$chains, private$tune_rungs)[[1]]
+      private$chain_objects[[1]]$acceptance_counter[[phase]] = matrix(0L, nrow = private$tune_rungs, ncol = private$n_par)
+      private$chain_objects[[1]]$swap_acceptance_counter[[phase]] <- rep(0L, private$tune_rungs - 1)
       
       apply_func <- noclusterApply
       #browser()
@@ -210,9 +209,16 @@ dj <- R6::R6Class(
                                  blocks = private$blocks,
                                  n_unique_blocks = private$n_unique_blocks
       )
-      browser()
+      
+      # Check for error return
+      if("error" %in% names(chain_output[[1]])){
+        self$error_debug = chain_output[[1]]
+        stop("Error in mcmc, check $error_debug")
+      }
+      
+      ### Define final beta ###
       # Check all rung pairs have achieved some swaps
-      private$tune_rejection_rate <- 1 - (chain_output[[1]]$swap_acceptance / chain_output[[1]]$iteration_counter)
+      private$tune_rejection_rate <- 1 - (chain_output[[1]]$swap_acceptance / (chain_output[[1]]$iteration_counter / 2))
       if(any(private$tune_rejection_rate > 0.99)){
         stop("Tuning needs more rungs to achieve an accurate estimate of communication barrier")
       }
@@ -227,29 +233,19 @@ dj <- R6::R6Class(
       )
       private$beta_mid <- private$beta[- 1] - diff(private$beta) / 2
       
-      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$rungs)[[1]]
-      private$chain_objects[[1]]$proposal_sd = create_proposal_sd_log(private$chains, private$rungs, private$n_par)[[1]]
-      private$chain_objects[[1]]$acceptance_counter = create_acceptance_counter(private$chains, private$tune_rungs, private$n_par)[[1]]
-      private$chain_objects[[1]]$iteration_counter = create_iteration_counter(private$chains)[[1]]
-      private$chain_objects[[1]]$swap_acceptance_counter = create_swap_acceptance_counter(private$chains, private$rungs)[[1]]
+      # Re-initialise chain objects with the final rung number
+      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$tune_rungs)[[1]]
+      private$chain_objects[[1]]$proposal_sd = create_proposal_sd_log(private$chains, private$tune_rungs, private$n_par)[[1]]
+      private$chain_objects[[1]]$acceptance_counter[[phase]] = matrix(0L, nrow = private$tune_rungs, ncol = private$n_par)
+      private$chain_objects[[1]]$swap_acceptance_counter[[phase]] <- rep(0L, private$tune_rungs - 1)
       
       # Update R6 object with mcmc outputs
-      for(i in 1:private$chains){
-        # Check for error return
-        if("error" %in% names(chain_output[[i]])){
-          self$error_debug = chain_output[[i]]
-          stop("Error in mcmc, check $error_debug")
-        }
-
-        # Update internal states
-        #private$chain_objects[[i]]$duration[phase] = private$chain_objects[[i]]$duration[phase] + chain_output[[i]]$dur
-        #private$chain_objects[[i]]$iteration_counter[phase] = private$chain_objects[[i]]$iteration_counter[phase] + iterations
-        #private$chain_objects[[i]]$proposal_sd = chain_output[[i]]$proposal_sd
-        #private$chain_objects[[i]]$acceptance_counter[phase,,] = chain_output[[i]]$acceptance
-        #if(private$rungs > 1){
-        #  private$chain_objects[[i]]$swap_acceptance_counter[phase,] = chain_output[[i]]$swap_acceptance
-        #}
-      }
+      private$chain_objects[[1]]$duration[[phase]] = private$chain_objects[[1]]$duration[[phase]] + chain_output[[1]]$dur
+      private$chain_objects[[1]]$iteration_counter[[phase]] = private$chain_objects[[1]]$iteration_counter[[phase]] + iterations
+      # Closest betas - to best-guess inform starting proposal_sd
+      ic <- index_closest(private$beta, private$tune_beta)
+      private$chain_objects[[1]]$proposal_sd = chain_output[[1]]$proposal_sd[ic,]
+      private$chain_objects[[1]]$acceptance_counter[[phase]] = chain_output[[1]]$acceptance[ic,]
     },
     
     ### Burn in ###
@@ -320,13 +316,13 @@ dj <- R6::R6Class(
         )
         
         # Update internal states
-        private$chain_objects[[i]]$duration[phase] = private$chain_objects[[i]]$duration[phase] + chain_output[[i]]$dur
-        private$chain_objects[[i]]$iteration_counter[phase] = private$chain_objects[[i]]$iteration_counter[phase] + iterations
+        private$chain_objects[[i]]$duration[[phase]] = private$chain_objects[[i]]$duration[[phase]] + chain_output[[i]]$dur
+        private$chain_objects[[i]]$iteration_counter[[phase]] = private$chain_objects[[i]]$iteration_counter[[phase]] + iterations
         private$chain_objects[[i]]$proposal_sd = chain_output[[i]]$proposal_sd
-        private$chain_objects[[i]]$acceptance_counter[phase,,] = chain_output[[i]]$acceptance
+        private$chain_objects[[i]]$acceptance_counter[[phase]] = chain_output[[i]]$acceptance
         private$chain_objects[[i]]$theta = chain_output[[i]]$theta
         if(private$rungs > 1){
-          private$chain_objects[[i]]$swap_acceptance_counter[phase,] = chain_output[[i]]$swap_acceptance
+          private$chain_objects[[i]]$swap_acceptance_counter[[phase]] = chain_output[[i]]$swap_acceptance
         }
         if (is_parallel) {
           private$chain_objects[[i]]$rng_ptr <- chain_output[[i]]$rng_ptr
@@ -393,12 +389,12 @@ dj <- R6::R6Class(
           chain = i
         )
         # Update internal states
-        private$chain_objects[[i]]$duration[phase] = private$chain_objects[[i]]$duration[phase] + chain_output[[i]]$dur
-        private$chain_objects[[i]]$iteration_counter[phase] = private$chain_objects[[i]]$iteration_counter[phase] + iterations
+        private$chain_objects[[i]]$duration[[phase]] = private$chain_objects[[i]]$duration[[phase]] + chain_output[[i]]$dur
+        private$chain_objects[[i]]$iteration_counter[[phase]] = private$chain_objects[[i]]$iteration_counter[[phase]] + iterations
         private$chain_objects[[i]]$theta = chain_output[[i]]$theta
-        private$chain_objects[[i]]$acceptance_counter[phase,,] = chain_output[[i]]$acceptance
+        private$chain_objects[[i]]$acceptance_counter[[phase]] = chain_output[[i]]$acceptance
         if(private$rungs > 1){
-          private$chain_objects[[i]]$swap_acceptance_counter[phase,] = chain_output[[i]]$swap_acceptance
+          private$chain_objects[[i]]$swap_acceptance_counter[[phase]] = chain_output[[i]]$swap_acceptance
         }
         if (is_parallel) {
           private$chain_objects[[i]]$rng_ptr <- chain_output[[i]]$rng_ptr
@@ -439,10 +435,13 @@ dj <- R6::R6Class(
     
     #' @description
     #' Get acceptance rates
-    mc_acceptance_rate = function(){
-      if(private$rungs == 1){
-        stop("Not available for a single rung")
+    mc_acceptance_rate = function(phase = "sample"){
+      stopifnot(phase %in% private$phases)
+      
+      if(phase == "tune"){
+        
       }
+
       swap_acceptance_counter <- private$chain_objects[[1]]$swap_acceptance_counter
       iteration_counter <- private$chain_objects[[1]]$iteration_counter
       if(private$swap == 2){
@@ -595,6 +594,14 @@ dj <- R6::R6Class(
         ar = ar,
         x_axis_type = x_axis_type
       )
+    },
+    
+    plot_tuning_rejection_rate = function(){
+      create_rejection_rate_plot(private$tune_beta, private$tune_beta_mid, private$tune_rejection_rate)
+    },
+    
+    plot_local_communication_barrier = function(){
+      create_local_communication_barrier_plot(private$tune_beta, private$tune_beta_mid, private$tune_rejection_rate)
     }
   )
 )

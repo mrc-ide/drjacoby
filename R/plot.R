@@ -231,3 +231,35 @@ create_mc_acceptance_plot <- function(rungs, beta, ar, x_axis_type) {
   
   return(mc_ar_plot)
 }
+
+create_rejection_rate_plot <- function(beta, beta_mid, rejection_rate){
+  pd <- data.frame(
+    beta = rev(beta_mid),
+    r = cumsum(rev(rejection_rate))
+  )
+  ggplot2::ggplot(data = pd, ggplot2::aes(x = beta, y = r, col = beta)) +
+    ggplot2::geom_vline(xintercept = beta, col = "grey90") +
+    ggplot2::geom_point() +
+    ggplot2::geom_line() +
+    ggplot2::xlab(expression("Schedule" ~ (beta))) +
+    ggplot2::ylab(expression("Cumulative rejection rate" ~ (hat("r")))) + 
+    ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0,1)) +
+    ggplot2::ylim(0, NA) +
+    ggplot2::theme_bw()
+}
+
+create_local_communication_barrier_plot <- function(beta, beta_mid, rejection_rate){
+  pd <- data.frame(
+    beta = rev(beta_mid),
+    r = rev(rejection_rate) / sum(rejection_rate)
+  )
+  ggplot2::ggplot(data = pd, ggplot2::aes(x = beta, y = r, col = beta)) +
+    ggplot2::geom_vline(xintercept = beta, col = "grey90") +
+    ggplot2::geom_line() +
+    ggplot2::geom_point() +
+    ggplot2::xlab(expression("Schedule" ~ (beta))) +
+    ggplot2::ylab(expression("Local communication barrier " ~ over(lambda(beta), Lambda))) +
+    ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0,1)) +
+    ggplot2::ylim(0, NA) +
+    ggplot2::theme_bw()
+}

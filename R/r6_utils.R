@@ -49,25 +49,40 @@ list_r_bind <- function(x){
 
 create_swap_acceptance_counter = function(chains, rungs){
   lapply(1:chains, function(x){
-    matrix(0L, nrow = 3, ncol = max(rungs - 1, 1))
+    list(
+      tune = rep(0L, rungs - 1),
+      burn = rep(0L, rungs - 1),
+      sample = rep(0L, rungs - 1)
+    )
   })
 }
 
 create_iteration_counter = function(chains){
   iteration_counter = lapply(1:chains, function(x){
-    rep(0L, 3, ncol = 1)
+    list(
+      tune = 0,
+      burn = 0,
+      sample = 0
+    )
   })
 }
 
 create_duration_log = function(chains){
   lapply(1:chains, function(x){
-    matrix(0, nrow = 3, ncol = 1)
+    list(
+      tune = 0,
+      burn = 0,
+      sample = 0
+    )
   })
 }
 
 create_acceptance_counter <- function(chains, rungs, n_par){
   lapply(1:chains, function(x){
-    array(0L, dim = c(3, rungs, n_par)
+    list(
+       tune = matrix(0L, nrow = rungs, ncol = n_par),
+       burn = matrix(0L, nrow = rungs, ncol = n_par),
+       sample = matrix(0L, nrow = rungs, ncol = n_par)
     )
   })
 }

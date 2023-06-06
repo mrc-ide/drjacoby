@@ -7,3 +7,10 @@ propose_new_beta <- function(n, beta_mid, rejection_rate, lambda){
   )
   rev(li(seq(0, lambda, length.out = n)))
 } 
+
+#' Find index of closest value in y of values in x
+index_closest <- function(x, y){
+  sapply(x, function(x, y) {
+    which.min(abs(y - x))
+  }, y = y)
+}

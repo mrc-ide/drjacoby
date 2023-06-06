@@ -18,14 +18,14 @@ run_mcmc <- function(chain_input, burnin, phase, iterations, silent, theta_names
     logprior,
     misc,
     chain_input$proposal_sd,
-    as.matrix(t(chain_input$acceptance_counter[phase,,])),
+    as.matrix(t(chain_input$acceptance_counter[[phase]])),
     target_acceptance,
     swap,
     beta,
-    as.vector(chain_input$swap_acceptance_counter[phase, ]),
+    as.vector(chain_input$swap_acceptance_counter[[phase]]),
     blocks,
     n_unique_blocks,
-    chain_input$iteration_counter[phase],
+    chain_input$iteration_counter[[phase]],
     chain_input$rng_ptr
   )
   chain_input$rng_ptr$sync()
