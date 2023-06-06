@@ -35,7 +35,14 @@ dj <- R6::R6Class(
     target_acceptance = NULL,
     rungs = 1,
     beta = 1,
+    beta_mid = NULL,
+    tune_rungs = NULL,
+    tune_beta = NULL,
+    tune_beta_mid = NULL,
     swap = 0L,
+    target_rung_acceptance = NULL,
+    tune_rejection_rate = NULL,
+    lambda = NULL,
     phases = c("tune", "burn", "sample"),
     
     output_df = NULL
@@ -152,7 +159,7 @@ dj <- R6::R6Class(
     #' @param max_rungs The maximum number of rungs
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
-    tune = function(iterations, swap = 1L, beta = seq(1, 0, -0.1), max_rungs = 100, target_acceptance = 0.44, silent = FALSE){
+    tune = function(target_rung_acceptance = 0.44, n_rungs = 50, iterations = 1000, initial_beta = NULL, swap = 1L,  target_acceptance = 0.44,  silent = FALSE){
       if(private$chains > 1){
         stop("To use parallel tempering please set the number of chains = 1")
       }
@@ -160,31 +167,89 @@ dj <- R6::R6Class(
         stop("Cannot call tune after burn or sample have been called")
       }
       private$tune_called <- TRUE
-      phase <- 1
-      
-      
-      ### TODO: Bob, any time you assign a new beta the following will need to be
-      ### updated
-      # Infer rung number
-      private$rungs = length(beta)
-      private$beta = beta
-      private$swap = swap
-      # Update default initial values for new number of rungs:
-      theta = initial(private$df_params, chains = private$chains, rungs = private$rungs)
-      proposal_sd = create_proposal_sd_log(private$chains, private$rungs, private$n_par)
-      acceptance_counter = create_acceptance_counter(private$chains, private$rungs, private$n_par)
-      swap_acceptance_counter = create_swap_acceptance_counter(private$chains, private$rungs)
-      
-      for(i in 1:private$chains){
-        private$chain_objects[[i]]$theta = theta[[i]]
-        private$chain_objects[[i]]$proposal_sd = proposal_sd[[i]]
-        private$chain_objects[[i]]$acceptance_counter = acceptance_counter[[i]]
-        private$chain_objects[[i]]$swap_acceptance_counter = swap_acceptance_counter[[i]]
+      # Tuning beta initialised with simple power law, unless overridden with initial_beta
+      private$tune_beta <- seq(1, 0, length.out = n_rungs)^2
+      if(!is.null(initial_beta)){
+        private$tune_beta <- initial_beta
       }
-      ### TODO: Bob, include the beta-schedule tuning function here:
-      ### tune_beta()
-      ### TODO: Bob ,when runing is ok, you may want to update the R6 state as with
-      ### "Update internal states" in the burn function
+      private$tune_rungs <- length(private$tune_beta)
+      private$tune_beta_mid <- private$tune_beta[- 1] - diff(private$tune_beta) / 2
+      burnin <- TRUE
+      phase <- 1
+      private$swap <- swap
+      private$target_acceptance <- target_acceptance
+      private$target_rung_acceptance <- target_rung_acceptance
+      
+      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$tune_rungs)[[1]]
+      private$chain_objects[[1]]$proposal_sd = create_proposal_sd_log(private$chains, private$tune_rungs, private$n_par)[[1]]
+      private$chain_objects[[1]]$acceptance_counter = create_acceptance_counter(private$chains, private$tune_rungs, private$n_par)[[1]]
+      private$chain_objects[[1]]$iteration_counter = create_iteration_counter(private$chains)[[1]]
+      private$chain_objects[[1]]$swap_acceptance_counter = create_swap_acceptance_counter(private$chains, private$tune_rungs)[[1]]
+      
+      apply_func <- noclusterApply
+      #browser()
+      # Run chains
+      chain_output <- apply_func(cl = NULL, 
+                                 private$chain_objects, run_mcmc,
+                                 phase = phase,
+                                 burnin = burnin,
+                                 iterations = iterations,
+                                 silent = silent,
+                                 theta_names = private$theta_names,
+                                 theta_transform_type = private$theta_transform_type,
+                                 theta_min = private$theta_min,
+                                 theta_max = private$theta_max,
+                                 infer_parameter = private$infer_parameter,
+                                 data = private$data,
+                                 loglikelihood = private$loglikelihood,
+                                 logprior = private$logprior,
+                                 misc = private$misc,
+                                 target_acceptance = private$target_acceptance,
+                                 swap = private$swap,
+                                 beta = private$tune_beta,
+                                 blocks = private$blocks,
+                                 n_unique_blocks = private$n_unique_blocks
+      )
+      browser()
+      # Check all rung pairs have achieved some swaps
+      private$tune_rejection_rate <- 1 - (chain_output[[1]]$swap_acceptance / chain_output[[1]]$iteration_counter)
+      if(any(private$tune_rejection_rate > 0.99)){
+        stop("Tuning needs more rungs to achieve an accurate estimate of communication barrier")
+      }
+      private$lambda <-  sum(private$tune_rejection_rate)
+      # Update beta
+      private$rungs <- ceiling(private$lambda / (1 - private$target_rung_acceptance))
+      private$beta <- propose_new_beta(
+        n = private$rungs,
+        beta_mid = private$tune_beta_mid,
+        rejection_rate = private$tune_rejection_rate,
+        lambda = private$lambda
+      )
+      private$beta_mid <- private$beta[- 1] - diff(private$beta) / 2
+      
+      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$rungs)[[1]]
+      private$chain_objects[[1]]$proposal_sd = create_proposal_sd_log(private$chains, private$rungs, private$n_par)[[1]]
+      private$chain_objects[[1]]$acceptance_counter = create_acceptance_counter(private$chains, private$tune_rungs, private$n_par)[[1]]
+      private$chain_objects[[1]]$iteration_counter = create_iteration_counter(private$chains)[[1]]
+      private$chain_objects[[1]]$swap_acceptance_counter = create_swap_acceptance_counter(private$chains, private$rungs)[[1]]
+      
+      # Update R6 object with mcmc outputs
+      for(i in 1:private$chains){
+        # Check for error return
+        if("error" %in% names(chain_output[[i]])){
+          self$error_debug = chain_output[[i]]
+          stop("Error in mcmc, check $error_debug")
+        }
+
+        # Update internal states
+        #private$chain_objects[[i]]$duration[phase] = private$chain_objects[[i]]$duration[phase] + chain_output[[i]]$dur
+        #private$chain_objects[[i]]$iteration_counter[phase] = private$chain_objects[[i]]$iteration_counter[phase] + iterations
+        #private$chain_objects[[i]]$proposal_sd = chain_output[[i]]$proposal_sd
+        #private$chain_objects[[i]]$acceptance_counter[phase,,] = chain_output[[i]]$acceptance
+        #if(private$rungs > 1){
+        #  private$chain_objects[[i]]$swap_acceptance_counter[phase,] = chain_output[[i]]$swap_acceptance
+        #}
+      }
     },
     
     ### Burn in ###
