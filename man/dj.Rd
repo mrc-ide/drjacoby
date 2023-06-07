@@ -33,6 +33,8 @@ Create a new dj object to run an mcmc
 \item \href{#method-dj-plot_credible}{\code{dj$plot_credible()}}
 \item \href{#method-dj-plot_cor_mat}{\code{dj$plot_cor_mat()}}
 \item \href{#method-dj-plot_mc_acceptance_rate}{\code{dj$plot_mc_acceptance_rate()}}
+\item \href{#method-dj-plot_tuning_rejection_rate}{\code{dj$plot_tuning_rejection_rate()}}
+\item \href{#method-dj-plot_local_communication_barrier}{\code{dj$plot_local_communication_barrier()}}
 \item \href{#method-dj-clone}{\code{dj$clone()}}
 }
 }
@@ -92,10 +94,11 @@ target acceptance rates and chain convergence are not guaranteed  - run
 \code{$burn()} to burn in further.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$tune(
-  iterations,
-  swap = 1L,
-  beta = seq(1, 0, -0.1),
-  max_rungs = 100,
+  target_rung_acceptance = 0.5,
+  n_rungs = 50,
+  iterations = 1000,
+  initial_beta = NULL,
+  swap = 2L,
   target_acceptance = 0.44,
   silent = FALSE
 )}\if{html}{\out{</div>}}
@@ -108,13 +111,13 @@ target acceptance rates and chain convergence are not guaranteed  - run
 
 \item{\code{swap}}{integer 0 = no swapping, 1 = standard swapping, 2 = super cool new swapping}
 
-\item{\code{beta}}{Initial beta schedule.}
-
-\item{\code{max_rungs}}{The maximum number of rungs}
-
 \item{\code{target_acceptance}}{Target acceptance rate}
 
 \item{\code{silent}}{print progress (boolean)}
+
+\item{\code{beta}}{Initial beta schedule.}
+
+\item{\code{max_rungs}}{The maximum number of rungs}
 }
 \if{html}{\out{</div>}}
 }
@@ -190,7 +193,7 @@ Get mcmc output data.frame
 \subsection{Method \code{acceptance_rate()}}{
 Get acceptance rates
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$acceptance_rate()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$acceptance_rate(phase = "sample", chain = NULL, rung = 1)}\if{html}{\out{</div>}}
 }
 
 }
@@ -200,7 +203,7 @@ Get acceptance rates
 \subsection{Method \code{mc_acceptance_rate()}}{
 Get acceptance rates
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$mc_acceptance_rate()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$mc_acceptance_rate(phase = NULL)}\if{html}{\out{</div>}}
 }
 
 }
@@ -380,6 +383,24 @@ the thermodynamic power.}
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-dj-plot_tuning_rejection_rate"></a>}}
+\if{latex}{\out{\hypertarget{method-dj-plot_tuning_rejection_rate}{}}}
+\subsection{Method \code{plot_tuning_rejection_rate()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dj$plot_tuning_rejection_rate()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-dj-plot_local_communication_barrier"></a>}}
+\if{latex}{\out{\hypertarget{method-dj-plot_local_communication_barrier}{}}}
+\subsection{Method \code{plot_local_communication_barrier()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dj$plot_local_communication_barrier()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-clone"></a>}}

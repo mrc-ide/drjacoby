@@ -679,25 +679,30 @@ dj <- R6::R6Class(
     #' @param x_axis_type how to format the x-axis. 1 = integer rungs, 2 = values of
     #'   the thermodynamic power.
     plot_mc_acceptance_rate = function(phase = "sample", x_axis_type = 1){
-      if(private$rungs == 1){
+      if(private$rungs[["sample"]] == 1){
         stop("Not available for a single rung")
       }
-      ar <- self$mc_acceptance_rate()
-      ar <- ar[which(phase == private$phases),]
+      ar <- self$mc_acceptance_rate(phase = phase)
       create_mc_acceptance_plot(
         rungs = private$rungs,
-        beta = private$beta,
-        ar = ar,
+        beta = private$beta[[phase]],
+        ar = ar$coupling_acceptance,
         x_axis_type = x_axis_type
       )
     },
     
     plot_tuning_rejection_rate = function(){
-      create_rejection_rate_plot(private$tune_beta, private$tune_beta_mid, private$tune_rejection_rate)
+      tune_rejection_rate <- 1 - self$mc_acceptance_rate(
+        phase = "tune"
+      )$coupling_acceptance
+      create_rejection_rate_plot(private$beta[["tune"]], tune_rejection_rate)
     },
     
     plot_local_communication_barrier = function(){
-      create_local_communication_barrier_plot(private$tune_beta, private$tune_beta_mid, private$tune_rejection_rate)
+      tune_rejection_rate <- 1 - self$mc_acceptance_rate(
+        phase = "tune"
+      )$coupling_acceptance
+      create_local_communication_barrier_plot(private$beta[["tune"]], tune_rejection_rate)
     }
   )
 )

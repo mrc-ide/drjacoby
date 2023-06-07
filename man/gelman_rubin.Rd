@@ -4,14 +4,10 @@
 \alias{gelman_rubin}
 \title{Gelman-Rubin statistic}
 \usage{
-gelman_rubin(par_matrix, chains, samples)
+gelman_rubin(par_matrix)
 }
 \arguments{
-\item{par_matrix}{Matrix (interations x chains)}
-
-\item{chains}{number of chains}
-
-\item{samples}{number of samples}
+\item{par_matrix}{Matrix (iterations x chains)}
 }
 \value{
 Gelman-Rubin statistic

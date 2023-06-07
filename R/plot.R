@@ -201,7 +201,7 @@ create_cor_mat_plot <- function(output_df, pars, chain, phase, param_names) {
 }
 
 create_mc_acceptance_plot <- function(rungs, beta, ar, x_axis_type) {
-  beta_mid <- beta[-1] - diff(beta)/2
+  beta_mid <- beta_mid(beta)
   
   # define x-axis type
   if (x_axis_type == 1) {
@@ -232,7 +232,8 @@ create_mc_acceptance_plot <- function(rungs, beta, ar, x_axis_type) {
   return(mc_ar_plot)
 }
 
-create_rejection_rate_plot <- function(beta, beta_mid, rejection_rate){
+create_rejection_rate_plot <- function(beta, rejection_rate){
+  beta_mid <- beta_mid(beta)
   pd <- data.frame(
     beta = rev(beta_mid),
     r = cumsum(rev(rejection_rate))
@@ -248,7 +249,8 @@ create_rejection_rate_plot <- function(beta, beta_mid, rejection_rate){
     ggplot2::theme_bw()
 }
 
-create_local_communication_barrier_plot <- function(beta, beta_mid, rejection_rate){
+create_local_communication_barrier_plot <- function(beta, rejection_rate){
+  beta_mid <- beta_mid(beta)
   pd <- data.frame(
     beta = rev(beta_mid),
     r = rev(rejection_rate) / sum(rejection_rate)
