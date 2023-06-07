@@ -566,7 +566,7 @@ dj <- R6::R6Class(
         chains = private$chains
       )
       
-
+      
     },
     
     #' @description
@@ -574,13 +574,13 @@ dj <- R6::R6Class(
     timing = function(){
       duration <- chain_element(private$chain_objects, "duration")
       iteration_counter <- private$iteration_counter
-      seconds <- list_c_bind(duration)
-      iterations <- list_c_bind(iteration_counter)
+      
       estimate_timing(
-        seconds = seconds,
-        iterations = iterations,
+        duration = duration, 
+        iteration_counter = iteration_counter,
         phases = private$phases,
-        chains = private$chains)
+        chains = private$chains
+      )
     },
     
     ### Plots ###

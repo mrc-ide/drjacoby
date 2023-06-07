@@ -85,14 +85,18 @@ estimate_acceptance_rate <- function(
   return(ar)
 }
 
-estimate_timing  <- function(seconds, iterations, phases, chains){
+estimate_timing <- function(duration, iteration_counter, phases, chains){
+  seconds <- list_c_bind(lapply(duration, list_r_bind))
   seconds <- rbind(seconds, colSums(seconds))
-  iterations <- rbind(iterations, colSums(iterations))
   rownames(seconds) <- c(phases, "Total")
   colnames(seconds) <- paste0("Chain_", 1:chains)
-  iterations_per_second <- round(iterations / seconds)
-  rownames(iterations_per_second) <- c(phases, "All")
-  colnames(iterations_per_second) <- paste0("Chain_", 1:chains)
+  iterations_per_second <- seconds
+  for(i in 1:3){
+    iterations_per_second[i,] <- iteration_counter[[i]] / iterations_per_second[i,]
+  }
+  iterations_per_second[4,] <- sum(unlist(iteration_counter)) / iterations_per_second[4,]
+  iterations_per_second <- round(iterations_per_second)
+  
   return(
     list(
       seconds = seconds,
