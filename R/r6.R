@@ -557,10 +557,16 @@ dj <- R6::R6Class(
     #' @description
     #' Get rhat estimates
     rhat = function(){
-      output_df <- list_r_bind(private$output_df)
-      iteration_counter <- private$iteration_counter
-      iteration_counter <- list_c_bind(iteration_counter)
-      estimate_rhat(output_df, private$theta_names, private$chains, iteration_counter)
+      output <- self$output(phase = "sample")
+      pars <- private$theta_names[private$infer_parameter]
+      
+      estimate_rhat(
+        output = output,
+        pars = pars,
+        chains = private$chains
+      )
+      
+
     },
     
     #' @description

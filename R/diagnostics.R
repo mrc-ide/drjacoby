@@ -10,14 +10,44 @@ estimate_ess <- function(output, parameter_names){
   return(ess)
 }
 
-estimate_rhat <- function(output, parameter_names, n_chains, samples){
-  rhat_est <- c()
-  for (p in seq_along(parameter_names)) {
-    rhat_est[p] <- output[output$phase == "sample", c("chain", parameter_names[p])] |>
-      gelman_rubin(chains = n_chains, samples = samples[3,1])
-  }
-  names(rhat_est) <- parameter_names
-  return(rhat_est)
+#' Gelman-Rubin statistic
+#' 
+#' Estimate sthe Gelman-Rubin (rhat) convergence statistic for a single parameter
+#' across multiple chains. Basic method, assuming all chains are of equal length
+#'  
+#' @references Gelman, A., and D. B. Rubin. 1992. 
+#' Inference from Iterative Simulation Using Multiple Sequences. 
+#' Statistical Science 7: 457–511.
+#' @references \url{https://astrostatistics.psu.edu/RLectures/diagnosticsMCMC.pdf}
+#'
+#' @param par_matrix Matrix (iterations x chains)
+#'
+#' @return Gelman-Rubin statistic
+gelman_rubin <- function(par_matrix){
+  # Mean over all samples
+  all_mean <- mean(par_matrix)
+  
+  # Mean of each chain
+  chain_mean <- apply(par_matrix, 2, mean)
+  
+  chains <- ncol(par_matrix)
+  samples <- nrow(par_matrix)
+  
+  # Variance of each chain
+  chain_var <- apply(par_matrix, 2, stats::var)
+  W <- (1 / chains) * sum(chain_var)
+  B <- samples / (chains - 1) * sum((chain_mean - all_mean)^2)
+  V <- (1 - 1 / samples) * W + (1 / samples) * B
+  round(sqrt(V / W), 4)
+}
+
+estimate_rhat <- function(output, pars, chains){
+  par_matrices <- lapply(pars, function(x){
+    matrix(output[[x]], ncol = chains)
+  })
+  out <- sapply(par_matrices, gelman_rubin)
+  names(out) <- pars
+  return(out)
 }
 
 estimate_acceptance_rate <- function(
@@ -93,42 +123,4 @@ estimate_mc_acceptance_rate <- function(swap_acceptance_counter, iteration_count
 #' @export
 acf_data <- function(x, lag){
   stats::acf(x, plot = FALSE, lag.max = lag)$acf
-}
-
-#' Gelman-Rubin statistic
-#' 
-#' Estimate sthe Gelman-Rubin (rhat) convergence statistic for a single parameter
-#' across multiple chains. Basic method, assuming all chains are of equal length
-#'  
-#' @references Gelman, A., and D. B. Rubin. 1992. 
-#' Inference from Iterative Simulation Using Multiple Sequences. 
-#' Statistical Science 7: 457–511.
-#' @references \url{https://astrostatistics.psu.edu/RLectures/diagnosticsMCMC.pdf}
-#'
-#' @param par_matrix Matrix (interations x chains)
-#' @param chains number of chains
-#' @param samples number of samples
-#'
-#' @return Gelman-Rubin statistic
-gelman_rubin <- function(par_matrix, chains, samples){
-  
-  # Check that >1 chains and >1 samples
-  stopifnot(chains > 1)
-  stopifnot(samples > 1)
-  
-  # Coerce to matrix
-  par_matrix <- as.data.frame(par_matrix)
-  
-  # Mean over all samples
-  all_mean <- mean(par_matrix[,2])
-  
-  # Mean of each chain
-  chain_mean <- tapply(par_matrix[,2], par_matrix[,1], mean)
-  
-  # Variance of each chain
-  chain_var <- tapply(par_matrix[,2], par_matrix[,1], stats::var)
-  W <- (1 / chains) * sum(chain_var)
-  B <- samples / (chains - 1) * sum((chain_mean - all_mean)^2)
-  V <- (1 - 1 / samples) * W + (1 / samples) * B
-  round(sqrt(V / W), 4)
 }
