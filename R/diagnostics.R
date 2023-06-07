@@ -70,12 +70,19 @@ estimate_timing  <- function(seconds, iterations, phases, chains){
   )
 }
 
-estimate_mc_acceptance_rate <- function(swap_acceptance_counter, iteration_counter){
-  swap_acceptance_rate <- apply(swap_acceptance_counter, 2, function(x){
-    x / iteration_counter
-  })
-  rownames(swap_acceptance_rate) <- rownames(swap_acceptance_counter)
-  swap_acceptance_rate  
+estimate_mc_acceptance_rate <- function(swap_acceptance_counter, iteration_counter, phases, beta){
+  mar <- list()
+  counter <- 1
+  for(p in phases){
+    mar[[counter]] <- data.frame(
+      phase = p,
+      beta_mid = round(beta_mid(beta[[p]]), 3),
+      coupling_acceptance = round(swap_acceptance_counter[[p]] / iteration_counter[[p]], 3)
+    )
+    counter <- counter + 1
+  }
+  mar <- list_r_bind(mar)
+  mar
 }
 
 

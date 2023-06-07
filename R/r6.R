@@ -265,7 +265,9 @@ dj <- R6::R6Class(
       
       ### Define final beta ###
       # Check all rung pairs have achieved some swaps
-      tune_rejection_rate <- 1 - self$mc_acceptance_rate("tune")
+      tune_rejection_rate <- 1 - self$mc_acceptance_rate(
+        phase = "tune"
+      )$coupling_acceptance
       if(any(tune_rejection_rate > 0.99)){
         stop("Tuning needs more rungs to achieve an accurate estimate of communication barrier")
       }
@@ -482,7 +484,9 @@ dj <- R6::R6Class(
     #' @description
     #' Get acceptance rates
     acceptance_rate = function(phase = "sample", chain = NULL, rung = 1){
-      acceptance_counter <- chain_element(private$chain_objects, "acceptance_counter")
+      acceptance_counter <- chain_element(
+        x = private$chain_objects, 
+        name = "acceptance_counter")
       
       phases <- private$phases
       if(!private$tune_called){
@@ -510,14 +514,30 @@ dj <- R6::R6Class(
     
     #' @description
     #' Get acceptance rates
-    mc_acceptance_rate = function(phase = "sample"){
+    mc_acceptance_rate = function(phase = NULL){
       stopifnot(phase %in% private$phases)
-      swap_acceptance_counter <- private$chain_objects[[1]]$swap_acceptance_counter[[phase]]
-      iteration_counter <- private$iteration_counter[[phase]]
+      stopifnot(private$tune_called)
+      
+      swap_acceptance_counter <- private$chain_objects[[1]]$swap_acceptance_counter
+      
+      iteration_counter <- private$iteration_counter
       if(private$swap == 2){
-        iteration_counter = iteration_counter / 2
+        iteration_counter = lapply(iteration_counter, function(x){
+          x / 2
+        })
       }
-      swap_acceptance_counter / iteration_counter
+      
+      phases <- private$phases
+      if(!is.null(phase)){
+        phases <- phases[phases %in% phase]
+      }
+      
+      estimate_mc_acceptance_rate(
+        swap_acceptance_counter = private$chain_objects[[1]]$swap_acceptance_counter,
+        iteration_counter = iteration_counter,
+        phases = phases,
+        beta = private$beta
+      )
     },
     
     #' @description
