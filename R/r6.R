@@ -32,16 +32,26 @@ dj <- R6::R6Class(
     blocks = NULL,
     n_unique_blocks = NULL,
     
+    iteration_counter = list(
+      tune = 0L,
+      burn = 0L,
+      sample = 0L
+    ),
+    
     target_acceptance = NULL,
-    rungs = 1,
-    beta = 1,
-    beta_mid = NULL,
-    tune_rungs = NULL,
-    tune_beta = NULL,
-    tune_beta_mid = NULL,
+    
+    rungs = list(
+      tune = 1L,
+      burn = 1L,
+      sample = 1L
+    ),
+    beta = list(
+      tune = 1,
+      burn = 1,
+      sample = 1
+    ),
     swap = 0L,
     target_rung_acceptance = NULL,
-    tune_rejection_rate = NULL,
     lambda = NULL,
     phases = c("tune", "burn", "sample"),
     
@@ -74,6 +84,8 @@ dj <- R6::R6Class(
     initialize = function(data, df_params, loglikelihood, logprior, chains = 1L, misc = list()){
       
       Sys.setenv(RSTUDIO = "1") # To get progress bar to show on Windows (progress package outstanding issue)
+      
+      # Input checks
       stopifnot(is.list(data))
       stopifnot(is.list(df_params))
       check_params(df_params)
@@ -97,15 +109,36 @@ dj <- R6::R6Class(
       private$infer_parameter = as.integer(!(private$theta_min == private$theta_max))
       private$blocks = set_blocks(df_params)
       private$n_unique_blocks = length(unique(unlist(private$blocks)))
-      private$output_df <- vector("list", private$chains)
+      private$output_df = vector("list", private$chains)
       
       # Chain-specific elements
-      theta = initial(private$df_params, chains = private$chains, rungs = private$rungs)
-      proposal_sd = create_proposal_sd_log(private$chains, private$rungs, private$n_par)
-      acceptance_counter = create_acceptance_counter(private$chains, private$rungs, private$n_par)
-      iteration_counter = create_iteration_counter(private$chains)
-      swap_acceptance_counter = create_swap_acceptance_counter(private$chains, private$rungs)
-      duration = create_duration_log(private$chains)
+      rungs = 1
+      theta = initial(
+        df_params = private$df_params,
+        chains = private$chains,
+        rungs = rungs
+      )
+      proposal_sd = create_proposal_sd(
+        chains = private$chains,
+        rungs = rungs,
+        n_par = private$n_par
+      )
+      acceptance_counter = create_chain_phase_list(
+        chains = private$chains,
+        base = matrix(
+          0L, 
+          nrow = rungs, 
+          ncol = private$n_par
+        )
+      )
+      swap_acceptance_counter = create_chain_phase_list(
+        chains = private$chains,
+        base = rep(0L, rungs - 1)
+      )
+      duration = create_chain_phase_list(
+        chains = private$chains,
+        base = 0
+      )
       rng_ptr = dust::dust_rng_distributed_pointer(
         seed = NULL,
         n_nodes = private$chains
@@ -119,7 +152,6 @@ dj <- R6::R6Class(
           proposal_sd = proposal_sd[[i]],
           acceptance_counter = acceptance_counter[[i]],
           swap_acceptance_counter = swap_acceptance_counter[[i]],
-          iteration_counter = iteration_counter[[i]],
           duration = duration[[i]],
           rng_ptr = rng_ptr[[i]]
         )
@@ -136,10 +168,11 @@ dj <- R6::R6Class(
       cat("drjacoby object:\n")
       cat(" \U0001F453  Parameters: ", private$n_par, "\n", sep = "")
       cat(" \U0001F453  Chains: ", private$chains, "\n", sep = "")
-      cat(" \U0001F453  Rungs: ", private$rungs, "\n", sep = "")
-      cat(" \U0001F453  Tuning iterations: ", private$chain_objects[[1]]$iteration_counter[1], "\n", sep = "")
-      cat(" \U0001F453  Burn-in iterations: ",private$chain_objects[[1]]$iteration_counter[2], "\n", sep = "")
-      cat(" \U0001F453  Sampling iterations: ", private$chain_objects[[1]]$iteration_counter[3], "\n", sep = "")
+      cat(" \U0001F453  Tuning rungs: ", private$rungs[["tune"]], "\n", sep = "")
+      cat(" \U0001F453  Burn-in and sampling rungs: ", private$rungs[["sample"]], "\n", sep = "")
+      cat(" \U0001F453  Tuning iterations: ", private$iteration_counter[["tune"]], "\n", sep = "")
+      cat(" \U0001F453  Burn-in iterations: ", private$iteration_counter[["burn"]], "\n", sep = "")
+      cat(" \U0001F453  Sampling iterations: ", private$iteration_counter[["sample"]], "\n", sep = "")
       cat(" \U0001F453  Total compute time: ", round(sum(self$timing()$seconds[4,]), 4), " seconds", "\n", sep = "")
       # return invisibly
       invisible(self)
@@ -166,89 +199,101 @@ dj <- R6::R6Class(
       if(private$burn_called | private$sample_called){
         stop("Cannot call tune after burn or sample have been called")
       }
+      phase <- "tune"
       private$tune_called <- TRUE
-      # Tuning beta initialised with simple power law, unless overridden with initial_beta
-      private$tune_beta <- seq(1, 0, length.out = n_rungs)^2
-      if(!is.null(initial_beta)){
-        private$tune_beta <- initial_beta
-      }
-      private$tune_rungs <- length(private$tune_beta)
-      private$tune_beta_mid <- private$tune_beta[- 1] - diff(private$tune_beta) / 2
       burnin <- TRUE
-      phase <- 1
+      
+      # Tuning beta initialised with simple power law, unless overridden by user with initial_beta
+      private$beta[[phase]] <- seq(1, 0, length.out = n_rungs)^2
+      if(!is.null(initial_beta)){
+        private$beta[[phase]] <- initial_beta
+      }
+      private$rungs[[phase]] <- length(private$beta[[phase]])
+      
       private$swap <- swap
       private$target_acceptance <- target_acceptance
       private$target_rung_acceptance <- target_rung_acceptance
       
-      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$tune_rungs)[[1]]
-      private$chain_objects[[1]]$proposal_sd = create_proposal_sd_log(private$chains, private$tune_rungs, private$n_par)[[1]]
-      private$chain_objects[[1]]$acceptance_counter[[phase]] = matrix(0L, nrow = private$tune_rungs, ncol = private$n_par)
-      private$chain_objects[[1]]$swap_acceptance_counter[[phase]] <- rep(0L, private$tune_rungs - 1)
+      # Adjust objects dependent on number of rungs
+      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$rungs[[phase]])[[1]]
+      private$chain_objects[[1]]$proposal_sd = create_proposal_sd(private$chains, private$rungs[[phase]], private$n_par)[[1]]
+      private$chain_objects[[1]]$acceptance_counter[[phase]] = matrix(0L, nrow = private$rungs[[phase]], ncol = private$n_par)
+      private$chain_objects[[1]]$swap_acceptance_counter[[phase]] <- rep(0L, private$rungs[[phase]] - 1)
       
+      # For tuning, chains always = 1, so never in parallel
       apply_func <- noclusterApply
-      #browser()
+      
       # Run chains
-      chain_output <- apply_func(cl = NULL, 
-                                 private$chain_objects, run_mcmc,
-                                 phase = phase,
-                                 burnin = burnin,
-                                 iterations = iterations,
-                                 silent = silent,
-                                 theta_names = private$theta_names,
-                                 theta_transform_type = private$theta_transform_type,
-                                 theta_min = private$theta_min,
-                                 theta_max = private$theta_max,
-                                 infer_parameter = private$infer_parameter,
-                                 data = private$data,
-                                 loglikelihood = private$loglikelihood,
-                                 logprior = private$logprior,
-                                 misc = private$misc,
-                                 target_acceptance = private$target_acceptance,
-                                 swap = private$swap,
-                                 beta = private$tune_beta,
-                                 blocks = private$blocks,
-                                 n_unique_blocks = private$n_unique_blocks
+      chain_output <- apply_func(
+        cl = NULL, 
+        x = private$chain_objects,
+        fun = run_mcmc,
+        phase = phase,
+        burnin = burnin,
+        iterations = iterations,
+        silent = silent,
+        theta_names = private$theta_names,
+        theta_transform_type = private$theta_transform_type,
+        theta_min = private$theta_min,
+        theta_max = private$theta_max,
+        infer_parameter = private$infer_parameter,
+        data = private$data,
+        loglikelihood = private$loglikelihood,
+        logprior = private$logprior,
+        misc = private$misc,
+        target_acceptance = private$target_acceptance,
+        swap = private$swap,
+        beta = private$beta[[phase]],
+        blocks = private$blocks,
+        n_unique_blocks = private$n_unique_blocks,
+        iteration_counter = private$iteration_counter[[phase]]
       )
       
-      # Check for error return
-      if("error" %in% names(chain_output[[1]])){
-        self$error_debug = chain_output[[1]]
-        stop("Error in mcmc, check $error_debug")
-      }
-      #browser()
+      # Error checking
+      lapply(chain_output, function(x){
+        if("error" %in% names(x)){
+          self$error_debug = x
+          stop("Error in mcmc, check $error_debug")
+        }
+      })
+      
+      # Update elemtents
+      private$iteration_counter[[phase]] <- private$iteration_counter[[phase]] + iterations
+      private$chain_objects[[1]]$duration[[phase]] = private$chain_objects[[1]]$duration[[phase]] + chain_output[[1]]$dur
+      private$chain_objects[[1]]$acceptance_counter[[phase]] = chain_output[[1]]$acceptance
+      private$chain_objects[[1]]$swap_acceptance_counter[[phase]] = chain_output[[1]]$swap_acceptance
+      
       ### Define final beta ###
       # Check all rung pairs have achieved some swaps
-      private$tune_rejection_rate <- 1 - (chain_output[[1]]$swap_acceptance / (chain_output[[1]]$iteration_counter / 2))
-      if(any(private$tune_rejection_rate > 0.99)){
+      tune_rejection_rate <- 1 - self$mc_acceptance_rate("tune")
+      if(any(tune_rejection_rate > 0.99)){
         stop("Tuning needs more rungs to achieve an accurate estimate of communication barrier")
       }
-      private$lambda <-  sum(private$tune_rejection_rate)
-      # Update beta
-      private$rungs <- ceiling(private$lambda / (1 - private$target_rung_acceptance))
-      private$beta <- propose_new_beta(
-        n = private$rungs,
-        beta_mid = private$tune_beta_mid,
-        rejection_rate = private$tune_rejection_rate,
+      private$lambda <-  sum(tune_rejection_rate)
+      rungs <- ceiling(private$lambda / (1 - private$target_rung_acceptance))
+      private$rungs[["burn"]] <- rungs
+      private$rungs[["sample"]] <- rungs
+      new_beta <- propose_new_beta(
+        n = rungs,
+        beta_mid = beta_mid(private$beta[[phase]]),
+        rejection_rate = tune_rejection_rate,
         lambda = private$lambda
       )
-      private$beta_mid <- private$beta[- 1] - diff(private$beta) / 2
+      private$beta[["burn"]] <- new_beta
+      private$beta[["sample"]] <- new_beta
       
-      # Re-initialise chain objects with the final rung number
-      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$rungs)[[1]]
-      private$chain_objects[[1]]$proposal_sd = create_proposal_sd_log(private$chains, private$tune_rungs, private$n_par)[[1]]
-      private$chain_objects[[1]]$swap_acceptance_counter[["burn"]] = rep(0L, private$rungs - 1)
-      private$chain_objects[[1]]$swap_acceptance_counter[["sample"]] = rep(0L, private$rungs - 1)
-      private$chain_objects[[1]]$acceptance_counter[["burn"]] = matrix(0L, nrow = private$rungs, ncol = private$n_par)
-      private$chain_objects[[1]]$acceptance_counter[["sample"]] = matrix(0L, nrow = private$rungs, ncol = private$n_par)
+      # Adjust objects dependent on number of rungs
+      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = rungs)[[1]]
+      private$chain_objects[[1]]$proposal_sd = create_proposal_sd(private$chains, rungs, private$n_par)[[1]]
+      private$chain_objects[[1]]$swap_acceptance_counter[["burn"]] = rep(0L, rungs - 1)
+      private$chain_objects[[1]]$swap_acceptance_counter[["sample"]] = rep(0L, rungs - 1)
+      private$chain_objects[[1]]$acceptance_counter[["burn"]] = matrix(0L, nrow = rungs, ncol = private$n_par)
+      private$chain_objects[[1]]$acceptance_counter[["sample"]] = matrix(0L, nrow = rungs, ncol = private$n_par)
       
-      # Update R6 object with mcmc outputs
-      private$chain_objects[[1]]$duration[[phase]] = private$chain_objects[[1]]$duration[[phase]] + chain_output[[1]]$dur
-      private$chain_objects[[1]]$iteration_counter[[phase]] = private$chain_objects[[1]]$iteration_counter[[phase]] + iterations
-      # Closest betas - to best-guess inform starting proposal_sd
-      ic <- index_closest(private$beta, private$tune_beta)
+      # Best-guess to inform starting proposal_sd by matching new beta to closest tuning beta
+      ic <- index_closest(new_beta, private$beta[[phase]])
       private$chain_objects[[1]]$proposal_sd = chain_output[[1]]$proposal_sd[ic,]
-      private$chain_objects[[1]]$acceptance_counter[[phase]] = chain_output[[1]]$acceptance[ic,]
-      private$chain_objects[[1]]$swap_acceptance_counter[[phase]] = chain_output[[1]]$swap_acceptance
+      
     },
     
     ### Burn in ###
@@ -266,68 +311,73 @@ dj <- R6::R6Class(
         stop("Cannot call burn after sample has been called")
       }
       
+      # Set burn parameters
+      private$burn_called <- TRUE
+      private$target_acceptance <- target_acceptance
+      burnin <- TRUE
+      phase <- "burn"
+      
       # Define the apply function
       is_parallel <- !is.null(cl)
       apply_func <- noclusterApply
       if(is_parallel){
         apply_func <- parallel::clusterApply
       }
-      
-      # Set burn parameters
-      private$burn_called <- TRUE
-      private$target_acceptance <- target_acceptance
-      burnin <- TRUE
-      phase <- 2
-      
       # Run chains
-      chain_output <- apply_func(cl, 
-                                 private$chain_objects, run_mcmc,
-                                 phase = phase,
-                                 burnin = burnin,
-                                 iterations = iterations,
-                                 silent = silent,
-                                 theta_names = private$theta_names,
-                                 theta_transform_type = private$theta_transform_type,
-                                 theta_min = private$theta_min,
-                                 theta_max = private$theta_max,
-                                 infer_parameter = private$infer_parameter,
-                                 data = private$data,
-                                 loglikelihood = private$loglikelihood,
-                                 logprior = private$logprior,
-                                 misc = private$misc,
-                                 target_acceptance = private$target_acceptance,
-                                 swap = private$swap,
-                                 beta = private$beta,
-                                 blocks = private$blocks,
-                                 n_unique_blocks = private$n_unique_blocks
+      chain_output <- apply_func(        
+        cl = cl, 
+        x = private$chain_objects,
+        fun = run_mcmc,
+        phase = phase,
+        burnin = burnin,
+        iterations = iterations,
+        silent = silent,
+        theta_names = private$theta_names,
+        theta_transform_type = private$theta_transform_type,
+        theta_min = private$theta_min,
+        theta_max = private$theta_max,
+        infer_parameter = private$infer_parameter,
+        data = private$data,
+        loglikelihood = private$loglikelihood,
+        logprior = private$logprior,
+        misc = private$misc,
+        target_acceptance = private$target_acceptance,
+        swap = private$swap,
+        beta = private$beta[[phase]],
+        blocks = private$blocks,
+        n_unique_blocks = private$n_unique_blocks,
+        iteration_counter = private$iteration_counter[[phase]]
       )
+      
+      # Error checking
+      lapply(chain_output, function(x){
+        if("error" %in% names(x)){
+          self$error_debug = x
+          stop("Error in mcmc, check $error_debug")
+        }
+      })
+      
+      private$iteration_counter[[phase]] <- private$iteration_counter[[phase]] + iterations
       
       # Update R6 object with mcmc outputs
       for(i in 1:private$chains){
-        # Check for error return
-        if("error" %in% names(chain_output[[i]])){
-          self$error_debug = chain_output[[i]]
-          stop("Error in mcmc, check $error_debug")
-        }
         # Update user output
         private$output_df[[i]] <- append_output(
           current = private$output_df[[i]],
           new = chain_output[[i]]$output,
-          phase = private$phases[phase],
+          phase = phase,
           theta_names = private$theta_names,
           chain = i
         )
-        
         # Update internal states
         private$chain_objects[[i]]$duration[[phase]] = private$chain_objects[[i]]$duration[[phase]] + chain_output[[i]]$dur
-        private$chain_objects[[i]]$iteration_counter[[phase]] = private$chain_objects[[i]]$iteration_counter[[phase]] + iterations
         private$chain_objects[[i]]$proposal_sd = chain_output[[i]]$proposal_sd
         private$chain_objects[[i]]$acceptance_counter[[phase]] = chain_output[[i]]$acceptance
         private$chain_objects[[i]]$theta = chain_output[[i]]$theta
-        if(private$rungs > 1){
+        if(private$rungs[[phase]] > 1){
           private$chain_objects[[i]]$swap_acceptance_counter[[phase]] = chain_output[[i]]$swap_acceptance
         }
-        if (is_parallel) {
+        if(is_parallel){
           private$chain_objects[[i]]$rng_ptr <- chain_output[[i]]$rng_ptr
         }
       }
@@ -342,61 +392,68 @@ dj <- R6::R6Class(
     sample = function(iterations, silent = FALSE, cl = NULL){
       stopifnot(is.integer(iterations))
       
+      # Set sample parameters
+      private$sample_called <- TRUE
+      burnin = FALSE
+      phase <- "sample"
+      
       # Define the apply function
       is_parallel <- !is.null(cl)
       apply_func <- noclusterApply
       if(is_parallel){
         apply_func <- parallel::clusterApply
       }
-      
-      # Set sample parameters
-      private$sample_called <- TRUE
-      burnin = FALSE
-      phase <- 3
       # Run chains
-      chain_output <- apply_func(cl, 
-                                 private$chain_objects, run_mcmc,
-                                 phase = phase,
-                                 burnin = burnin,
-                                 iterations = iterations,
-                                 silent = silent,
-                                 theta_names = private$theta_names,
-                                 theta_transform_type = private$theta_transform_type,
-                                 theta_min = private$theta_min,
-                                 theta_max = private$theta_max,
-                                 infer_parameter = private$infer_parameter,
-                                 data = private$data,
-                                 loglikelihood = private$loglikelihood,
-                                 logprior = private$logprior,
-                                 misc = private$misc,
-                                 target_acceptance = private$target_acceptance,
-                                 swap = private$swap,
-                                 beta = private$beta,
-                                 blocks = private$blocks,
-                                 n_unique_blocks = private$n_unique_blocks
+      chain_output <- apply_func(
+        cl = cl, 
+        x = private$chain_objects,
+        fun = run_mcmc,
+        phase = phase,
+        burnin = burnin,
+        iterations = iterations,
+        silent = silent,
+        theta_names = private$theta_names,
+        theta_transform_type = private$theta_transform_type,
+        theta_min = private$theta_min,
+        theta_max = private$theta_max,
+        infer_parameter = private$infer_parameter,
+        data = private$data,
+        loglikelihood = private$loglikelihood,
+        logprior = private$logprior,
+        misc = private$misc,
+        target_acceptance = private$target_acceptance,
+        swap = private$swap,
+        beta = private$beta[[phase]],
+        blocks = private$blocks,
+        n_unique_blocks = private$n_unique_blocks,
+        iteration_counter = private$iteration_counter[[phase]]
       )
+      
+      # Error checking
+      lapply(chain_output, function(x){
+        if("error" %in% names(x)){
+          self$error_debug = x
+          stop("Error in mcmc, check $error_debug")
+        }
+      })
+      
+      private$iteration_counter[[phase]] <- private$iteration_counter[[phase]] + iterations
       
       # Update R6 object with mcmc outputs
       for(i in 1:private$chains){
-        # Check for error return
-        if("error" %in% names(chain_output[[i]])){
-          self$error_debug = chain_output[[i]]
-          stop("Error in mcmc, check $error_debug")
-        }
         # Update user output
         private$output_df[[i]] <- append_output(
           current = private$output_df[[i]],
           new = chain_output[[i]]$output,
-          phase = private$phases[phase],
+          phase = phase,
           theta_names = private$theta_names,
           chain = i
         )
         # Update internal states
         private$chain_objects[[i]]$duration[[phase]] = private$chain_objects[[i]]$duration[[phase]] + chain_output[[i]]$dur
-        private$chain_objects[[i]]$iteration_counter[[phase]] = private$chain_objects[[i]]$iteration_counter[[phase]] + iterations
         private$chain_objects[[i]]$theta = chain_output[[i]]$theta
         private$chain_objects[[i]]$acceptance_counter[[phase]] = chain_output[[i]]$acceptance
-        if(private$rungs > 1){
+        if(private$rungs[[phase]] > 1){
           private$chain_objects[[i]]$swap_acceptance_counter[[phase]] = chain_output[[i]]$swap_acceptance
         }
         if (is_parallel) {
@@ -424,16 +481,31 @@ dj <- R6::R6Class(
     ### Diagnostics ###
     #' @description
     #' Get acceptance rates
-    acceptance_rate = function(){
+    acceptance_rate = function(phase = "sample", chain = NULL, rung = 1){
       acceptance_counter <- chain_element(private$chain_objects, "acceptance_counter")
-      iteration_counter <- chain_element(private$chain_objects, "iteration_counter")
+      
+      phases <- private$phases
+      if(!private$tune_called){
+        phases <- phases[!phases == "tune"]
+      }
+      if(!is.null(phase)){
+        phases <- phases[phases %in% phase]
+      }
+      
+      chains <- 1:private$chains
+      if(!is.null(chain)){
+        chains <- chains[chains %in% chain]
+      }
+      
       estimate_acceptance_rate(
-        acceptance_counter,
-        iteration_counter,
-        private$chains,
-        private$theta_names,
-        private$phases
+        acceptance_counter = acceptance_counter,
+        iteration_counter = private$iteration_counter,
+        chains = chains,
+        phases = phases,
+        theta_names = private$theta_names,
+        rungs = rung
       )
+      
     },
     
     #' @description
@@ -441,7 +513,7 @@ dj <- R6::R6Class(
     mc_acceptance_rate = function(phase = "sample"){
       stopifnot(phase %in% private$phases)
       swap_acceptance_counter <- private$chain_objects[[1]]$swap_acceptance_counter[[phase]]
-      iteration_counter <- private$chain_objects[[1]]$iteration_counter[[phase]]
+      iteration_counter <- private$iteration_counter[[phase]]
       if(private$swap == 2){
         iteration_counter = iteration_counter / 2
       }
@@ -466,7 +538,7 @@ dj <- R6::R6Class(
     #' Get rhat estimates
     rhat = function(){
       output_df <- list_r_bind(private$output_df)
-      iteration_counter <- chain_element(private$chain_objects, "iteration_counter")
+      iteration_counter <- private$iteration_counter
       iteration_counter <- list_c_bind(iteration_counter)
       estimate_rhat(output_df, private$theta_names, private$chains, iteration_counter)
     },
@@ -475,7 +547,7 @@ dj <- R6::R6Class(
     #' Get run-time data
     timing = function(){
       duration <- chain_element(private$chain_objects, "duration")
-      iteration_counter <- chain_element(private$chain_objects, "iteration_counter")
+      iteration_counter <- private$iteration_counter
       seconds <- list_c_bind(duration)
       iterations <- list_c_bind(iteration_counter)
       estimate_timing(

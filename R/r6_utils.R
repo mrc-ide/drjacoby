@@ -24,7 +24,9 @@ append_output <- function(current, new, phase, theta_names, chain){
 #' @param x Nested list
 #' @param name name
 chain_element <- function(x, name){
-  lapply(x, `[[`, name)  
+  out <- lapply(x, `[[`, name)  
+  names(out) <- paste0("Chain_", 1:length(out))
+  return(out)
 }
 
 #' Column bind all elements of list
@@ -47,48 +49,35 @@ list_r_bind <- function(x){
   return(x)
 }
 
-create_swap_acceptance_counter = function(chains, rungs){
+#' Create nested list of phases in chains
+#'
+#' @param chains Numebr of chains
+#' @param base element at base of list
+create_chain_phase_list <- function(chains, base){
   lapply(1:chains, function(x){
     list(
-      tune = rep(0L, rungs - 1),
-      burn = rep(0L, rungs - 1),
-      sample = rep(0L, rungs - 1)
+      tune = base,
+      burn = base,
+      sample = base
     )
   })
 }
 
-create_iteration_counter = function(chains){
-  iteration_counter = lapply(1:chains, function(x){
-    list(
-      tune = 0,
-      burn = 0,
-      sample = 0
-    )
-  })
-}
-
-create_duration_log = function(chains){
-  lapply(1:chains, function(x){
-    list(
-      tune = 0,
-      burn = 0,
-      sample = 0
-    )
-  })
-}
-
-create_acceptance_counter <- function(chains, rungs, n_par){
-  lapply(1:chains, function(x){
-    list(
-       tune = matrix(0L, nrow = rungs, ncol = n_par),
-       burn = matrix(0L, nrow = rungs, ncol = n_par),
-       sample = matrix(0L, nrow = rungs, ncol = n_par)
-    )
-  })
-}
-
-create_proposal_sd_log <- function(chains, rungs, n_par, init_sd = 0.1){
+#' Create list containing proposal sd matrix for each chain
+#'
+#' @param chains Number of chains
+#' @param rungs Number of rungs
+#' @param n_par Number of parameters
+#' @param init_sd Initial value
+create_proposal_sd <- function(chains, rungs, n_par, init_sd = 0.1){
   lapply(1:chains, function(x){
     matrix(init_sd, nrow = rungs, ncol = n_par)
   })
+}
+
+#' Get mid points of beta between rungs
+#'
+#' @param beta Beta
+beta_mid <- function(beta){
+  beta[- 1] - diff(beta) / 2
 }

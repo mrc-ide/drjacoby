@@ -20,21 +20,37 @@ estimate_rhat <- function(output, parameter_names, n_chains, samples){
   return(rhat_est)
 }
 
-estimate_acceptance_rate <- function(acceptance_counter, iteration_counter, chains, theta_names, phases){
-  iteration_counter <- list_c_bind(iteration_counter)
-  # Extract only cold chain rates
+estimate_acceptance_rate <- function(
+    acceptance_counter,
+    iteration_counter,
+    chains,
+    phases,
+    theta_names,
+    rungs){
+  
   ar <- list()
-  for(i in 1:chains){
-    count <- as.matrix(acceptance_counter[[i]][,1,])
-    its <- iteration_counter[,i]
-    rate <- apply(count, 2, function(x, y){
-      x / y
-    }, y = its)
-    colnames(rate) <- theta_names
-    rownames(rate) <- phases
-    ar[[i]] <- rate
+  counter <- 1
+  for(i in chains){
+    for(p in phases){
+      d <- round(acceptance_counter[[i]][[p]] / iteration_counter[[p]], 3)
+      colnames(d) <- theta_names
+      ar[[counter]] <- 
+        cbind(
+          data.frame(
+            chain = i,
+            phase = p,
+            rung = 1:nrow(d)
+          ) ,
+          d
+        )
+      counter <- counter + 1
+    }
   }
-  names(ar) <- paste0("Chain_", 1:chains)
+  ar <- list_r_bind(ar)
+  
+  if(!is.null(rungs)){
+    ar <- ar[ar$rung %in% rungs,]
+  }
   
   return(ar)
 }
