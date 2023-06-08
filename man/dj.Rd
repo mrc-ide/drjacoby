@@ -107,17 +107,22 @@ target acceptance rates and chain convergence are not guaranteed  - run
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{target_rung_acceptance}}{The target (average) acceptance rate between rungs}
+
+\item{\code{n_rungs}}{Number of rungs to run for tuning. This should be high enough such that no
+links between neighbouring chains have 0% acceptance of swaps. One tuned, the optimised number
+of rungs will likely be lower, leading to faster run times for \code{$burn()} and \code{$sample()}}
+
 \item{\code{iterations}}{Number of tuning iterations to run}
+
+\item{\code{initial_beta}}{If prior knowledge of beta exists, the user can override the default tuning beta
+defined by \code{n_rungs}. This should be a vector decreaseing from 1 to 0.}
 
 \item{\code{swap}}{integer 0 = no swapping, 1 = standard swapping, 2 = super cool new swapping}
 
 \item{\code{target_acceptance}}{Target acceptance rate}
 
 \item{\code{silent}}{print progress (boolean)}
-
-\item{\code{beta}}{Initial beta schedule.}
-
-\item{\code{max_rungs}}{The maximum number of rungs}
 }
 \if{html}{\out{</div>}}
 }
@@ -174,15 +179,15 @@ Run sampling in. Runs the sampling phase of the MCMC.
 \subsection{Method \code{output()}}{
 Get mcmc output data.frame
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$output(chain = NULL, phase = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$output(phase = NULL, chain = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{chain}}{option chain(s) selection}
+\item{\code{phase}}{optional phase selection, can be a vector chosen from "tune", "burn", "sample"}
 
-\item{\code{phase}}{optional phase selection, can be a vector chosen from "tune", "burn","sample"}
+\item{\code{chain}}{option chain(s) selection}
 }
 \if{html}{\out{</div>}}
 }
@@ -196,6 +201,17 @@ Get acceptance rates
 \if{html}{\out{<div class="r">}}\preformatted{dj$acceptance_rate(phase = "sample", chain = NULL, rung = 1)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{phase}}{optional phase selection, can be a vector chosen from "tune", "burn", "sample"}
+
+\item{\code{chain}}{option chain(s) selection}
+
+\item{\code{rung}}{optional rung selection}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-mc_acceptance_rate"></a>}}
@@ -206,6 +222,13 @@ Get acceptance rates
 \if{html}{\out{<div class="r">}}\preformatted{dj$mc_acceptance_rate(phase = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{phase}}{optional phase selection, can be a vector chosen from "tune", "burn", "sample"}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-dic"></a>}}
@@ -388,6 +411,7 @@ the thermodynamic power.}
 \if{html}{\out{<a id="method-dj-plot_tuning_rejection_rate"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-plot_tuning_rejection_rate}{}}}
 \subsection{Method \code{plot_tuning_rejection_rate()}}{
+Plots the cumulative rejection rate between rungs
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$plot_tuning_rejection_rate()}\if{html}{\out{</div>}}
 }
@@ -397,6 +421,7 @@ the thermodynamic power.}
 \if{html}{\out{<a id="method-dj-plot_local_communication_barrier"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-plot_local_communication_barrier}{}}}
 \subsection{Method \code{plot_local_communication_barrier()}}{
+Plots the local communication barrier between rungs
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dj$plot_local_communication_barrier()}\if{html}{\out{</div>}}
 }

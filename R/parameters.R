@@ -1,3 +1,14 @@
+#' Title
+#'
+#' @param x The Parameters data.frame to modify or an empty data.frame()
+#' @param name Parameter name
+#' @param min Parameter minimum
+#' @param max Parameter maximum
+#' @param initial_values Optional vector of initial values. If NULL random starting values will be drawn. Must be between min and max. Must be the same length as the number of chains.
+#' @param blocks Optional vector of likelihood blocks
+#'
+#' @return Modified parameters data.frame
+#' @export 
 add_parameter <- function(x, name, min = -Inf, max = Inf, initial_values = NULL, blocks = 1L){
   # Input checks
   stopifnot(is.data.frame(x))

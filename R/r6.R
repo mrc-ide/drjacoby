@@ -190,10 +190,14 @@ dj <- R6::R6Class(
     #' schedule. Proposal standard deviations will also be tuned in this phase but
     #' target acceptance rates and chain convergence are not guaranteed  - run
     #' \code{$burn()} to burn in further.
+    #' @param target_rung_acceptance The target (average) acceptance rate between rungs
+    #' @param n_rungs Number of rungs to run for tuning. This should be high enough such that no
+    #' links between neighbouring chains have 0% acceptance of swaps. One tuned, the optimised number
+    #' of rungs will likely be lower, leading to faster run times for \code{$burn()} and \code{$sample()}
     #' @param iterations Number of tuning iterations to run
+    #' @param initial_beta If prior knowledge of beta exists, the user can override the default tuning beta
+    #' defined by \code{n_rungs}. This should be a vector decreaseing from 1 to 0.
     #' @param swap integer 0 = no swapping, 1 = standard swapping, 2 = super cool new swapping
-    #' @param beta Initial beta schedule.
-    #' @param max_rungs The maximum number of rungs
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
     tune = function(target_rung_acceptance = 0.5, n_rungs = 50, iterations = 1000, initial_beta = NULL, swap = 2L,  target_acceptance = 0.44,  silent = FALSE){
@@ -221,7 +225,7 @@ dj <- R6::R6Class(
       private$target_rung_acceptance <- target_rung_acceptance
       
       # Adjust objects dependent on number of rungs
-      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = private$rungs[[phase]])[[1]]
+      private$chain_objects[[1]]$theta = initial_theta(private$df_params, chains = private$chains, rungs = private$rungs[[phase]])[[1]]
       private$chain_objects[[1]]$proposal_sd = create_proposal_sd(private$chains, private$rungs[[phase]], private$n_par)[[1]]
       private$chain_objects[[1]]$acceptance_counter[[phase]] = matrix(0L, nrow = private$rungs[[phase]], ncol = private$n_par)
       private$chain_objects[[1]]$swap_acceptance_counter[[phase]] <- rep(0L, private$rungs[[phase]] - 1)
@@ -291,7 +295,7 @@ dj <- R6::R6Class(
       private$beta[["sample"]] <- new_beta
       
       # Adjust objects dependent on number of rungs
-      private$chain_objects[[1]]$theta = initial(private$df_params, chains = private$chains, rungs = rungs)[[1]]
+      private$chain_objects[[1]]$theta = initial_theta(private$df_params, chains = private$chains, rungs = rungs)[[1]]
       private$chain_objects[[1]]$proposal_sd = create_proposal_sd(private$chains, rungs, private$n_par)[[1]]
       private$chain_objects[[1]]$swap_acceptance_counter[["burn"]] = rep(0L, rungs - 1)
       private$chain_objects[[1]]$swap_acceptance_counter[["sample"]] = rep(0L, rungs - 1)
@@ -476,9 +480,9 @@ dj <- R6::R6Class(
     ### Output ###
     #' @description
     #' Get mcmc output data.frame
+    #' @param phase optional phase selection, can be a vector chosen from "tune", "burn", "sample"
     #' @param chain option chain(s) selection
-    #' @param phase optional phase selection, can be a vector chosen from "tune", "burn","sample"
-    output = function(chain = NULL, phase = NULL){
+    output = function(phase = NULL, chain = NULL){
       data <- list_r_bind(private$output_df)
       if(!is.null(phase)){
         data <- data[data$phase %in% phase, ]
@@ -492,6 +496,9 @@ dj <- R6::R6Class(
     ### Diagnostics ###
     #' @description
     #' Get acceptance rates
+    #' @param chain option chain(s) selection
+    #' @param phase optional phase selection, can be a vector chosen from "tune", "burn", "sample"
+    #' @param rung optional rung selection
     acceptance_rate = function(phase = "sample", chain = NULL, rung = 1){
       acceptance_counter <- chain_element(
         x = private$chain_objects, 
@@ -523,6 +530,7 @@ dj <- R6::R6Class(
     
     #' @description
     #' Get acceptance rates
+    #' @param phase optional phase selection, can be a vector chosen from "tune", "burn", "sample"
     mc_acceptance_rate = function(phase = NULL){
       stopifnot(phase %in% private$phases)
       stopifnot(private$tune_called)
@@ -588,11 +596,12 @@ dj <- R6::R6Class(
         duration = duration, 
         iteration_counter = iteration_counter,
         phases = private$phases,
-        chains = private$chains
+        chains = private$chains,
+        tuned = private$tune_called
       )
     },
     
-    ### Plots ###
+    ### Plots ###,
     
     #' @description Produce a parameter plot of the named parameter,
     #'   including the raw trace, the posterior histogram and an autocorrelation
@@ -693,13 +702,14 @@ dj <- R6::R6Class(
       }
       ar <- self$mc_acceptance_rate(phase = phase)
       create_mc_acceptance_plot(
-        rungs = private$rungs,
+        rungs = private$rungs[[phase]],
         beta = private$beta[[phase]],
         ar = ar$coupling_acceptance,
         x_axis_type = x_axis_type
       )
     },
     
+    #' @description Plots the cumulative rejection rate between rungs
     plot_tuning_rejection_rate = function(){
       tune_rejection_rate <- 1 - self$mc_acceptance_rate(
         phase = "tune"
@@ -707,6 +717,7 @@ dj <- R6::R6Class(
       create_rejection_rate_plot(private$beta[["tune"]], tune_rejection_rate)
     },
     
+    #' @description Plots the local communication barrier between rungs
     plot_local_communication_barrier = function(){
       tune_rejection_rate <- 1 - self$mc_acceptance_rate(
         phase = "tune"

@@ -33,8 +33,9 @@ data_list <- list(x = rnorm(n))
 Parameters dataframe:
 
 ```{r}
-df_params <- define_params(name = "mu", min = -1, max = 1,
-                           name= "sigma", min = 1, max = 1)
+df_params <- data.frame() |>
+  add_parameter(name = "mu", min = -1, max = 1) |>
+  add_parameter(name = "sigma", min = 1, max = 1)
 ```
 
 ## MCMC
@@ -44,7 +45,7 @@ mcmc <- dj$new(data = data_list,
                df_params = df_params,
                loglike = loglike_normal,
                logprior = logprior_null,
-               chains = 10L)
+               chains = 5L)
 mcmc$burn(iterations = 1000L, silent = TRUE)
 mcmc$sample(iterations = 10000L, silent = TRUE)
 ```

@@ -37,8 +37,9 @@ Parameters dataframe:
 ```{r}
 L <- 2
 gamma <- 30
-df_params <- define_params(name = "mu", min = -L, max = L,
-                           name = "gamma", min = gamma, max = gamma)
+df_params <- data.frame() |>
+  add_parameter(name = "mu", min = -L, max = L) |>
+  add_parameter(name = "gamma", min = gamma, max = gamma)
 ```
 
 
@@ -82,7 +83,7 @@ mcmc <- dj$new(data = list(x = -1),
                loglike = loglike_double_well,
                logprior = logprior_null,
                chains = 1L)
-mcmc$tune(beta = seq(1, 0, -0.1)^2)
+mcmc$tune()
 mcmc$burn(iterations = 1000L, silent = TRUE)
 mcmc$sample(iterations = 10000L, silent = TRUE)
 ```
@@ -92,7 +93,10 @@ mcmc$sample(iterations = 10000L, silent = TRUE)
 mcmc$plot_par("mu")
 
 # coupling acceptance plot
-# plot_mc_acceptance(mcmc)
+mcmc$plot_mc_acceptance_rate()
+
+# communication barrier plot
+mcmc$plot_local_communication_barrier()
 ```
 
 ```{r, fig.width=6, fig.height=5}
