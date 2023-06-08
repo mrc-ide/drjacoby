@@ -88,15 +88,19 @@ dj <- R6::R6Class(
       # Input checks
       stopifnot(is.list(data))
       stopifnot(is.list(df_params))
-      check_params(df_params)
       stopifnot(is.list(misc))
-      stopifnot(is.integer(chains))
+      stopifnot(is.numeric(chains))
+      chains <- as.integer(chains)
       stopifnot(chains >= 1)
       stopifnot(!"block" %in% names(misc))
       
       # Shared elements
       private$chains = chains
       private$data = data
+      df_params <- add_initial_values(
+        df_params = df_params,
+        chains = private$chains
+      )
       private$df_params = df_params
       private$misc = misc
       private$loglikelihood = loglikelihood
@@ -106,14 +110,14 @@ dj <- R6::R6Class(
       private$theta_min = unlist(df_params$min)
       private$theta_max = unlist(df_params$max)
       private$theta_transform_type = get_transform_type(private$theta_min,  private$theta_max)
-      private$infer_parameter = as.integer(!(private$theta_min == private$theta_max))
-      private$blocks = set_blocks(df_params)
+      private$infer_parameter = as.integer(private$df_params$infer_parameter)
+      private$blocks = private$df_params$blocks
       private$n_unique_blocks = length(unique(unlist(private$blocks)))
       private$output_df = vector("list", private$chains)
       
       # Chain-specific elements
       rungs = 1
-      theta = initial(
+      theta = initial_theta(
         df_params = private$df_params,
         chains = private$chains,
         rungs = rungs
@@ -199,6 +203,8 @@ dj <- R6::R6Class(
       if(private$burn_called | private$sample_called){
         stop("Cannot call tune after burn or sample have been called")
       }
+      stopifnot(is.numeric(iterations))
+      iterations <- as.integer(iterations)
       phase <- "tune"
       private$tune_called <- TRUE
       burnin <- TRUE
@@ -308,7 +314,8 @@ dj <- R6::R6Class(
     #' @param silent print progress (boolean)
     #' @param cl parallel cluster object 
     burn = function(iterations, target_acceptance = 0.44, silent = FALSE, cl = NULL){
-      stopifnot(is.integer(iterations))
+      stopifnot(is.numeric(iterations))
+      iterations <- as.integer(iterations)
       if(private$sample_called){
         stop("Cannot call burn after sample has been called")
       }
@@ -325,6 +332,7 @@ dj <- R6::R6Class(
       if(is_parallel){
         apply_func <- parallel::clusterApply
       }
+      
       # Run chains
       chain_output <- apply_func(        
         cl = cl, 
@@ -392,7 +400,8 @@ dj <- R6::R6Class(
     #' @param silent print progress (boolean)
     #' @param cl parallel cluster object 
     sample = function(iterations, silent = FALSE, cl = NULL){
-      stopifnot(is.integer(iterations))
+      stopifnot(is.numeric(iterations))
+      iterations <- as.integer(iterations)
       
       # Set sample parameters
       private$sample_called <- TRUE
