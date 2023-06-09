@@ -8,7 +8,8 @@ test_that("Checks on likelihood and prior errors work", {
   data_list <- list(x = 1)
   
   # define parameters dataframe
-  df_params <- define_params(name = "mu", min = -10, max = 10, init = 1)
+  df_params <- data.frame() |>
+    add_parameter(name = "mu", min = -10, max = 10, init = 1)
   
   
   # define failing log-likelihood functions

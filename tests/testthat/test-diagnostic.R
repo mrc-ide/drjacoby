@@ -1,12 +1,12 @@
 test_that("gelman_rubin works", {
   
-  # create dummy posterior draws matrix
-  m <- cbind(chain = rep(1:2, each = 1e2), mu = rnorm(2e2))
-  
-  # expect error when running with single chain or sample
-  expect_error(gelman_rubin(m, 1, 10))
-  expect_error(gelman_rubin(m, 2, 1))
-  
-  # expect no warnings when run with correct parameters
-  expect_silent(gelman_rubin(m, 2, 10))
+  set.seed(1)
+  m <- matrix(runif(300), ncol = 3)
+  expect_lt(gelman_rubin(m), 1.1)
+  m <- matrix(c(
+    runif(100, 0, 1),
+    runif(100, 10, 11),
+    runif(100, 20, 21)
+  ), ncol = 3)
+  expect_gt(gelman_rubin(m), 1.1)
 })
