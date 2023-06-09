@@ -516,6 +516,9 @@ dj <- R6::R6Class(
     #' @param phase optional phase selection, can be a vector chosen from "tune", "burn", "sample"
     #' @param chain option chain(s) selection
     output = function(phase = NULL, chain = NULL){
+      private$check_phase(phase)
+      private$check_chain(chain)
+      
       data <- list_r_bind(private$output_df)
       if(!is.null(phase)){
         data <- data[data$phase %in% phase, ]
@@ -534,6 +537,10 @@ dj <- R6::R6Class(
     #' @param phase optional phase selection, can be a vector chosen from "tune", "burn", "sample"
     #' @param rung optional rung selection
     acceptance_rate = function(phase = "sample", chain = NULL, rung = 1){
+      private$check_phase(phase)
+      private$check_chain(chain)
+      private$check_rung(rung)
+      
       acceptance_counter <- chain_element(
         x = private$chain_objects, 
         name = "acceptance_counter")
@@ -552,8 +559,6 @@ dj <- R6::R6Class(
         chains <- chains[chains %in% chain]
       }
       
-      private$check_rung(rung)
-      
       estimate_acceptance_rate(
         acceptance_counter = acceptance_counter,
         iteration_counter = private$iteration_counter,
@@ -569,8 +574,10 @@ dj <- R6::R6Class(
     #' Get acceptance rates
     #' @param phase optional phase selection, can be a vector chosen from "tune", "burn", "sample"
     mc_acceptance_rate = function(phase = NULL){
-      stopifnot(phase %in% private$phases)
-      stopifnot(private$tune_called)
+      if(!private$tune_called){
+        stop("Not available for a single rung")
+      }
+      private$check_phase(phase)
       
       swap_acceptance_counter <- private$chain_objects[[1]]$swap_acceptance_counter
       
@@ -615,7 +622,7 @@ dj <- R6::R6Class(
         stop("Rhat not applicable for a single chain")
       }
       output <- self$output(phase = "sample")
-      pars <- private$theta_names[private$infer_parameter]
+      pars <- private$theta_names[private$infer_parameter == 1]
       
       estimate_rhat(
         output = output,
@@ -726,13 +733,16 @@ dj <- R6::R6Class(
     #' @param phase Optional selection of phases, can be from: tune, burn and sample
     #' @param chain Optional selection of chains
     #' @param param_names Optional vector of prameter names for plotting labels
-    plot_cor_mat = function(pars, phase = "sample", chain = NULL, param_names = NULL){
+    plot_cor_mat = function(pars = NULL, phase = "sample", chain = NULL, param_names = NULL){
       if(is.null(pars)){
         pars = private$theta_names
       }
       if(is.null(param_names)){
         param_names <- pars
       }
+      stopifnot(length(param_names) == length(pars))
+      stopifnot(length(pars) > 1)
+      private$check_par(pars)
       private$check_phase(phase = phase)
       private$check_chain(chain = chain)
       create_cor_mat_plot(
@@ -749,7 +759,7 @@ dj <- R6::R6Class(
     #' @param x_axis_type how to format the x-axis. 1 = integer rungs, 2 = values of
     #'   the thermodynamic power.
     plot_mc_acceptance_rate = function(phase = "sample", x_axis_type = 1){
-      if(private$rungs[["sample"]] == 1){
+      if(!private$tune_called){
         stop("Not available for a single rung")
       }
       private$check_phase(phase = phase)
@@ -764,6 +774,9 @@ dj <- R6::R6Class(
     
     #' @description Plots the cumulative rejection rate between rungs
     plot_tuning_rejection_rate = function(){
+      if(!private$tune_called){
+        stop("Not available for a single rung")
+      }
       tune_rejection_rate <- 1 - self$mc_acceptance_rate(
         phase = "tune"
       )$coupling_acceptance
@@ -772,6 +785,9 @@ dj <- R6::R6Class(
     
     #' @description Plots the local communication barrier between rungs
     plot_local_communication_barrier = function(){
+      if(!private$tune_called){
+        stop("Not available for a single rung")
+      }
       tune_rejection_rate <- 1 - self$mc_acceptance_rate(
         phase = "tune"
       )$coupling_acceptance
