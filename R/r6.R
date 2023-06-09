@@ -74,7 +74,7 @@ dj <- R6::R6Class(
     
     check_rung = function(rung){
       present <- sapply(private$rungs, function(x){
-        all(rung %in% x)
+        all(rung %in% 1:x)
       })
       if(!all(present)){
         stop("Requested rungs not all present in output")

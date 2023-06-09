@@ -370,7 +370,12 @@ Plots posterior 95\% credible intervals over specified set of
 Produces a matrix showing the correlation between all parameters
   from posterior draws.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$plot_cor_mat(pars, phase = "sample", chain = NULL, param_names = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$plot_cor_mat(
+  pars = NULL,
+  phase = "sample",
+  chain = NULL,
+  param_names = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

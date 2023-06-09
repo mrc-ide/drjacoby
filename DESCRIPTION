@@ -17,7 +17,8 @@ RoxygenNote: 7.2.3
 Suggests: 
     roxygen2,
     testthat (>= 3.0.0),
-    knitr
+    knitr,
+    Rcpp
 Remotes:
   mrc-ide/dust
 LinkingTo: 
