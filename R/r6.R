@@ -282,6 +282,7 @@ dj <- R6::R6Class(
         stop("Tuning needs more rungs to achieve an accurate estimate of communication barrier")
       }
       private$lambda <-  sum(tune_rejection_rate)
+
       rungs <- ceiling(private$lambda / (1 - private$target_rung_acceptance))
       private$rungs[["burn"]] <- rungs
       private$rungs[["sample"]] <- rungs
@@ -293,7 +294,7 @@ dj <- R6::R6Class(
       )
       private$beta[["burn"]] <- new_beta
       private$beta[["sample"]] <- new_beta
-      
+      #browser()
       # Adjust objects dependent on number of rungs
       private$chain_objects[[1]]$theta = initial_theta(private$df_params, chains = private$chains, rungs = rungs)[[1]]
       private$chain_objects[[1]]$proposal_sd = create_proposal_sd(private$chains, rungs, private$n_par)[[1]]
@@ -418,6 +419,7 @@ dj <- R6::R6Class(
       if(is_parallel){
         apply_func <- parallel::clusterApply
       }
+      
       # Run chains
       chain_output <- apply_func(
         cl = cl, 
@@ -488,6 +490,10 @@ dj <- R6::R6Class(
         data <- data[data$phase %in% phase, ]
       }
       if(!is.null(chain)){
+        check_chain(
+          chain = chain,
+          chains = private$chains
+        )
         data <- data[data$chain %in% chain, ]
       }
       return(data)
@@ -514,8 +520,14 @@ dj <- R6::R6Class(
       
       chains <- 1:private$chains
       if(!is.null(chain)){
+        check_chain(
+          chain = chain,
+          chains = private$chains
+        )
         chains <- chains[chains %in% chain]
       }
+      
+      check_rung(rung, private$rungs)
       
       estimate_acceptance_rate(
         acceptance_counter = acceptance_counter,
@@ -574,6 +586,9 @@ dj <- R6::R6Class(
     #' @description
     #' Get rhat estimates
     rhat = function(){
+      if(private$chains == 1){
+        stop("Rhat not applicable for a single chain")
+      }
       output <- self$output(phase = "sample")
       pars <- private$theta_names[private$infer_parameter]
       
@@ -616,6 +631,9 @@ dj <- R6::R6Class(
     #' @param return_elements boolean. If \code{TRUE} a list of plotting objects 
     #'   are returned without displaying.
     plot_par = function(par, lag = 20, downsample = TRUE, phase = NULL, chain = NULL, return_elements = FALSE){
+      if(!par %in% private$theta_names){
+        stop("Parameter not present")
+      }
       create_par_plot(
         par = par,
         output_df = private$output_df,

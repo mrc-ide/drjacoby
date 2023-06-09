@@ -81,3 +81,19 @@ create_proposal_sd <- function(chains, rungs, n_par, init_sd = 0.1){
 beta_mid <- function(beta){
   beta[- 1] - diff(beta) / 2
 }
+
+check_chain <- function(chain, chains){
+  present <- chain %in% 1:chains
+  if(!all(present)){
+    stop("Requested chains not all present in output")
+  }
+}
+
+check_rung <- function(rung, rungs){
+  present <- sapply(rungs, function(x){
+    all(rung %in% x)
+  })
+  if(!all(present)){
+    stop("Requested rungs not all present in output")
+  }
+}

@@ -84,9 +84,9 @@ list mcmc(
   // Proposal theta is always the theta given to the likelihood function
   // and therefore must be a named vector, which is why it is writeable::doubles
   writable::doubles theta_prop(n_par);
-  for(int p = 0; p < n_par; ++p){
-    theta_prop[p] = theta_init(0,p);
-  }
+  //for(int p = 0; p < n_par; ++p){
+  //  theta_prop[p] = theta_init(0,p);
+  //}
   theta_prop.names() = theta_names;
   
   // Initialise value for transformed theta: phi
@@ -104,9 +104,12 @@ list mcmc(
   std::vector<std::vector<double>> block_ll;
   block_ll.resize(n_rungs, std::vector<double>(n_unique_blocks));
   for(int b = 0; b < n_unique_blocks; ++b) {
-    for(int i = 0; i < n_rungs; ++i){
+    for(int r = 0; r < n_rungs; ++r){
       misc["block"] = as_sexp(b + 1);
-      block_ll[i][b] = cpp11::as_cpp<double>(ll_f(theta_prop, data, misc));
+      for(int p = 0; p < n_par; ++p){
+        theta_prop[p] = theta_init(r, p);
+      }
+      block_ll[r][b] = cpp11::as_cpp<double>(ll_f(theta_prop, data, misc));
     }
   }
   
@@ -125,6 +128,9 @@ list mcmc(
   // Initialise log prior vector
   std::vector<double> lp(n_rungs);
   for(int r = 0; r < n_rungs; ++r){
+    for(int p = 0; p < n_par; ++p){
+      theta_prop[p] = theta_init(r, p);
+    }
     lp[r] = cpp11::as_cpp<double>(lp_f(theta_prop, misc));
   }
   // Initialise proposal log prior
@@ -196,6 +202,18 @@ list mcmc(
     if(!silent){
       progress.tick();
     }
+    
+    // Set to True to print all rung thetas (debugging)
+    if(false){
+      std::cout.precision(5);
+      int par = 0;
+      for (int r = 0; r < n_rungs; r++) {
+        index = rung_index[r];
+        std::cout << theta[index][par] << ' ';
+      }
+      std::cout << "\n " << std::endl;
+    }
+    
     for(int r = 0; r < n_rungs; ++r){
       rung_beta = beta[r];
       index = rung_index[r];
@@ -255,6 +273,7 @@ list mcmc(
           adjustment = get_adjustment(theta[index][p], theta_prop[p], transform_type[p], theta_min[p], theta_max[p]);
           // calculate Metropolis-Hastings ratio
           mh = rung_beta * (sum(block_ll_prop) - ll[r]) + (lp_prop - lp[r]) + adjustment;
+          
           // accept or reject move
           mh_accept = log(dust::random::random_real<double>(state)) < mh;
           if(mh_accept){
@@ -333,7 +352,6 @@ list mcmc(
         double accept = (loglike2*rung_beta1 + loglike1*rung_beta2) - (loglike1*rung_beta1 + loglike2*rung_beta2);
         // accept or reject move
         bool accept_move = log(dust::random::random_real<double>(state)) < accept;
-        
         if(accept_move){
           int ri1 = rung_index[r];
           int ri2 = rung_index[r - 1];

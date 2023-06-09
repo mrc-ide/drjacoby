@@ -39,7 +39,7 @@ L <- 2
 gamma <- 30
 df_params <- data.frame() |>
   add_parameter(name = "mu", min = -L, max = L) |>
-  add_parameter(name = "gamma", min = gamma, max = gamma)
+  add_parameter(name = "gamma", min = 20, max = 40)
 ```
 
 
