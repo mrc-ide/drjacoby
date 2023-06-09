@@ -82,5 +82,4 @@ test_that("add_parameter() working as expected", {
   expect_equal(p$transform_type, c(3, 3))
   expect_equal(p$infer_parameter, c(TRUE, FALSE))
   
-    
 })
