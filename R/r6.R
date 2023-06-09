@@ -55,7 +55,38 @@ dj <- R6::R6Class(
     lambda = NULL,
     phases = c("tune", "burn", "sample"),
     
-    output_df = NULL
+    output_df = NULL,
+    
+    check_phase = function(phase){
+      phases <- private$phases[c(private$tune_called, private$burn_called, private$sample_called)]
+      present <- phase %in% phases
+      if(!all(present)){
+        stop("Requested phases not all present in output")
+      }
+    },
+    
+    check_chain = function(chain){
+      present <- chain %in% 1:private$chains
+      if(!all(present)){
+        stop("Requested chains not all present in output")
+      }
+    },
+    
+    check_rung = function(rung){
+      present <- sapply(private$rungs, function(x){
+        all(rung %in% x)
+      })
+      if(!all(present)){
+        stop("Requested rungs not all present in output")
+      }
+    },
+    
+    check_par = function(par){
+      present <- par %in% private$theta_names
+      if(!all(present)){
+        stop("Requested parameters not all present in output")
+      }
+    }
   ),
   
   public = list(
@@ -473,7 +504,7 @@ dj <- R6::R6Class(
         if(private$rungs[[phase]] > 1){
           private$chain_objects[[i]]$swap_acceptance_counter[[phase]] = chain_output[[i]]$swap_acceptance
         }
-        if (is_parallel) {
+        if(is_parallel){
           private$chain_objects[[i]]$rng_ptr <- chain_output[[i]]$rng_ptr
         }
       }
@@ -490,10 +521,7 @@ dj <- R6::R6Class(
         data <- data[data$phase %in% phase, ]
       }
       if(!is.null(chain)){
-        check_chain(
-          chain = chain,
-          chains = private$chains
-        )
+        private$check_chain(chain = chain)
         data <- data[data$chain %in% chain, ]
       }
       return(data)
@@ -520,14 +548,11 @@ dj <- R6::R6Class(
       
       chains <- 1:private$chains
       if(!is.null(chain)){
-        check_chain(
-          chain = chain,
-          chains = private$chains
-        )
+        private$check_chain(chain = chain)
         chains <- chains[chains %in% chain]
       }
       
-      check_rung(rung, private$rungs)
+      private$check_rung(rung)
       
       estimate_acceptance_rate(
         acceptance_counter = acceptance_counter,
@@ -631,9 +656,9 @@ dj <- R6::R6Class(
     #' @param return_elements boolean. If \code{TRUE} a list of plotting objects 
     #'   are returned without displaying.
     plot_par = function(par, lag = 20, downsample = TRUE, phase = NULL, chain = NULL, return_elements = FALSE){
-      if(!par %in% private$theta_names){
-        stop("Parameter not present")
-      }
+      private$check_par(par = par)
+      private$check_phase(phase = phase)
+      private$check_chain(chain = chain)
       create_par_plot(
         par = par,
         output_df = private$output_df,
@@ -654,6 +679,9 @@ dj <- R6::R6Class(
     #' @param phase Optional selection of phases, can be from: tune, burn and sample
     #' @param chain Optional selection of chains
     plot_cor = function(parx, pary, downsample = TRUE, phase = "sample", chain = NULL){
+      private$check_par(c(parx, pary))
+      private$check_phase(phase = phase)
+      private$check_chain(chain = chain)
       create_cor_plot(
         parx = parx,
         pary = pary,
@@ -678,6 +706,10 @@ dj <- R6::R6Class(
       if(is.null(param_names)){
         param_names <- pars
       }
+      stopifnot(length(param_names) == length(pars))
+      private$check_par(par = pars)
+      private$check_phase(phase = phase)
+      private$check_chain(chain = chain)
       create_credible_plot(
         output_df = private$output_df,
         pars = pars,
@@ -701,6 +733,8 @@ dj <- R6::R6Class(
       if(is.null(param_names)){
         param_names <- pars
       }
+      private$check_phase(phase = phase)
+      private$check_chain(chain = chain)
       create_cor_mat_plot(
         output_df = private$output_df,
         pars = pars,
@@ -718,6 +752,7 @@ dj <- R6::R6Class(
       if(private$rungs[["sample"]] == 1){
         stop("Not available for a single rung")
       }
+      private$check_phase(phase = phase)
       ar <- self$mc_acceptance_rate(phase = phase)
       create_mc_acceptance_plot(
         rungs = private$rungs[[phase]],

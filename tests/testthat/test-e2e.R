@@ -9,11 +9,11 @@ df_params <- data.frame() |>
   add_parameter(name = "sigma", min = 0, max = 1)
 
 ## Want to test all combinations of:
-  # Chains 1 or multiple
-  # Rungs on or off
-  # Function R/cpp11/Rcpp
-  # x <- expand.grid(chains = c("One", "Multiple"), rungs = c("Yes", "No"), f = c("R", "cpp11", "Rcpp"))
-  # x <- x[!(x$chain == "Multiple" & x$rungs == "Yes"),]
+# Chains 1 or multiple
+# Rungs on or off
+# Function R/cpp11/Rcpp
+# x <- expand.grid(chains = c("One", "Multiple"), rungs = c("Yes", "No"), f = c("R", "cpp11", "Rcpp"))
+# x <- x[!(x$chain == "Multiple" & x$rungs == "Yes"),]
 
 test_that("Chains = 1 Rungs = No, Functions = R", {
   mcmc <- dj$new( 
@@ -95,7 +95,7 @@ test_that("Chains = 1 Rungs = No, Functions = R", {
     "Requested rungs not all present in output",
     fixed = TRUE
   )
-
+  
   # MC acceptance rate
   expect_error(
     mcmc$mc_acceptance_rate(),
@@ -153,8 +153,75 @@ test_that("Chains = 1 Rungs = No, Functions = R", {
   }
   
   expect_error(
-    mcmc$plot_par("foo", return_elements = TRUE),
-    "Parameter not present",
+    mcmc$plot_par("foo"),
+    "Requested parameters not all present in output",
     fixed = TRUE
   )
+  
+  expect_error(
+    mcmc$plot_par(par = "mu", chain = 2),
+    "Requested chains not all present in output",
+    fixed = TRUE
+  )
+  
+  # Plot correlation
+  p <- mcmc$plot_cor(parx = "mu", pary = "sigma")
+  expect_type(p, "list")
+  expect_equal(is(p), "gg")
+  
+  expect_error(
+    mcmc$plot_cor(parx = "foo", pary = "sigma"),
+    "Requested parameters not all present in output",
+    fixed = TRUE
+  )
+  
+  expect_error(
+    mcmc$plot_cor(parx = "mu", pary = "foo"),
+    "Requested parameters not all present in output",
+    fixed = TRUE
+  )
+  
+  expect_error(
+    mcmc$plot_cor(parx = "mu", pary = "sigma", chain = 2),
+    "Requested chains not all present in output",
+    fixed = TRUE
+  )
+  
+  # Plot credible
+  p <- mcmc$plot_credible()
+  expect_type(p, "list")
+  expect_equal(is(p), "gg")
+  
+  p <- mcmc$plot_credible(pars = "mu")
+  expect_type(p, "list")
+  expect_equal(is(p), "gg")
+  
+  expect_error(
+    mcmc$plot_credible(pars = "foo"),
+    "Requested parameters not all present in output",
+    fixed = TRUE
+  )
+  
+  expect_error(
+    mcmc$plot_credible(pars = c("mu", "foo")),
+    "Requested parameters not all present in output",
+    fixed = TRUE
+  )
+  
+  p <- mcmc$plot_credible(phase = "burn")
+  expect_type(p, "list")
+  expect_equal(is(p), "gg")
+  
+  expect_error(
+    mcmc$plot_credible(phase = "foo"),
+    "Requested phases not all present in output",
+    fixed = TRUE
+  )
+  
+  expect_error(
+    mcmc$plot_credible(pars = "mu", param_names = c("foo", "bar")),
+    "length(param_names) == length(pars) is not TRUE",
+    fixed = TRUE
+  )
+  
 })

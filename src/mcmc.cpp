@@ -203,13 +203,13 @@ list mcmc(
       progress.tick();
     }
     
-    // Set to True to print all rung thetas (debugging)
+    // Set to true to print all rung thetas for given parameter index (debugging)
     if(false){
       std::cout.precision(5);
-      int par = 0;
+      int print_par = 0;
       for (int r = 0; r < n_rungs; r++) {
         index = rung_index[r];
-        std::cout << theta[index][par] << ' ';
+        std::cout << theta[index][print_par] << ' ';
       }
       std::cout << "\n " << std::endl;
     }

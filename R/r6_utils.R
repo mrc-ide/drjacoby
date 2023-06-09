@@ -82,18 +82,25 @@ beta_mid <- function(beta){
   beta[- 1] - diff(beta) / 2
 }
 
-check_chain <- function(chain, chains){
-  present <- chain %in% 1:chains
+check_chain <- function(chain){
+  present <- chain %in% 1:private$chains
   if(!all(present)){
     stop("Requested chains not all present in output")
   }
 }
 
-check_rung <- function(rung, rungs){
-  present <- sapply(rungs, function(x){
+check_rung <- function(rung){
+  present <- sapply(private$rungs, function(x){
     all(rung %in% x)
   })
   if(!all(present)){
     stop("Requested rungs not all present in output")
+  }
+}
+
+check_par <- function(par){
+  present <- par %in% private$theta_names
+  if(!all(present)){
+    stop("Requested parameters not all present in output")
   }
 }
