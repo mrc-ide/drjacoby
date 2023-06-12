@@ -1,6 +1,6 @@
 propose_new_beta <- function(n, beta_mid, rejection_rate, lambda){
   lambda <- sum(rejection_rate)
-  li <- approxfun(
+  li <- stats::approxfun(
     y = c(0, rev(beta_mid), 1),
     x = c(0, cumsum(rev(rejection_rate)), lambda),
     ties = "ordered"
@@ -8,7 +8,6 @@ propose_new_beta <- function(n, beta_mid, rejection_rate, lambda){
   rev(li(seq(0, lambda, length.out = n)))
 } 
 
-#' Find index of closest value in y of values in x
 index_closest <- function(x, y){
   sapply(x, function(x, y) {
     which.min(abs(y - x))

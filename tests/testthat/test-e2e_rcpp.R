@@ -1,6 +1,7 @@
 set.seed(1)
 
 rlang::is_installed("Rcpp")
+rlang::is_installed("rogress")
 
 n <- 50
 iterations <- 100

@@ -806,3 +806,5 @@ NULL
 NULL
 #' @import decor
 NULL
+utils::globalVariables(c("private"))
+

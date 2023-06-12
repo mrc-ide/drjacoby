@@ -238,7 +238,7 @@ create_rejection_rate_plot <- function(beta, rejection_rate){
     beta = rev(beta_mid),
     r = cumsum(rev(rejection_rate))
   )
-  ggplot2::ggplot(data = pd, ggplot2::aes(x = beta, y = r, col = beta)) +
+  ggplot2::ggplot(data = pd, ggplot2::aes(x = .data$beta, y = .data$r, col = .data$beta)) +
     ggplot2::geom_vline(xintercept = beta, col = "grey90") +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
@@ -255,7 +255,7 @@ create_local_communication_barrier_plot <- function(beta, rejection_rate){
     beta = rev(beta_mid),
     r = rev(rejection_rate) / sum(rejection_rate)
   )
-  ggplot2::ggplot(data = pd, ggplot2::aes(x = beta, y = r, col = beta)) +
+  ggplot2::ggplot(data = pd, ggplot2::aes(x = .data$beta, y = .data$r, col = .data$beta)) +
     ggplot2::geom_vline(xintercept = beta, col = "grey90") +
     ggplot2::geom_line() +
     ggplot2::geom_point() +
