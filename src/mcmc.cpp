@@ -198,7 +198,11 @@ list mcmc(
   //////////////////////////////////////////////////////////////////////////////
   
   // Run ///////////////////////////////////////////////////////////////////////
-  for(int i = 1; i < iterations; ++i){
+  int start_i = 0;
+  if(burnin && iteration_counter_init == 0){
+    start_i = 1;
+  }
+  for(int i = start_i; i < iterations; ++i){
     if(!silent){
       progress.tick();
     }
