@@ -16,21 +16,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Installing Rcpp
+## Installing cpp11
 
-*drjacoby* relies on the [Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html) package, which requires the following OS-specific steps:
-
-* Windows
-    - Download and install the appropriate version of [Rtools](https://cran.rstudio.com/bin/windows/Rtools/) for your version of R. On installation, ensure you check the box to arrange your system PATH as recommended by Rtools
-* Mac OS X
-    - Download and install [XCode](http://itunes.apple.com/us/app/xcode/id497799835?mt=12)
-    - Within XCode go to Preferences : Downloads and install the Command Line Tools
-* Linux (Debian/Ubuntu)
-    - Install the core software development utilities required for R package development as well as LaTeX by executing
-    
-        ```{}
-        sudo apt-get install r-base-dev texlive-full
-        ```
+*drjacoby* relies on the [cpp11](https://cran.r-project.org/web/packages/cpp11/index.html) package, which requires [OS-specific setup](https://cran.r-project.org/web/packages/cpp11/vignettes/cpp11.html)
 
 ## Installing and loading *drjacoby*
 
