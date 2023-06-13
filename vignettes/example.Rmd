@@ -52,12 +52,13 @@ sigma_true <- 2
 data_list <- list(x = rnorm(10, mean = mu_true, sd = sigma_true))
 ```
 
-Notice that data needs to be defined as a named list. For our example MCMC we will assume that we know the correct distribution of the data (i.e. we know the data is normally distributed), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the parameters of the distribution are unknown. Parameters within *drjacoby* are defined in dataframe format, where we specify minimum and maximum values of all parameters. The function `define_params()` makes it slightly easier to define this dataframe, but standard methods for making dataframes are also fine:
+Notice that data needs to be defined as a named list. For our example MCMC we will assume that we know the correct distribution of the data (i.e. we know the data is normally distributed), and we know that the mean is no smaller than -10 and no larger than 10, but otherwise the parameters of the distribution are unknown. Parameters within *drjacoby* are defined in dataframe format, where we specify minimum and maximum values of all parameters. We can start with an empty `data.frame()` and then add parameters manually (or programmatically) with the `add_parameter()` function. You can see in the printed `df_params` object there is some additional information coding the transformation type and if the parameter will be inferred.
 
 ```{r}
 # define parameters dataframe
-df_params <- define_params(name = "mu", min = -10, max = 10,
-                           name = "sigma", min = 0, max = Inf)
+df_params <- data.frame() |>
+  add_parameter(name = "mu", min = -10, max = 10) |>
+  add_parameter(name = "sigma", min = 0, max = Inf)
 
 print(df_params)
 ```
@@ -117,24 +118,45 @@ Be careful to ensure that your prior is defined over the same range as specified
 
 ## Running the MCMC
 
-Once we have all the elements above it is straightforward to run a basic MCMC in *drjacoby*. We simply input the four elements, along with the number of burn-in and sampling iterations. By default *drjacoby* prints progress bars to the console to keep you updated on the progress of the MCMC, we will turn them off here.
+Once we have all the elements above it is straightforward to run a basic MCMC in *drjacoby*. 
+
+First we initialise our mcmc object using `dj$new()`. We provide this object with the data, parameters and likelihood and prior functions. We can also set the number of chains to run
 
 ```{r}
-# run MCMC
-mcmc <- run_mcmc(data = data_list,
-                 df_params = df_params,
-                 loglike = r_loglike,
-                 logprior = r_logprior,
-                 burnin = 1e3L,
-                 samples = 1e3L,
-                 chains = 5L,
-                 progress = TRUE)
+# initialise MCMC
+mcmc <- dj$new(
+  data = data_list,
+  df_params = df_params,
+  loglike = r_loglike,
+  logprior = r_logprior,
+  chains = 5
+)
+mcmc
 ```
 
-The output returned by the MCMC function has four parts: 1) an "output" dataframe containing raw posterior draws and other key elements at each iteration of the MCMC, 2) a "pt" dataframe containing output related to parallel tempering (if not used this just contains the log-likelihood and log-prior at every iteration), 3) a "diagnostics" object containing useful summaries such as the effective sample size of each parameter, 3) a "parameters" object containing a record of the exact parameters used to run the MCMC. We can take a peek at the first of these outputs:
+Once initialised we can use two functions, `mcmc$burn()` and `mcmc$sample()` associated with the mcmc object to run the burn-in and sampling iterations for our mcmc, we set `silent = TRUE` here to avoid printing progress bar output, you can leave it on by default. First let's burn-in the chains:
 
 ```{r}
-head(mcmc$output)
+# run burn in
+mcmc$burn(iterations = 1000, silent = TRUE)
+```
+
+Then we can run the sampling iterations
+
+```{r}
+# run sampling
+mcmc$sample(iterations = 1000, silent = TRUE)
+
+```
+
+A useful feature is that we can call `mcmc$burn()` and `mcmc$sample()` multiple times if needed, essentially stopping then restarting our mcmc.
+In the case where we would like more sampling, we could just call `mcmc$sample(iterations = 1000, silent = TRUE)` again, which would give us a total of 2000 sampling iterations.
+
+We can inspect the mcmc output using the `mcmc$output()` function to retrieve the output dataframe. This gives us the parameter samples and loglikelihood and logprior estimates for each iteration, phase (burn-in or sampling) and chain.
+
+```{r}
+output <- mcmc$output()
+head(output)
 ```
 
 We can see that both `mu` and `sigma` changed values throughout the burn-in period, as we would expect, and the loglikelihood generally increased.
@@ -142,32 +164,32 @@ We can see that both `mu` and `sigma` changed values throughout the burn-in peri
 
 ## Exploring outputs and checking MCMC performance
 
-Before we can draw any conclusions from our MCMC results there are some basic checks that we should carry out. First, we can examine trace plots of all parameters to see how they are moving. This can be done using the `plot_par()` function, shown here for the burn-in phase:
+Before we can draw any conclusions from our MCMC results there are some basic checks that we should carry out. First, we can examine trace plots of all parameters to see how they are moving. This can be done using the `mcmc$plot_par()` function, shown here for the burn-in phase:
 
 ```{r, fig.width=8, fig.height=4}
-plot_par(mcmc, show = "mu", phase = "burnin")
-plot_par(mcmc, show = "sigma", phase = "burnin")
+mcmc$plot_par(par = "mu", phase = "burn")
+mcmc$plot_par(par = "sigma", phase = "burn")
 ```
 
-Notice that for all five chains both `mu` and `sigma` move quickly from their initial values to stable levels at around 3 and 2, respectively. This is a visual indication that the MCMC has burned in for an appropriate number of iterations. We can check this more rigorously by looking at the `rhat` object within the MCMC diagnostics, which gives the value of the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-4/topics/gelman.diag).
+Notice that for all five chains both `mu` and `sigma` move quickly from their initial values to stable levels at around 3 and 2, respectively. This is a visual indication that the MCMC has burned in for an appropriate number of iterations. We can check this more rigorously by looking at the `mcmc$rhat()` output diagnostic, which gives the value of the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-4/topics/gelman.diag).
 
 ```{r}
-mcmc$diagnostics$rhat
+mcmc$rhat()
 ```
 
 Values close to 1 indicate that the MCMC has converged (typically the threshold <1.1 is used). This output uses the variance between chains, and therefore is only available when running multiple chains.
 
-By setting `phase = "sampling"` we can look at trace plots from the sampling phase only:
+By setting `phase = "sample"` we can look at trace plots from the sampling phase only:
 
 ```{r, fig.width=8, fig.height=4}
-plot_par(mcmc, show = "mu", phase = "sampling")
-plot_par(mcmc, show = "sigma", phase = "sampling")
+mcmc$plot_par(par = "mu", phase = "sample")
+mcmc$plot_par(par = "sigma", phase = "sample")
 ```
 
-Here we can see that the MCMC continues to move freely after the burn-in phase, and that all chains appear to be exploring the same part of the parameter space. The final plot shows the autocorrelation of the chains, which in this case falls off rapidly with samples being approximately independent at around 10 lags. This is an indication that the MCMC is mixing well. The marginal histogram shows a single clear peak, although this is still a bit rough so we may want to re-run the MCMC with a larger number of sampling iterations to get a smoother result. We can also explore this by looking at the effective sample size (ESS), which is stored within the MCMC diagnostics:
+Here we can see that the MCMC continues to move freely after the burn-in phase, and that all chains appear to be exploring the same part of the parameter space. The final plot shows the autocorrelation of the chains, which in this case falls off rapidly with samples being approximately independent at around 10 lags. This is an indication that the MCMC is mixing well. The marginal histogram shows a single clear peak, although this is still a bit rough so we may want to re-run the MCMC with a larger number of sampling iterations to get a smoother result. We can also explore this by looking at the effective sample size (ESS), which can be accessed via the `mcmc$ess()` function:
 
 ```{r}
-mcmc$diagnostics$ess
+mcmc$ess()
 ```
 
 We can see that despite running the MCMC for 1000 sampling iterations, the actual number of effectively independent samples accounting for autocorrelation is lower. When doing any calculation that relies on the number of samples we should use the ESS rather than the raw number of sampling iterations. For example if we want to know the standard error of our estimate of `mu` we should do `sd(mu)/sqrt(ESS)`. But just as importantly, when producing any summary of the posterior that does not make direct use of the number of samples - for example when producing posterior histograms - we should *use all posterior draws*, and we should [not thin samples](https://doi.org/10.1111/j.2041-210X.2011.00131.x) to reduce autocorrelation. This is because a histogram produced from all samples is more accurate than one produced from thinned samples, even if the samples are autocorrelated.
@@ -177,17 +199,17 @@ The final question is how confident can we be that our MCMC has actually explore
 
 ## Using C++ functions
 
-Although *drjacoby* is an R package, under the hood it is running C++ through the fantastic [cpp11](https://cpp11.r-lib.org/) package. When we pass an R likelihood function to `run_mcmc()`, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This creates a computational overhead that can be avoided by specifying functions directly within C++.
+Although *drjacoby* is an R package, under the hood it is running C++ through the fantastic [cpp11](https://cpp11.r-lib.org/) package. When we pass an R likelihood function to `dj$new()`, as in the example above, the code is forced to jump out of C++ into R to evaluate the likelihood before jumping back into C++. This creates a computational overhead that can be avoided by specifying functions directly within C++.
 
 To use C++ a function within *drjacoby* we first write it out as stand-alone file. The example used here can be found inside the *inst/extdata* folder of the package, and reads as follows:
 
 ```{r, echo = FALSE, comment = ''}
-likelihood_filename <- system.file("extdata", "example_loglike_logprior.cpp", package = 'drjacoby', mustWork = TRUE)
+likelihood_filename <- system.file("extdata", "example_cpp_functions.cpp", package = 'drjacoby', mustWork = TRUE)
 cat(readLines(likelihood_filename), sep = '\n')
 ```
 
 The logic of this function is identical to the R version above, just written in the language of C++. 
-With this set up all we need to do is source our C++ file with `cpp11::cpp_source()` then simply pass the function *names* to `run_mcmc()`. To make life easy when setting up a new C++ model, you can create a template for your cpp file with the `cpp_template()` function - then all you need to do is fill in the internals of the loglikehood and logprior.
+With this set up all we need to do is source our C++ file with `cpp11::cpp_source()` then simply pass the functions to `run_mcmc()`.
 
 As before, there are some constraints on what this function must look like. It **must** take the same three input arguments described in the previous section, defined in the following formats:
 
@@ -207,16 +229,24 @@ cpp11::cpp_source(likelihood_filename)
 
 ```{r}
 # run MCMC
-mcmc <- run_mcmc(data = data_list,
-                 df_params = df_params,
-                 loglike = "loglike",
-                 logprior = "logprior",
-                 burnin = 1e3L,
-                 samples = 1e3L,
-                 chains = 5L,
-                 progress = TRUE)
+mcmc_cpp <- dj$new(
+  data = data_list,
+  df_params = df_params,
+  loglike = loglike_cpp11,
+  logprior = logprior_cpp11,
+  chains = 5
+)
+mcmc_cpp$burn(iterations = 1000, silent = TRUE)
+mcmc_cpp$sample(iterations = 1000, silent = TRUE)
 ```
 
 You should notice that this MCMC runs faster than the previous version that used R functions. On the other hand, writing C++ functions is arguably more error-prone and difficult to debug than simple R functions. Hence, if efficiency is your goal then C++ versions of both the likelihood and prior should be used, whereas if ease of programming is more important then R functions might be a better choice.
+
+We can have a look at the speed of both mcmc runs using the `$timing()` function 
+
+```{r}
+mcmc$timing()$iterations_per_second
+mcmc_cpp$timing()$iterations_per_second
+```
 
 This was a very easy problem, and so required no fancy MCMC tricks. The [next vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) demonstrates how *drjacoby* can be applied to a more challenging problem.

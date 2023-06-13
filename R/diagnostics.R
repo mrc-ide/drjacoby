@@ -6,7 +6,7 @@ estimate_dic <- function(output){
 
 estimate_ess <- function(output, parameter_names){
   input <- output[output$phase == "sample", parameter_names, drop = FALSE]
-  ess <- apply(input, 2, coda::effectiveSize)
+  ess <- round(apply(input, 2, coda::effectiveSize))
   return(ess)
 }
 
