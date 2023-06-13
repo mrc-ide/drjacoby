@@ -130,10 +130,10 @@ we must also make the C++ functions accessible, by running the cpp11::cpp_source
 cc <- parallel::clusterEvalQ(
   cl = cl_cpp, 
   expr =  cpp11::cpp_source(
-    system.file("extdata", "cpp_likelihood_and_prior_functions.cpp", package = "drjacoby")
+    system.file("extdata", "example_cpp_functions.cpp", package = "drjacoby")
     )
 )
-cpp11::cpp_source(system.file("extdata", "cpp_likelihood_and_prior_functions.cpp", package = "drjacoby"))
+cpp11::cpp_source(system.file("extdata", "example_cpp_functions.cpp", package = "drjacoby"))
 ```
 
 After which we can run the mcmc in the same way:
