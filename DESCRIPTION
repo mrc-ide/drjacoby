@@ -19,7 +19,8 @@ Suggests:
     testthat (>= 3.0.0),
     knitr,
     Rcpp,
-    progress
+    progress,
+    rmarkdown
 Remotes:
   mrc-ide/dust
 LinkingTo: 

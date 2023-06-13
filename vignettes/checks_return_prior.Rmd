@@ -27,10 +27,11 @@ Four parameters, each representing a different one of the four possible paramete
 Parameters dataframe:
 
 ```{r}
-df_params <- define_params(name = "real_line", min = -Inf, max = Inf,
-                           name = "neg_line", min = -Inf, max = 0,
-                           name = "pos_line", min = 0, max = Inf,
-                           name = "unit_interval", min = 0, max = 1)
+df_params <- data.frame() |>
+  add_parameter(name = "real_line", min = -Inf, max = Inf) |>
+  add_parameter(name = "neg_line", min = -Inf, max = 0) |>
+  add_parameter(name = "pos_line", min = 0, max = Inf) |>
+  add_parameter(name = "unit_interval", min = 0, max = 1)
 ```
 
 ## Run MCMC
@@ -40,7 +41,7 @@ mcmc <- dj$new(data = list(x = -1),
                df_params = df_params,
                loglike = loglike_null,
                logprior = logprior_return,
-               chains = 10L)
+               chains = 5L)
 mcmc$burn(iterations = 1000L, silent = TRUE)
 mcmc$sample(iterations = 10000L, silent = TRUE)
 ```

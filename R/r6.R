@@ -208,7 +208,7 @@ dj <- R6::R6Class(
       cat(" \U0001F453  Tuning iterations: ", private$iteration_counter[["tune"]], "\n", sep = "")
       cat(" \U0001F453  Burn-in iterations: ", private$iteration_counter[["burn"]], "\n", sep = "")
       cat(" \U0001F453  Sampling iterations: ", private$iteration_counter[["sample"]], "\n", sep = "")
-      cat(" \U0001F453  Total compute time: ", round(sum(self$timing()$seconds[4,]), 4), " seconds", "\n", sep = "")
+      cat(" \U0001F453  Total compute time: ", round(sum(self$timing()$seconds["Total",]), 4), " seconds", "\n", sep = "")
       # return invisibly
       invisible(self)
     },
@@ -348,8 +348,8 @@ dj <- R6::R6Class(
     #' @param iterations Number of burn-in iterations to run
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
-    #' @param cl parallel cluster object 
-    burn = function(iterations, target_acceptance = 0.44, silent = FALSE, cl = NULL){
+    #' @param cluster parallel cluster object 
+    burn = function(iterations, target_acceptance = 0.44, silent = FALSE, cluster = NULL){
       stopifnot(is.numeric(iterations))
       iterations <- as.integer(iterations)
       if(private$sample_called){
@@ -363,7 +363,7 @@ dj <- R6::R6Class(
       phase <- "burn"
       
       # Define the apply function
-      is_parallel <- !is.null(cl)
+      is_parallel <- !is.null(cluster)
       apply_func <- noclusterApply
       if(is_parallel){
         apply_func <- parallel::clusterApply
@@ -371,7 +371,7 @@ dj <- R6::R6Class(
       
       # Run chains
       chain_output <- apply_func(        
-        cl = cl, 
+        cl = cluster, 
         x = private$chain_objects,
         fun = run_mcmc,
         phase = phase,
@@ -434,8 +434,8 @@ dj <- R6::R6Class(
     #' Run sampling in. Runs the sampling phase of the MCMC.
     #' @param iterations Number of sampling iterations to run
     #' @param silent print progress (boolean)
-    #' @param cl parallel cluster object 
-    sample = function(iterations, silent = FALSE, cl = NULL){
+    #' @param cluster parallel cluster object 
+    sample = function(iterations, silent = FALSE, cluster = NULL){
       stopifnot(is.numeric(iterations))
       iterations <- as.integer(iterations)
       
@@ -445,7 +445,7 @@ dj <- R6::R6Class(
       phase <- "sample"
       
       # Define the apply function
-      is_parallel <- !is.null(cl)
+      is_parallel <- !is.null(cluster)
       apply_func <- noclusterApply
       if(is_parallel){
         apply_func <- parallel::clusterApply
@@ -453,7 +453,7 @@ dj <- R6::R6Class(
       
       # Run chains
       chain_output <- apply_func(
-        cl = cl, 
+        cl = cluster, 
         x = private$chain_objects,
         fun = run_mcmc,
         phase = phase,

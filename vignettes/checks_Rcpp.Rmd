@@ -19,7 +19,7 @@ set.seed(1)
 library(drjacoby)
 ```
 
-**Purpose:** to check providing cpp11 loglikelihood and logprior functions works.
+**Purpose:** to check providing Rcpp loglikelihood and logprior functions works.
 
 ## Model
 
@@ -42,13 +42,13 @@ df_params <- data.frame() |>
 
 ```{r cars}
 # Source the cpp11 functions
-fpath <- system.file("extdata", "cpp_likelihood_and_prior_functions.cpp", package = "drjacoby")
-cpp11::cpp_source(fpath)
+fpath <- system.file("extdata", "rcpp_likelihood_and_prior_functions.cpp", package = "drjacoby")
+Rcpp::sourceCpp(fpath)
 
 mcmc <- dj$new(data = data_list,
                df_params = df_params,
-               loglike = loglike_normal_cpp11,
-               logprior = logprior_null_cpp11,
+               loglike = loglike_normal_rcpp,
+               logprior = logprior_null_rcpp,
                chains = 5L)
 mcmc$burn(iterations = 1000L, silent = TRUE)
 mcmc$sample(iterations = 10000L, silent = TRUE)

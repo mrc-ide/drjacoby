@@ -83,7 +83,7 @@ mcmc <- dj$new(data = list(x = -1),
                loglike = loglike_double_well,
                logprior = logprior_null,
                chains = 1L)
-mcmc$tune()
+mcmc$tune(silent = TRUE)
 mcmc$burn(iterations = 1000L, silent = TRUE)
 mcmc$sample(iterations = 10000L, silent = TRUE)
 ```

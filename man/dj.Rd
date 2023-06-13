@@ -135,7 +135,7 @@ Run burn in. Runs the burn in phase of the MCMC to allow where
 proposal standard deviations to be tuned towards a target acceptance rate
 and chains to converge.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$burn(iterations, target_acceptance = 0.44, silent = FALSE, cl = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$burn(iterations, target_acceptance = 0.44, silent = FALSE, cluster = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -147,7 +147,7 @@ and chains to converge.
 
 \item{\code{silent}}{print progress (boolean)}
 
-\item{\code{cl}}{parallel cluster object}
+\item{\code{cluster}}{parallel cluster object}
 }
 \if{html}{\out{</div>}}
 }
@@ -158,7 +158,7 @@ and chains to converge.
 \subsection{Method \code{sample()}}{
 Run sampling in. Runs the sampling phase of the MCMC.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$sample(iterations, silent = FALSE, cl = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$sample(iterations, silent = FALSE, cluster = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -168,7 +168,7 @@ Run sampling in. Runs the sampling phase of the MCMC.
 
 \item{\code{silent}}{print progress (boolean)}
 
-\item{\code{cl}}{parallel cluster object}
+\item{\code{cluster}}{parallel cluster object}
 }
 \if{html}{\out{</div>}}
 }

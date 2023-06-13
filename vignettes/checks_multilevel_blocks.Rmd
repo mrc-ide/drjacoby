@@ -38,15 +38,15 @@ for (i in 1:g) {
 names(data_list) <- sprintf("group%s", 1:g)
 ```
 
-Parameters dataframe:
+Parameters data.frame:
 
 ```{r}
 L <- 5
-df_params <- define_params(name = "mu_1", min = -L, max = L, block = c(1, 6),
-                           name = "mu_2", min = -L, max = L, block = c(2, 6),
-                           name = "mu_3", min = -L, max = L, block = c(3, 6),
-                           name = "mu_4", min = -L, max = L, block = c(4, 6),
-                           name = "mu_5", min = -L, max = L, block = c(5, 6))
+df_params <- data.frame()
+for(i in 1:5){
+  df_params <- df_params |>
+    add_parameter(name = paste0("mu_", i), min = -L, max = L, block = c(i, 6))
+}
 ```
 
 ## MCMC
@@ -56,7 +56,7 @@ mcmc <- dj$new(data = data_list,
                df_params = df_params,
                loglike = loglike_block,
                logprior = logprior_null,
-               chains = 10L)
+               chains = 5L)
 mcmc$burn(iterations = 1000L, silent = TRUE)
 mcmc$sample(iterations = 10000L, silent = TRUE)
 ```

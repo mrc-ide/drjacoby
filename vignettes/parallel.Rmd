@@ -30,7 +30,7 @@ This vignette will demonstrate how to run *drjacoby* with multiple chains, first
 
 ## Setup
 
-As always, we require some data, some parameters, and some functions to work with (see [earlier examples](https://mrc-ide.github.io/drjacoby/articles/example.html)). The underlying model is not our focus here, so we will use a very basic setup
+As always, we require some data, some parameters, and some functions to work with (see [earlier examples](https://mrc-ide.github.io/drjacoby/articles/example.html)). The underlying model is not our focus here, so we will use a very basic set-up
 
 
 ```{r}
@@ -38,7 +38,8 @@ As always, we require some data, some parameters, and some functions to work wit
 data_list <- list(x = rnorm(10))
 
 # define parameters dataframe
-df_params <- data.frame(name = "mu", min = -10, max = 10, init = 0)
+df_params <- data.frame() |>
+  add_parameter(name = "mu", min = -10, max = 10, initial_values = c(-1, 1))
 
 # define loglike function
 r_loglike <- function(params, data, misc) {
@@ -57,24 +58,25 @@ Whenever the input argument `cluster` is `NULL`, chains will run in serial. This
 
 ```{r}
 # run MCMC in serial
-mcmc <- run_mcmc(data = data_list,
-                 df_params = df_params,
-                 loglike = r_loglike,
-                 logprior = r_logprior,
-                 burnin = 1e3,
-                 samples = 1e3,
-                 chains = 2,
-                 pb_markdown = TRUE)
+mcmc <- dj$new(
+  data = data_list,
+  df_params = df_params,
+  loglike = r_loglike,
+  logprior = r_logprior,
+  chains = 2
+)
+mcmc$burn(iterations = 1000, silent = TRUE)
+mcmc$sample(iterations = 1000, silent = TRUE)
 ```
 
 When we look at our MCMC output (using the `plot_par()` function) we can see that there are 2 chains, each of which contains a series of draws from the posterior. If we used multiple [temperature rungs](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) then these would also be duplicated over chains.
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.width=7, fig.height=4}
 # summarise output
 mcmc
 
 # compare mu over both chains
-plot_par(mcmc, "mu", phase = "both")
+mcmc$plot_par(par = "mu")
 ```
 
 Running in parallel is only slightly more complex. Before running anything we need to know how many cores our machine has. You may know this number already, but if you don't then the `parallel` package has a handy function for detecting the number of cores for you:
@@ -95,15 +97,15 @@ Note that output is supressed when running in parallel to avoid sending print co
 
 ```{r, eval = FALSE}
 # run MCMC in parallel
-mcmc <- run_mcmc(data = data_list,
-                 df_params = df_params,
-                 loglike = r_loglike,
-                 logprior = r_logprior,
-                 burnin = 1e3,
-                 samples = 1e3,
-                 chains = 2,
-                 cluster = cl,
-                 pb_markdown = TRUE)
+mcmc <- dj$new(
+  data = data_list,
+  df_params = df_params,
+  loglike = r_loglike,
+  logprior = r_logprior,
+  chains = 2
+)
+mcmc$burn(iterations = 1000, silent = TRUE, cluster = cl)
+mcmc$sample(iterations = 1000, silent = TRUE, cluster = cl)
 ```
 
 Finally, it is good practice to shut down the workers once we are finished:
@@ -119,28 +121,41 @@ To run the MCMC in parallel with C++ log-likelihood or log-prior functions there
 the cluster. Each node must be able to access a version of the compiled C++ functions, so after initialising the cluster with:
 
 ```{r, eval = FALSE}
-cl <- parallel::makeCluster(cores)
+cl_cpp <- parallel::makeCluster(cores)
 ```
 
-we must also make the C++ functions accessible, by running the Rcpp::sourceCPP command for our C++ file for each node:
+we must also make the C++ functions accessible, by running the cpp11::cpp_source command for our C++ file for each node, and finally also locally:
 
 ```{r, eval = FALSE}
-cl_cpp <- parallel::clusterEvalQ(cl, Rcpp::sourceCpp("my_cpp.cpp"))
+cc <- parallel::clusterEvalQ(
+  cl = cl_cpp, 
+  expr =  cpp11::cpp_source(
+    system.file("extdata", "cpp_likelihood_and_prior_functions.cpp", package = "drjacoby")
+    )
+)
+cpp11::cpp_source(system.file("extdata", "cpp_likelihood_and_prior_functions.cpp", package = "drjacoby"))
 ```
 
 After which we can run the mcmc in the same way:
 
 ```{r, eval = FALSE}
 # run MCMC in parallel
-mcmc <- run_mcmc(data = data_list,
-                 df_params = df_params,
-                 loglike = "loglike",
-                 logprior = "logprior",
-                 burnin = 1e3,
-                 samples = 1e3,
-                 chains = 2,
-                 cluster = cl,
-                 pb_markdown = TRUE)
-parallel::stopCluster(cl)
+mcmc <- dj$new(
+  data = data_list,
+  df_params = df_params,
+  loglike = loglike_normal_cpp11,
+  logprior = logprior_null_cpp11,
+  chains = 2
+)
+mcmc$burn(iterations = 1000, silent = TRUE, cluster = cl_cpp)
+mcmc$sample(iterations = 1000, silent = TRUE, cluster = cl_cpp)
+parallel::stopCluster(cl_cpp)
+```
+
+Again, we can have a look at the parameter estimate:
+
+```{r, fig.width=7, fig.height=4}
+mcmc$plot_par(par = "mu")
+
 ```
 
