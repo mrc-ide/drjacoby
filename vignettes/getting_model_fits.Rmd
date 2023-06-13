@@ -50,7 +50,7 @@ For our model we will assume a discrete-time logistic growth model, in which the
 
 $$
 \begin{align}
-  N_{t+1} = rN_t(1 - N_t / K), \hspace{10mm} \mbox{where } K = N_{\mbox{max}}\left(\frac{r}{r-1}\right).
+N_{t+1} = rN_t(1 - N_t / K), \hspace{10mm} \mbox{where } K = N_{\mbox{max}}\left(\frac{r}{r-1}\right).
 \end{align}
 $$
 
@@ -58,9 +58,10 @@ There are three parameters in this model, and so our parameters dataframe should
 
 ```{r}
 # define parameters dataframe
-df_params <- define_params(name = "N_0", min = 1, max = 100,
-                           name = "r", min = 1, max = 2,
-                           name = "N_max", min = 50, max = 200)
+df_params <- data.frame() |>
+  add_parameter(name = "N_0", min = 1, max = 100) |>
+  add_parameter(name = "r", min = 1, max = 2) |>
+  add_parameter(name = "N_max", min = 50, max = 200)
 ```
 
 Within our likelihood function we need to calculate our expected population growth curve. This curve is perfectly smooth, but the real data is noisy so we will use a Poisson distribution to link the data to the model.
@@ -106,22 +107,24 @@ When running the MCMC we want to make sure `misc$output_type = 1`:
 
 ```{r}
 # run MCMC
-mcmc <- run_mcmc(data = population_data,
-                 df_params = df_params,
-                 misc = list(output_type = 1),
-                 loglike = loglike,
-                 logprior = logprior,
-                 burnin = 1e3,
-                 samples = 1e4,
-                 chains = 3,
-                 pb_markdown = TRUE)
+mcmc <- dj$new(
+  data = population_data,
+  df_params = df_params,
+  misc = list(output_type = 1),
+  loglike = loglike,
+  logprior = logprior,
+  chains = 3
+)
+mcmc$burn(iterations = 1000, silent = TRUE)
+mcmc$sample(iterations = 1000, silent = TRUE)
 ```
 
 Once we have MCMC output we should perform our usual checks to make sure that everything has converged nicely. Assuming everything is OK, we can move on to exploring model fits. We will do this by running the same likelihood function but with `misc$output_type = 2`, using the posterior parameter draws as inputs. We may not want to use every posterior parameter draw, in which case we can use the `sample_chains()` function to sub-sample the output down as needed:
 
 ```{r}
 # sample from posterior
-param_draws <- sample_chains(mcmc, 1000)
+output <- mcmc$output(phase = "sample")
+param_draws <- output[seq(1, nrow(output), 30) , df_params$name]
 
 # get matrix of model predictions
 model_matrix <- apply(param_draws, 1, function(x) {
