@@ -33,6 +33,8 @@ navbar:
           href: articles/checks_multilevel_blocks.html
         - text: "cpp11 functions"
           href: articles/checks_cpp.html
+        - text: "Rcpp functions"
+          href: articles/checks_Rcpp.html
     - text: "Functions"
       href: reference/index.html
   right:

@@ -1,10 +1,10 @@
 ---
-title: "Normal model"
+title: "Normal model cpp11"
 author: "Bob Verity and Pete Winskill"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Normal model}
+  %\VignetteIndexEntry{Normal model cpp11"}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

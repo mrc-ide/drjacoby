@@ -20,7 +20,8 @@ Suggests:
     knitr,
     Rcpp,
     progress,
-    rmarkdown
+    rmarkdown,
+    gridExtra
 Remotes:
   mrc-ide/dust
 LinkingTo: 
