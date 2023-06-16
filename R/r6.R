@@ -232,9 +232,6 @@ dj <- R6::R6Class(
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
     tune = function(target_rung_acceptance = 0.5, n_rungs = 50, iterations = 1000, initial_beta = NULL, swap = 2L,  target_acceptance = 0.44,  silent = FALSE){
-      if(private$chains > 1){
-        stop("To use parallel tempering please set the number of chains = 1")
-      }
       if(private$burn_called | private$sample_called){
         stop("Cannot call tune after burn or sample have been called")
       }
@@ -267,7 +264,7 @@ dj <- R6::R6Class(
       # Run chains
       chain_output <- apply_func(
         cl = NULL, 
-        x = private$chain_objects,
+        x = private$chain_objects[1],
         fun = run_mcmc,
         phase = phase,
         burnin = burnin,
