@@ -21,6 +21,7 @@ Create a new dj object to run an mcmc
 \item \href{#method-dj-tune}{\code{dj$tune()}}
 \item \href{#method-dj-burn}{\code{dj$burn()}}
 \item \href{#method-dj-sample}{\code{dj$sample()}}
+\item \href{#method-dj-set_beta}{\code{dj$set_beta()}}
 \item \href{#method-dj-output}{\code{dj$output()}}
 \item \href{#method-dj-acceptance_rate}{\code{dj$acceptance_rate()}}
 \item \href{#method-dj-mc_acceptance_rate}{\code{dj$mc_acceptance_rate()}}
@@ -175,6 +176,15 @@ Run sampling in. Runs the sampling phase of the MCMC.
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-dj-set_beta"></a>}}
+\if{latex}{\out{\hypertarget{method-dj-set_beta}{}}}
+\subsection{Method \code{set_beta()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dj$set_beta(beta, swap = 2L)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-output"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-output}{}}}
 \subsection{Method \code{output()}}{
@@ -220,7 +230,7 @@ Get acceptance rates
 \subsection{Method \code{mc_acceptance_rate()}}{
 Get acceptance rates
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$mc_acceptance_rate(phase = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$mc_acceptance_rate(phase = c("tune", "burn", "sample"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

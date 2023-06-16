@@ -73,7 +73,7 @@ dj <- R6::R6Class(
     },
     
     check_rung = function(rung){
-      present <- sapply(private$rungs, function(x){
+      present <- sapply(private$rungs[2:3], function(x){
         all(rung %in% 1:x)
       })
       if(!all(present)){
@@ -313,30 +313,21 @@ dj <- R6::R6Class(
         stop("Tuning needs more rungs to achieve an accurate estimate of communication barrier")
       }
       private$lambda <-  sum(tune_rejection_rate)
-
+      
       rungs <- ceiling(private$lambda / (1 - private$target_rung_acceptance))
-      private$rungs[["burn"]] <- rungs
-      private$rungs[["sample"]] <- rungs
       new_beta <- propose_new_beta(
         n = rungs,
         beta_mid = beta_mid(private$beta[[phase]]),
         rejection_rate = tune_rejection_rate,
         lambda = private$lambda
       )
-      private$beta[["burn"]] <- new_beta
-      private$beta[["sample"]] <- new_beta
-      #browser()
-      # Adjust objects dependent on number of rungs
-      private$chain_objects[[1]]$theta = initial_theta(private$df_params, chains = private$chains, rungs = rungs)[[1]]
-      private$chain_objects[[1]]$proposal_sd = create_proposal_sd(private$chains, rungs, private$n_par)[[1]]
-      private$chain_objects[[1]]$swap_acceptance_counter[["burn"]] = rep(0L, rungs - 1)
-      private$chain_objects[[1]]$swap_acceptance_counter[["sample"]] = rep(0L, rungs - 1)
-      private$chain_objects[[1]]$acceptance_counter[["burn"]] = matrix(0L, nrow = rungs, ncol = private$n_par)
-      private$chain_objects[[1]]$acceptance_counter[["sample"]] = matrix(0L, nrow = rungs, ncol = private$n_par)
       
+      self$set_beta(new_beta)
       # Best-guess to inform starting proposal_sd by matching new beta to closest tuning beta
       ic <- index_closest(new_beta, private$beta[[phase]])
-      private$chain_objects[[1]]$proposal_sd = chain_output[[1]]$proposal_sd[ic,]
+      for(i in 1:private$chains){
+        private$chain_objects[[i]]$proposal_sd = chain_output[[1]]$proposal_sd[ic,]
+      }
       
     },
     
@@ -510,6 +501,41 @@ dj <- R6::R6Class(
       }
     },
     
+    set_beta = function(beta, swap = 2L){
+      if(private$burn_called){
+        stop("Can't set beta after burn has been called")
+      }
+      if(private$sample_called){
+        stop("Can't set beta after sample has been called")
+      }
+      rungs <- length(beta)
+      private$rungs[["burn"]] <- rungs
+      private$rungs[["sample"]] <- rungs
+      private$beta[["burn"]] <- beta
+      private$beta[["sample"]] <- beta
+      private$swap <- swap
+      
+      theta = initial_theta(
+        df_params = private$df_params,
+        chains = private$chains,
+        rungs = rungs
+      )
+      proposal_sd = create_proposal_sd(
+        chains = private$chains,
+        rungs = rungs,
+        n_par = private$n_par
+      )
+
+      for(i in 1:private$chains){
+        private$chain_objects[[i]]$theta = theta[[i]]
+        private$chain_objects[[i]]$proposal_sd = proposal_sd[[i]]
+        private$chain_objects[[i]]$swap_acceptance_counter[["burn"]] = rep(0L, rungs - 1)
+        private$chain_objects[[i]]$swap_acceptance_counter[["sample"]] = rep(0L, rungs - 1)
+        private$chain_objects[[i]]$acceptance_counter[["burn"]] = matrix(0L, nrow = rungs, ncol = private$n_par)
+        private$chain_objects[[i]]$acceptance_counter[["sample"]] = matrix(0L, nrow = rungs, ncol = private$n_par)
+      }
+    },
+    
     ### Output ###
     #' @description
     #' Get mcmc output data.frame
@@ -573,8 +599,8 @@ dj <- R6::R6Class(
     #' @description
     #' Get acceptance rates
     #' @param phase optional phase selection, can be a vector chosen from "tune", "burn", "sample"
-    mc_acceptance_rate = function(phase = NULL){
-      if(!private$tune_called){
+    mc_acceptance_rate = function(phase = c("tune", "burn", "sample")){
+      if(private$rungs[[phase[length(phase)]]] == 1){
         stop("Not available for a single rung")
       }
       private$check_phase(phase)
@@ -764,7 +790,7 @@ dj <- R6::R6Class(
     #' @param phase Optional selection of phases, can be from: tune, burn or sample
     #' @param beta_axis axis type, set to FALSE to plot rungs evenly spaced
     plot_mc_acceptance_rate = function(phase = "sample", beta_axis = TRUE){
-      if(!private$tune_called){
+      if(private$rungs[["tune"]] == 1){
         stop("Not available for a single rung")
       }
       private$check_phase(phase = phase)
@@ -779,7 +805,7 @@ dj <- R6::R6Class(
     #' @description Plots the cumulative rejection rate between rungs
     #' @param beta_axis axis type, set to FALSE to plot rungs evenly spaced
     plot_tuning_rejection_rate = function(beta_axis = TRUE){
-      if(!private$tune_called){
+      if(private$rungs[["tune"]] == 1){
         stop("Not available for a single rung")
       }
       tune_rejection_rate <- 1 - self$mc_acceptance_rate(
@@ -791,7 +817,7 @@ dj <- R6::R6Class(
     #' @description Plots the local communication barrier between rungs
     #' @param beta_axis axis type, set to FALSE to plot rungs evenly spaced
     plot_local_communication_barrier = function(beta_axis = TRUE){
-      if(!private$tune_called){
+      if(private$rungs[["tune"]] == 1){
         stop("Not available for a single rung")
       }
       tune_rejection_rate <- 1 - self$mc_acceptance_rate(
