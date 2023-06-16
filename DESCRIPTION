@@ -1,7 +1,7 @@
 Package: drjacoby
 Type: Package
 Title: Flexible Markov Chain Monte Carlo via Reparameterization
-Version: 2.0.0
+Version: 2.0.1
 Authors@R: c(
     person("Bob", "Verity", email = "r.verity@imperial.ac.uk", role = c("aut", "cre")),
     person("Pete", "Winskill", email = "p.winskill@imperial.ac.uk", role = c("aut"))

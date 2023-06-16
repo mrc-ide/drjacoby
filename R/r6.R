@@ -648,6 +648,12 @@ dj <- R6::R6Class(
       )
     },
     
+    #' @description
+    #' Get beta schedule
+    get_beta = function(){
+      private$beta
+    },
+    
     ### Plots ###,
     
     #' @description Produce a parameter plot of the named parameter,
@@ -756,42 +762,42 @@ dj <- R6::R6Class(
     #' @description Plots the acceptance rate between rungs
     #'
     #' @param phase Optional selection of phases, can be from: tune, burn or sample
-    #' @param x_axis_type how to format the x-axis. 1 = integer rungs, 2 = values of
-    #'   the thermodynamic power.
-    plot_mc_acceptance_rate = function(phase = "sample", x_axis_type = 1){
+    #' @param beta_axis axis type, set to FALSE to plot rungs evenly spaced
+    plot_mc_acceptance_rate = function(phase = "sample", beta_axis = TRUE){
       if(!private$tune_called){
         stop("Not available for a single rung")
       }
       private$check_phase(phase = phase)
       ar <- self$mc_acceptance_rate(phase = phase)
       create_mc_acceptance_plot(
-        rungs = private$rungs[[phase]],
         beta = private$beta[[phase]],
         ar = ar$coupling_acceptance,
-        x_axis_type = x_axis_type
+        beta_axis = beta_axis
       )
     },
     
     #' @description Plots the cumulative rejection rate between rungs
-    plot_tuning_rejection_rate = function(){
+    #' @param beta_axis axis type, set to FALSE to plot rungs evenly spaced
+    plot_tuning_rejection_rate = function(beta_axis = TRUE){
       if(!private$tune_called){
         stop("Not available for a single rung")
       }
       tune_rejection_rate <- 1 - self$mc_acceptance_rate(
         phase = "tune"
       )$coupling_acceptance
-      create_rejection_rate_plot(private$beta[["tune"]], tune_rejection_rate)
+      create_rejection_rate_plot(private$beta[["tune"]], tune_rejection_rate, beta_axis)
     },
     
     #' @description Plots the local communication barrier between rungs
-    plot_local_communication_barrier = function(){
+    #' @param beta_axis axis type, set to FALSE to plot rungs evenly spaced
+    plot_local_communication_barrier = function(beta_axis = TRUE){
       if(!private$tune_called){
         stop("Not available for a single rung")
       }
       tune_rejection_rate <- 1 - self$mc_acceptance_rate(
         phase = "tune"
       )$coupling_acceptance
-      create_local_communication_barrier_plot(private$beta[["tune"]], tune_rejection_rate)
+      create_local_communication_barrier_plot(private$beta[["tune"]], tune_rejection_rate, beta_axis)
     }
   )
 )

@@ -28,6 +28,7 @@ Create a new dj object to run an mcmc
 \item \href{#method-dj-ess}{\code{dj$ess()}}
 \item \href{#method-dj-rhat}{\code{dj$rhat()}}
 \item \href{#method-dj-timing}{\code{dj$timing()}}
+\item \href{#method-dj-get_beta}{\code{dj$get_beta()}}
 \item \href{#method-dj-plot_par}{\code{dj$plot_par()}}
 \item \href{#method-dj-plot_cor}{\code{dj$plot_cor()}}
 \item \href{#method-dj-plot_credible}{\code{dj$plot_credible()}}
@@ -271,6 +272,16 @@ Get run-time data
 
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-dj-get_beta"></a>}}
+\if{latex}{\out{\hypertarget{method-dj-get_beta}{}}}
+\subsection{Method \code{get_beta()}}{
+Get beta schedule
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dj$get_beta()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-plot_par"></a>}}
 \if{latex}{\out{\hypertarget{method-dj-plot_par}{}}}
 \subsection{Method \code{plot_par()}}{
@@ -398,7 +409,7 @@ Produces a matrix showing the correlation between all parameters
 \subsection{Method \code{plot_mc_acceptance_rate()}}{
 Plots the acceptance rate between rungs
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$plot_mc_acceptance_rate(phase = "sample", x_axis_type = 1)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$plot_mc_acceptance_rate(phase = "sample", beta_axis = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -406,8 +417,7 @@ Plots the acceptance rate between rungs
 \describe{
 \item{\code{phase}}{Optional selection of phases, can be from: tune, burn or sample}
 
-\item{\code{x_axis_type}}{how to format the x-axis. 1 = integer rungs, 2 = values of
-the thermodynamic power.}
+\item{\code{beta_axis}}{axis type, set to FALSE to plot rungs evenly spaced}
 }
 \if{html}{\out{</div>}}
 }
@@ -418,9 +428,16 @@ the thermodynamic power.}
 \subsection{Method \code{plot_tuning_rejection_rate()}}{
 Plots the cumulative rejection rate between rungs
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$plot_tuning_rejection_rate()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$plot_tuning_rejection_rate(beta_axis = TRUE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{beta_axis}}{axis type, set to FALSE to plot rungs evenly spaced}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-plot_local_communication_barrier"></a>}}
@@ -428,9 +445,16 @@ Plots the cumulative rejection rate between rungs
 \subsection{Method \code{plot_local_communication_barrier()}}{
 Plots the local communication barrier between rungs
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dj$plot_local_communication_barrier()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dj$plot_local_communication_barrier(beta_axis = TRUE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{beta_axis}}{axis type, set to FALSE to plot rungs evenly spaced}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-dj-clone"></a>}}

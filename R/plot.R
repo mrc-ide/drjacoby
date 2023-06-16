@@ -200,68 +200,101 @@ create_cor_mat_plot <- function(output_df, pars, chain, phase, param_names) {
   
 }
 
-create_mc_acceptance_plot <- function(rungs, beta, ar, x_axis_type) {
-  beta_mid <- beta_mid(beta)
+create_mc_acceptance_plot <- function(beta, ar, beta_axis) {
   
+  beta_mid <- beta_mid(beta)
+  breaks_vec <- beta
+  x_vec <- rev(beta_mid)
+  x_lab <- "coupling acceptance rate"
   # define x-axis type
-  if (x_axis_type == 1) {
+  if(!beta_axis) {
+    rungs <- length(beta)
     breaks_vec <- 1:rungs
     x_vec <- (2:rungs) - 0.5
     x_lab <- "rung"
-  } else {
-    breaks_vec <- beta
-    x_vec <- beta_mid
-    x_lab <- "beta"
   }
   
   # get data into ggplot format and define temperature colours
-  df <- data.frame(x_vec = x_vec, mc_accept = ar, col = beta_mid)
+  df <- data.frame(x = x_vec, mc_accept = ar, col = beta_mid)
   
   # produce plot
-  mc_ar_plot <- ggplot2::ggplot(data = df) + 
-    ggplot2::geom_vline(data = data.frame(x = breaks_vec), ggplot2::aes(xintercept = .data$x), col = "grey90") +
+ ggplot2::ggplot(data = df, ggplot2::aes(x = .data$x, y = .data$mc_accept, color = .data$col)) + 
+    ggplot2::geom_vline(xintercept = breaks_vec, col = "grey90") +
+    ggplot2::geom_point() + 
+    ggplot2::geom_line() +
     ggplot2::scale_y_continuous(limits = c(0,1), expand = c(0,0)) + 
-    ggplot2::geom_point(ggplot2::aes(x = .data$x_vec, y = .data$mc_accept, color = .data$col)) + 
     ggplot2::xlab(x_lab) + 
-    ggplot2::ylab("coupling acceptance rate") + 
+    ggplot2::ylab("Coupling acceptance rate") + 
     ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0,1)) +
     ggplot2::theme_bw() + 
     ggplot2::theme(panel.grid.minor.x = ggplot2::element_blank(),
-                   panel.grid.major.x = ggplot2::element_blank())
-  
-  return(mc_ar_plot)
+                   panel.grid.major.x = ggplot2::element_blank()) +
+    ggplot2::theme(
+      panel.grid.major.x = ggplot2::element_blank(),
+      panel.grid.minor.x = ggplot2::element_blank()
+    )
 }
 
-create_rejection_rate_plot <- function(beta, rejection_rate){
+create_rejection_rate_plot <- function(beta, rejection_rate, beta_axis){
   beta_mid <- beta_mid(beta)
+  breaks_vec <- beta
+  x_vec <- rev(beta_mid)
+  x_lab <- expression("Schedule" ~ (beta))
+  # define x-axis type
+  if(!beta_axis) {
+    rungs <- length(beta)
+    breaks_vec <- 1:rungs
+    x_vec <- (2:rungs) - 0.5
+    x_lab <- "rung"
+  }
   pd <- data.frame(
-    beta = rev(beta_mid),
+    x = x_vec,
+    col = rev(beta_mid),
     r = cumsum(rev(rejection_rate))
   )
-  ggplot2::ggplot(data = pd, ggplot2::aes(x = .data$beta, y = .data$r, col = .data$beta)) +
-    ggplot2::geom_vline(xintercept = beta, col = "grey90") +
+  ggplot2::ggplot(data = pd, ggplot2::aes(x = .data$x, y = .data$r, col = .data$col)) +
+    ggplot2::geom_vline(xintercept = breaks_vec, col = "grey90") +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
-    ggplot2::xlab(expression("Schedule" ~ (beta))) +
+    ggplot2::xlab(x_lab) +
     ggplot2::ylab(expression("Cumulative rejection rate" ~ (hat("r")))) + 
     ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0,1)) +
     ggplot2::ylim(0, NA) +
-    ggplot2::theme_bw()
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      panel.grid.major.x = ggplot2::element_blank(),
+      panel.grid.minor.x = ggplot2::element_blank()
+    )
 }
 
-create_local_communication_barrier_plot <- function(beta, rejection_rate){
+create_local_communication_barrier_plot <- function(beta, rejection_rate, beta_axis){
   beta_mid <- beta_mid(beta)
+  breaks_vec <- beta
+  x_vec <- rev(beta_mid)
+  x_lab <- expression("Schedule" ~ (beta))
+  # define x-axis type
+  if(!beta_axis) {
+    rungs <- length(beta)
+    breaks_vec <- 1:rungs
+    x_vec <- (2:rungs) - 0.5
+    x_lab <- "rung"
+  }
   pd <- data.frame(
-    beta = rev(beta_mid),
+    x = x_vec,
+    col = rev(beta_mid),
     r = rev(rejection_rate) / sum(rejection_rate)
   )
-  ggplot2::ggplot(data = pd, ggplot2::aes(x = .data$beta, y = .data$r, col = .data$beta)) +
-    ggplot2::geom_vline(xintercept = beta, col = "grey90") +
+  ggplot2::ggplot(data = pd, ggplot2::aes(x = .data$x, y = .data$r, col = .data$col)) +
+    ggplot2::geom_vline(xintercept = breaks_vec, col = "grey90") +
     ggplot2::geom_line() +
-    ggplot2::geom_point() +
-    ggplot2::xlab(expression("Schedule" ~ (beta))) +
+    ggplot2::geom_point(size = 2) +
+    ggplot2::xlab(x_lab) +
     ggplot2::ylab(expression("Local communication barrier " ~ over(lambda(beta), Lambda))) +
     ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0,1)) +
     ggplot2::ylim(0, NA) +
-    ggplot2::theme_bw()
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      panel.grid.major.x = ggplot2::element_blank(),
+      panel.grid.minor.x = ggplot2::element_blank()
+    )
 }

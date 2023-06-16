@@ -147,6 +147,12 @@ test_that("Chains = 1 Rungs = No, Functions = R", {
   expect_named(timing, c("seconds", "iterations_per_second"))
   expect_equal(sum(is.na(unlist(timing))), 0)
   
+  # Beta
+  beta <- mcmc$get_beta()
+  expect_type(beta, "list")
+  expect_equal(length(beta), 3)
+  expect_equal(sum(is.na(unlist(beta))), 0)
+  
   # Plot parameters
   p <- mcmc$plot_par(par = "mu")
   expect_type(p, "list")
@@ -439,6 +445,12 @@ test_that("Chains > 1 Rungs = No, Functions = R", {
   expect_named(timing, c("seconds", "iterations_per_second"))
   expect_equal(sum(is.na(unlist(timing))), 0)
   
+  # Beta
+  beta <- mcmc$get_beta()
+  expect_type(beta, "list")
+  expect_equal(length(beta), 3)
+  expect_equal(sum(is.na(unlist(beta))), 0)
+  
   # Plot parameters
   p <- mcmc$plot_par(par = "mu")
   expect_type(p, "list")
@@ -727,6 +739,12 @@ test_that("Chains = 1 Rungs = Yes, Functions = R", {
   expect_length(timing, 2)
   expect_named(timing, c("seconds", "iterations_per_second"))
   expect_equal(sum(is.na(unlist(timing))), 0)
+  
+  # Beta
+  beta <- mcmc$get_beta()
+  expect_type(beta, "list")
+  expect_equal(length(beta), 3)
+  expect_equal(sum(is.na(unlist(beta))), 0)
   
   # Plot parameters
   p <- mcmc$plot_par(par = "mu")
