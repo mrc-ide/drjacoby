@@ -232,6 +232,9 @@ dj <- R6::R6Class(
     #' @param target_acceptance Target acceptance rate
     #' @param silent print progress (boolean)
     tune = function(target_rung_acceptance = 0.5, n_rungs = 50, iterations = 1000, initial_beta = NULL, swap = 2L,  target_acceptance = 0.44,  silent = FALSE){
+      if(private$tune_called){
+        stop("Tune cannot be called more than once")
+      }
       if(private$burn_called | private$sample_called){
         stop("Cannot call tune after burn or sample have been called")
       }
@@ -306,7 +309,8 @@ dj <- R6::R6Class(
       tune_rejection_rate <- 1 - self$mc_acceptance_rate(
         phase = "tune"
       )$coupling_acceptance
-      if(any(tune_rejection_rate > 0.99)){
+      if(any(tune_rejection_rate > 0.95)){
+        print(tune_rejection_rate)
         stop("Tuning needs more rungs to achieve an accurate estimate of communication barrier")
       }
       private$lambda <-  sum(tune_rejection_rate)

@@ -205,7 +205,7 @@ create_mc_acceptance_plot <- function(beta, ar, beta_axis) {
   beta_mid <- beta_mid(beta)
   breaks_vec <- beta
   x_vec <- rev(beta_mid)
-  x_lab <- "coupling acceptance rate"
+  x_lab <- expression("Schedule" ~ (beta))
   # define x-axis type
   if(!beta_axis) {
     rungs <- length(beta)
@@ -215,17 +215,21 @@ create_mc_acceptance_plot <- function(beta, ar, beta_axis) {
   }
   
   # get data into ggplot format and define temperature colours
-  df <- data.frame(x = x_vec, mc_accept = ar, col = beta_mid)
+  df <- data.frame(
+    x = x_vec,
+    mc_accept = rev(ar),
+    col = rev(beta_mid)
+  )
   
   # produce plot
- ggplot2::ggplot(data = df, ggplot2::aes(x = .data$x, y = .data$mc_accept, color = .data$col)) + 
+  ggplot2::ggplot(data = df, ggplot2::aes(x = .data$x, y = .data$mc_accept, color = .data$col)) + 
     ggplot2::geom_vline(xintercept = breaks_vec, col = "grey90") +
     ggplot2::geom_point() + 
     ggplot2::geom_line() +
-    ggplot2::scale_y_continuous(limits = c(0,1), expand = c(0,0)) + 
+    ggplot2::scale_y_continuous(limits = c(0, 1), expand = c(0,0)) + 
     ggplot2::xlab(x_lab) + 
     ggplot2::ylab("Coupling acceptance rate") + 
-    ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0,1)) +
+    ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0, 1)) +
     ggplot2::theme_bw() + 
     ggplot2::theme(panel.grid.minor.x = ggplot2::element_blank(),
                    panel.grid.major.x = ggplot2::element_blank()) +
@@ -258,7 +262,7 @@ create_rejection_rate_plot <- function(beta, rejection_rate, beta_axis){
     ggplot2::geom_line() +
     ggplot2::xlab(x_lab) +
     ggplot2::ylab(expression("Cumulative rejection rate" ~ (hat("r")))) + 
-    ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0,1)) +
+    ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0, 1)) +
     ggplot2::ylim(0, NA) +
     ggplot2::theme_bw() +
     ggplot2::theme(
@@ -290,7 +294,7 @@ create_local_communication_barrier_plot <- function(beta, rejection_rate, beta_a
     ggplot2::geom_point(size = 2) +
     ggplot2::xlab(x_lab) +
     ggplot2::ylab(expression("Local communication barrier " ~ over(lambda(beta), Lambda))) +
-    ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0,1)) +
+    ggplot2::scale_colour_gradientn(colours = c("red", "blue"), name = "beta", limits = c(0, 1)) +
     ggplot2::ylim(0, NA) +
     ggplot2::theme_bw() +
     ggplot2::theme(
