@@ -92,9 +92,11 @@ gridExtra::grid.arrange(grobs = plot_list)
 
 Clearly this MCMC is not mixing well! By looking over all nine plots we can get a rough idea of what the distribution *should* look like, but no single MCMC run has captured it adequately. You can experiment with increasing the number of samples - you should get better results for more samples, but a *very* large number of samples are needed before we get good mixing between the left and right sides of the distribution.
 
-Parallel tempering is perfectly designed to solve this kind of problem. To activate parallel tempering, before running the burn-in or sampling we need to run a tuning phse (`$tune()`) to select the number and temperature for our rungs. Each rung represents a different MCMC chain arranged in a "temperature ladder", with the hotter chains being more free to  explore the parameter space. Every iteration, chains have the option of swapping parameter values between rungs, thereby allowing the freely-moving hot chains to propose values to the more constrained colder chains. When looking at the output, we tend to focus exclusively on the coldest chain which can be interpreted the same way as a single chain from regular MCMC.
+Parallel tempering is perfectly designed to solve this kind of problem. To run parallel tempering
+we set up a number of rungs. Each rung represents a different MCMC chain arranged in a "temperature ladder". Hotter chains being more free to explore the parameter space as the likelihood space has
+been "melted", making exploration easier. Parameter values can be swapped between rungs in a similar way as newly proposed parameters are accepted or rejected within an MCMC chain. This allows the freely-moving hot chains to propose values to the more constrained colder chains.
 
-In this example we use 20 rungs:
+To activate parallel tempering, before running the burn-in or sampling we need to run a tuning phase (`$tune()`) to select the number and temperature for our rungs. When looking at the output, we tend to focus exclusively on the coldest chain which can be interpreted the same way as a single chain from regular MCMC.
 
 ```{r, fig.width=5, fig.height=4}
 # run MCMC
@@ -105,7 +107,7 @@ mcmc <- dj$new(
   logprior = rung_logprior_cpp11,
   chains = 1
 )
-mcmc$tune(target_rung_acceptance = 0.5,iterations = 5000, silent = TRUE)
+mcmc$tune(target_rung_acceptance = 0.5, n_rungs = 50, iterations = 2000, silent = TRUE)
 mcmc$burn(iterations = 5000, silent = TRUE)
 mcmc$sample(iterations = 5000, silent = TRUE)
 
@@ -114,26 +116,27 @@ mcmc$plot_cor("alpha", "beta") +
   ggplot2::ylim(0, 10) + ggplot2::xlim(-10, 10) + ggplot2::theme(legend.position = "none")
 ```
 
-You should see a much better characterisation of the posterior distribution. The run time scales approximately linearly with the number of rungs, so there is a computational cost to using this method, but on the other hand our results are far better than we would obtain by simply increasing the number of samples by a factor of 20.
+You should see a much better characterisation of the posterior distribution. The run time scales approximately linearly with the number of rungs, so there is a computational cost to using this method, but on the other hand our results are far better than we would obtain by simply increasing the number of samples by the number of rungs.
 
 
 ## How many rungs to use?
 
 Parallel tempering in *drjacoby* works by proposing swaps between adjacent rungs in the temperature ladder, which are accepted or rejected according to the standard Metropolis-Hastings ratio. If, for example, a hot rung happens upon a set of parameter values that have high likelihood then there is a good chance these values will be swapped up to the next rung. In this way, information can effectively move its way from the prior (the hottest chain) to the posterior (the coldest chain). The average chance of a swap being accepted depends on the two adjacent rungs being similar enough in distribution that values drawn from one have a high likelihood in the other.
 
-The `$tune()` function works by selecting the number and temperature of rungs against a target rate. It first runs the mcmc for a short period with 
-a resonably high number of rungs, the default being 50. We can use the output from this phase to inform us how hard it is to traverse from the coldest
+The `$tune()` function works by selecting the number and temperature of rungs against a target rate. It first runs the MCMC for a short period with a reasonably high number of rungs. We can use the output from this phase to inform us how hard it is to traverse from the coldest
 rung to the hottest - we call this the local communication barrier. We can view the local communication barrier across all rungs:
 
 ```{r, fig.width=5, fig.height=4}
 mcmc$plot_local_communication_barrier()
 ```
 
-You can read this just like an elevation plot for a hike! Higher peaks are harder to traverse and indicate we may need to focus more rungs in that area
-so that they can communicate with each other. Using this, drjacoby automatically picks the number and temperatures of the rungs for the burn-in and sampling phases. We can view the acceptance rates of these rungs to check they are close to the target rung acceptance rate specified in the tuning phase (in this case it was 0.5):
+You can read this just like an elevation plot for a hike! Higher peaks are harder to traverse and indicate we may need to focus more rungs at those temperatures so that they can more easily communicate with each other. Using this, drjacoby automatically picks the number and temperatures of the rungs for the burn-in and sampling phases. We can view the acceptance rates of these rungs to check they are close to the target rung acceptance rate specified in the tuning phase (in this case it was 0.5):
 
 ```{r, fig.width=5, fig.height=4}
-mcmc$plot_mc_acceptance_rate()
+mcmc$plot_mc_acceptance_rate(beta_axis = FALSE)
 ```
 
 We can see that the acceptance rates are mostly ~0.5 all the way through our temperature ladder, and all >0 so we can be confident that the prior is "talking to" the posterior, making it *extremely unlikely* (but not impossible) that the MCMC is still missing large parts of the posterior distribution.
+
+In some cases you may already know the optimal rung schedule. In this instance you can skip the
+costly `$tune()` phase and instead, before running `$burn()` call `$set_beta()`.

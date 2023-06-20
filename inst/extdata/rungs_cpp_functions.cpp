@@ -14,7 +14,7 @@ double rung_loglike_cpp11(const doubles params, const list data, const list misc
   double epsilon = params["epsilon"];
   
   // sum log-likelihood over all data
-  double mean = alpha*alpha*beta + epsilon;
+  double mean = alpha * alpha * beta + epsilon;
   double ret = 0.0;
   for (int i = 0; i < x.size(); ++i) {
     ret += Rf_dnorm4(x[i], mean, 1.0, true);
