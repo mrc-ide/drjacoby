@@ -329,6 +329,8 @@ list mcmc(
         double rung_beta2 = beta[r - 1];
         double loglike1 = ll[r];
         double loglike2 = ll[r - 1];
+        double logprior1 = lp[r];
+        double logprior2 = lp[r - 1];
         
         double accept = (loglike2*rung_beta1 + loglike1*rung_beta2) - (loglike1*rung_beta1 + loglike2*rung_beta2);
         // accept or reject move
@@ -342,6 +344,8 @@ list mcmc(
           rung_index[r - 1] = ri1;
           ll[r] = loglike2;
           ll[r - 1] = loglike1;
+          lp[r] = logprior2;
+          lp[r - 1] = logprior1;
         }
       }
     }
@@ -352,6 +356,8 @@ list mcmc(
         double rung_beta2 = beta[r - 1];
         double loglike1 = ll[r];
         double loglike2 = ll[r - 1];
+        double logprior1 = lp[r];
+        double logprior2 = lp[r - 1];
         
         double accept = (loglike2*rung_beta1 + loglike1*rung_beta2) - (loglike1*rung_beta1 + loglike2*rung_beta2);
         // accept or reject move
@@ -364,6 +370,8 @@ list mcmc(
           rung_index[r - 1] = ri1;
           ll[r] = loglike2;
           ll[r - 1] = loglike1;
+          lp[r] = logprior2;
+          lp[r - 1] = logprior1;
         }
       }
     }
