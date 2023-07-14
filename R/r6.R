@@ -252,6 +252,7 @@ dj <- R6::R6Class(
       private$rungs[[phase]] <- length(private$beta[[phase]])
       
       private$swap <- swap
+      
       private$target_acceptance <- target_acceptance
       private$target_rung_acceptance <- target_rung_acceptance
       
@@ -323,7 +324,8 @@ dj <- R6::R6Class(
         lambda = private$lambda
       )
       
-      self$set_beta(new_beta)
+      self$set_beta(new_beta, private$swap)
+     
       # Best-guess to inform starting proposal_sd by matching new beta to closest tuning beta
       ic <- index_closest(new_beta, private$beta[[phase]])
       for(i in 1:private$chains){
@@ -502,7 +504,7 @@ dj <- R6::R6Class(
       }
     },
     
-    set_beta = function(beta, swap = 2L){
+    set_beta = function(beta, swap){
       if(private$burn_called){
         stop("Can't set beta after burn has been called")
       }
