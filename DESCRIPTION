@@ -21,15 +21,12 @@ Imports:
     coda,
     parallel,
     ggplot2,
-    RcppXPtrUtils,
     usethis,
     tools,
     rlang,
     cowplot,
     dplyr,
-    magrittr,
-    readr,
-    data.table
+    magrittr
 SystemRequirements: C++11
 Suggests: 
     testthat,
