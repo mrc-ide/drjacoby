@@ -9,3 +9,4 @@ ignore/
 test_scripts/
 /doc/
 /Meta/
+.DS_Store
