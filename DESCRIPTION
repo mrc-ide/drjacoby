@@ -27,7 +27,6 @@ Imports:
     cowplot,
     dplyr,
     magrittr
-SystemRequirements: C++11
 Suggests: 
     testthat,
     covr,
