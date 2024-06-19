@@ -12,3 +12,4 @@ R_ignore/
 ^\.github$
 ^README\.Rmd$
 test_scripts/
+LICENSE.md
