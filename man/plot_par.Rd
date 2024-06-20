@@ -29,7 +29,7 @@ matching hide will be hidden.}
 \item{downsample}{boolean. Whether to downsample chain to make plotting more
 efficient.}
 
-\item{phase}{which phase to plot. Must be either "burnin" or "sampling".}
+\item{phase}{which phase to plot. Must be either "burnin", "sampling" or "both".}
 
 \item{chain}{which chain to plot.}
 
