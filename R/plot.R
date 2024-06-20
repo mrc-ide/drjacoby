@@ -250,6 +250,7 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #' @param lag maximum lag. Must be an integer between 1 and 500.
 #' @param downsample boolean. Whether to downsample chain to make plotting more
 #'   efficient.
+#' @param phase which phase to plot. Must be either "burnin", "sampling" or "both".
 #' @param display boolean. Whether to show plots, if \code{FALSE} then plotting
 #'   objects are returned without displaying.
 #'

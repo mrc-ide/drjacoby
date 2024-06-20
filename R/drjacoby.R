@@ -4,7 +4,7 @@
 #' @description Flexible Markov chain monte carlo via reparameterization using
 #'   the Jacobean matrix.
 #'
-#' @docType package
+#' _PACKAGE
 #' @name drjacoby
 NULL
 
