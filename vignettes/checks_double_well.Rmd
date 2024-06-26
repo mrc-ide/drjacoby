@@ -66,7 +66,7 @@ mcmc <- run_mcmc(data = list(x = -1),
 
 ```{r}
 # trace plot
-plot_par(mcmc, show = "mu")
+plot_trace(mcmc, show = "mu")
 ```
 
 ```{r}
@@ -102,7 +102,7 @@ mcmc <- run_mcmc(data = list(x = -1),
 
 ```{r, fig.width=6, fig.height=5}
 # trace plot
-plot_par(mcmc, show = "mu")
+plot_trace(mcmc, show = "mu")
 
 # coupling acceptance plot
 plot_mc_acceptance(mcmc)

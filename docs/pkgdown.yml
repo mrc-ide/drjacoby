@@ -1,5 +1,5 @@
-pandoc: 2.11.4
-pkgdown: 1.6.1
+pandoc: 3.1.11
+pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
   blocks: blocks.html
@@ -12,5 +12,5 @@ articles:
   installation: installation.html
   metropolis_coupling: metropolis_coupling.html
   parallel: parallel.html
-last_built: 2021-12-16T09:33Z
+last_built: 2024-06-26T00:19Z
 
