@@ -46,7 +46,7 @@ plot(population_data$time, population_data$pop, ylim = c(0, 120), pch = 20,
      xlab = "Time (days)", ylab = "Population size")
 ```
 
-For our model we will assume a discrete-time logistic growth model, in which the population starts at size $N_0$ and grows at a rate $r$ each timestep, but also experiences density-dependent death causing it to plateau out a maximum population size $N_{max}$. If we use $N_t$ to denote the population size at time $t$ then we can write this model as follows:
+For our model we will assume a discrete-time logistic growth model, in which the population starts at size $N_0$ and grows at a rate $r$ each timestep, but also experiences density-dependent death causing it to plateau out at a maximum population size $N_{max}$. If we use $N_t$ to denote the population size at time $t$ then we can write this model as follows:
 
 $$
 \begin{align}
@@ -54,7 +54,7 @@ $$
 \end{align}
 $$
 
-There are three parameters in this model, and so our parameters dataframe should contain the three with suitable ranges as follows:
+There are three parameters in this model, and so our parameters dataframe should contain the three variables with suitable ranges as follows:
 
 ```{r}
 # define parameters dataframe
@@ -98,7 +98,9 @@ loglike <- function(params, data, misc) {
 
 # define R logprior function
 logprior <- function(params, misc) {
-  return(0)
+  dunif(params["N_0"], 1, 100, log = TRUE) +
+    dunif(params["r"], 1, 2, log = TRUE) +
+    dunif(params["N_max"], 50, 200, log = TRUE)
 }
 ```
 
@@ -117,7 +119,7 @@ mcmc <- run_mcmc(data = population_data,
                  pb_markdown = TRUE)
 ```
 
-Once we have MCMC output we should perform our usual checks to make sure that everything has converged nicely. Assuming everything is OK, we can move on to exploring model fits. We will do this by running the same likelihood function but with `misc$output_type = 2`, using the posterior parameter draws as inputs. We may not want to use every posterior parameter draw, in which case we can use the `sample_chains()` function to sub-sample the output down as needed:
+Once we have MCMC output we should perform our usual checks to make sure that everything has converged nicely (we will skip this step here in the interest of time). Assuming everything is OK, we can move on to exploring model fits. We will do this by running the same likelihood function but with `misc$output_type = 2`, using the posterior parameter draws as inputs. We may not want to use every posterior parameter draw, in which case we can use the `sample_chains()` function to sub-sample the output down as needed:
 
 ```{r}
 # sample from posterior

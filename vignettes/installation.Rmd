@@ -26,11 +26,25 @@ knitr::opts_chunk$set(
     - Download and install [XCode](http://itunes.apple.com/us/app/xcode/id497799835?mt=12)
     - Within XCode go to Preferences : Downloads and install the Command Line Tools
 * Linux (Debian/Ubuntu)
-    - Install the core software development utilities required for R package development as well as LaTeX by executing
+    - Install g++ with
     
         ```{}
-        sudo apt-get install r-base-dev texlive-full
+        sudo apt-get update
+        sudo apt-get install g++
         ```
+
+Irrespective of which system you use above, you should then install and load Rcpp with
+
+```{r, eval = FALSE}
+install.packages("Rcpp")
+library(Rcpp)
+```
+
+You can check the version number to make sure it has properly installed
+```{r, eval = FALSE}
+packageVersion("Rcpp")
+```
+
 
 ## Installing and loading *drjacoby*
 

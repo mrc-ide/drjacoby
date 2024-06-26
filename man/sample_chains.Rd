@@ -2,18 +2,21 @@
 % Please edit documentation in R/samples.R
 \name{sample_chains}
 \alias{sample_chains}
-\title{Sample N draws from all available chains}
+\title{Sample posterior draws from all available chains}
 \usage{
-sample_chains(x, sample_n)
+sample_chains(x, sample_n, keep_chain_index = FALSE)
 }
 \arguments{
-\item{x}{an object of class \code{drjacoby_output}}
+\item{x}{an object of class \code{drjacoby_output}.}
 
-\item{sample_n}{An integer number of samples}
+\item{sample_n}{An integer number of samples.}
+
+\item{keep_chain_index}{if \code{TRUE} then the column giving the chain is
+retained.}
 }
 \value{
 A data.frame of posterior samples
 }
 \description{
-Sample N draws from all available chains
+Sample posterior draws from all available chains
 }

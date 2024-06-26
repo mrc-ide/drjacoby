@@ -415,32 +415,32 @@ run_mcmc <- function(data,
   rung_names <- 1:rungs
   param_names <- df_params$name
   
-  # get parameter draws into dataframe. This will be over all rungs if
+  # get parameter draws into data.frame. This will be over all rungs if
   # save_hot_draws is TRUE, otherwise it will only be over the cold chain
   df_theta <- do.call(rbind, mapply(function(j) {
     do.call(rbind, mapply(function(i) {
       
-      theta_burnin <- do.call(rbind, output_raw[[j]]$theta_burnin[[i]]) %>%
-        as.data.frame() %>%
-        magrittr::set_colnames(param_names) %>%
-        dplyr::mutate(chain = chain_names[j],
-                      rung = rung_names[i],
-                      phase = "burnin", .before = 1)
+      theta_burnin <- do.call(rbind, output_raw[[j]]$theta_burnin[[i]]) |>
+        as.data.frame() |>
+        setNames(param_names) |>
+        mutate(chain = chain_names[j],
+               rung = rung_names[i],
+               phase = "burnin", .before = 1)
       
-      theta_sampling <- do.call(rbind, output_raw[[j]]$theta_sampling[[i]]) %>%
-        as.data.frame() %>%
-        magrittr::set_colnames(param_names) %>%
-        dplyr::mutate(chain = chain_names[j],
-                      rung = rung_names[i],
-                      phase = "sampling", .before = 1)
+      theta_sampling <- do.call(rbind, output_raw[[j]]$theta_sampling[[i]]) |>
+        as.data.frame() |>
+        setNames(param_names) |>
+        mutate(chain = chain_names[j],
+               rung = rung_names[i],
+               phase = "sampling", .before = 1)
       
-      ret <- theta_burnin %>%
-        dplyr::bind_rows(theta_sampling) %>%
-        dplyr::mutate(iteration = seq_along(phase), .after = "phase")
+      ret <- theta_burnin |>
+        bind_rows(theta_sampling) |>
+        mutate(iteration = row_number(), .after = "phase")
       
       return(ret)
-    }, seq_along(output_raw[[j]]$theta_burnin), SIMPLIFY = FALSE))
-  }, seq_along(output_raw), SIMPLIFY = FALSE))
+    }, seq_len(ifelse(save_hot_draws, rungs, 1)), SIMPLIFY = FALSE))
+  }, seq_len(chains), SIMPLIFY = FALSE))
   
   # fix rungs field if save_hot_draws is FALSE
   if (!save_hot_draws) {
@@ -463,22 +463,22 @@ run_mcmc <- function(data,
                                 logprior = output_raw[[j]]$logprior_sampling[[i]],
                                 loglikelihood = output_raw[[j]]$loglike_sampling[[i]])
       
-      ret <- pt_burnin %>%
-        dplyr::bind_rows(pt_sampling) %>%
-        dplyr::mutate(iteration = seq_along(phase), .after = "phase")
+      ret <- pt_burnin |>
+        bind_rows(pt_sampling) |>
+        mutate(iteration = row_number(), .after = "phase")
       
       return(ret)
-    }, seq_along(output_raw[[j]]$logprior_burnin), SIMPLIFY = FALSE))
-  }, seq_along(output_raw), SIMPLIFY = FALSE))
+    }, seq_len(rungs), SIMPLIFY = FALSE))
+  }, seq_len(chains), SIMPLIFY = FALSE))
   
   # merge loglike and logprior for cold chain into main output
   df_theta <- df_theta %>%
-    dplyr::left_join(df_pt, by = c("chain", "rung", "phase", "iteration"))
+    left_join(df_pt, by = c("chain", "rung", "phase", "iteration"))
   
   # if save_hot_draws = TRUE then merge theta values back into pt output
   if (save_hot_draws) {
     df_pt <- df_pt %>%
-      dplyr::left_join(dplyr::select(df_theta, -.data$loglikelihood, -.data$logprior), by = c("chain", "rung", "phase", "iteration"))
+      left_join(dplyr::select(df_theta, -.data$loglikelihood, -.data$logprior), by = c("chain", "rung", "phase", "iteration"))
   }
   
   # drop rungs field from main output

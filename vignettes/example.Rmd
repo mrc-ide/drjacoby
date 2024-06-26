@@ -139,11 +139,11 @@ We can see that both `mu` and `sigma` changed values throughout the burn-in peri
 
 ## Exploring outputs and checking MCMC performance
 
-Before we can draw any conclusions from our MCMC results there are some basic checks that we should carry out. First, we can examine trace plots of all parameters to see how they are moving. This can be done using the `plot_par()` function, shown here for the burn-in phase:
+Before we can draw any conclusions from our MCMC results there are some basic checks that we should carry out. First, we can examine trace plots of all parameters to see how they are moving. This can be done using the `plot_trace()` function, shown here for the burn-in phase:
 
 ```{r, fig.width=8, fig.height=4}
-plot_par(mcmc, show = "mu", phase = "burnin")
-plot_par(mcmc, show = "sigma", phase = "burnin")
+plot_trace(mcmc, show = "mu", phase = "burnin")
+plot_trace(mcmc, show = "sigma", phase = "burnin")
 ```
 
 Notice that for all five chains both `mu` and `sigma` move quickly from their initial values to stable levels at around 3 and 2, respectively. This is a visual indication that the MCMC has burned in for an appropriate number of iterations. We can check this more rigorously by looking at the `rhat` object within the MCMC diagnostics, which gives the value of the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-4/topics/gelman.diag).
@@ -157,8 +157,8 @@ Values close to 1 indicate that the MCMC has converged (typically the threshold 
 By setting `phase = "sampling"` we can look at trace plots from the sampling phase only:
 
 ```{r, fig.width=8, fig.height=4}
-plot_par(mcmc, show = "mu", phase = "sampling")
-plot_par(mcmc, show = "sigma", phase = "sampling")
+plot_trace(mcmc, show = "mu", phase = "sampling")
+plot_trace(mcmc, show = "sigma", phase = "sampling")
 ```
 
 Here we can see that the MCMC continues to move freely after the burn-in phase, and that all chains appear to be exploring the same part of the parameter space. The final plot shows the autocorrelation of the chains, which in this case falls off rapidly with samples being approximately independent at around 10 lags. This is an indication that the MCMC is mixing well. The marginal histogram shows a single clear peak, although this is still a bit rough so we may want to re-run the MCMC with a larger number of sampling iterations to get a smoother result. We can also explore this by looking at the effective sample size (ESS), which is stored within the MCMC diagnostics:
@@ -167,7 +167,7 @@ Here we can see that the MCMC continues to move freely after the burn-in phase, 
 mcmc$diagnostics$ess
 ```
 
-We can see that despite running the MCMC for 1000 sampling iterations, the actual number of effectively independent samples accounting for autocorrelation is lower. When doing any calculation that relies on the number of samples we should use the ESS rather than the raw number of sampling iterations. For example if we want to know the standard error of our estimate of `mu` we should do `sd(mu)/sqrt(ESS)`. But just as importantly, when producing any summary of the posterior that does not make direct use of the number of samples - for example when producing posterior histograms - we should *use all posterior draws*, and we should [not thin samples](https://doi.org/10.1111/j.2041-210X.2011.00131.x) to reduce autocorrelation. This is because a histogram produced from all samples is more accurate than one produced from thinned samples, even if the samples are autocorrelated.
+We can see that despite running the MCMC for 1000 sampling iterations over 5 chains (5000 in total), the actual number of effectively independent samples accounting for autocorrelation is lower. When doing any calculation that relies on the number of samples we should use the ESS rather than the raw number of sampling iterations. For example if we want to know the standard error of our estimate of `mu` we should do `sd(mu)/sqrt(ESS)`. But just as importantly, when producing any summary of the posterior that does not make direct use of the number of samples - for example when producing posterior histograms - we should *use all posterior draws*, and we should [not thin samples](https://doi.org/10.1111/j.2041-210X.2011.00131.x) to reduce autocorrelation. This is because a histogram produced from all samples is more accurate than one produced from thinned samples, even if the samples are autocorrelated.
 
 The final question is how confident can we be that our MCMC has actually explored the space well? Although the trace plot above looks good, it is possible to get results that look like this from very pathological MCMC runs. This is a more complex problem that is dealt with in [another vignette](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html).
 

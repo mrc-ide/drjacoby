@@ -235,7 +235,7 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 }
 
 #------------------------------------------------
-#' @title Plot parameter estimates
+#' @title Plot parameter trace
 #'
 #' @description Produce a series of plots corresponding to each parameter,
 #'   including the raw trace, the posterior histogram and an autocorrelation
@@ -256,9 +256,9 @@ plot_autocorrelation <- function(x, lag = 20, par = NULL, chain = 1, phase = "sa
 #'
 #' @export
 
-plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
-                     downsample = TRUE, phase = "sampling",
-                     chain = NULL, display = TRUE) {
+plot_trace <- function(x, show = NULL, hide = NULL, lag = 20,
+                       downsample = TRUE, phase = "sampling",
+                       chain = NULL, display = TRUE) {
   
   # check inputs and define defaults
   assert_class(x, "drjacoby_output")
@@ -373,20 +373,21 @@ plot_par <- function(x, show = NULL, hide = NULL, lag = 20,
 }
 
 #------------------------------------------------
-#' @title Plot parameter correlation
+#' @title Produce bivariate scatterplot
 #'
-#' @description Plots correlation between two parameters
+#' @description Produces scatterplot between two named parameters.
 #'
 #' @inheritParams plot_rung_loglike
 #' @param parameter1 name of parameter first parameter.
 #' @param parameter2 name of parameter second parameter.
-#' @param downsample whether to downsample output to speed up plotting.
+#' @param downsample whether to downsample output to 200 values max to speed up
+#'   plotting.
 #'
 #' @export
 
-plot_cor <- function(x, parameter1, parameter2,
-                     downsample = TRUE, phase = "sampling",
-                     chain = NULL) {
+plot_scatter <- function(x, parameter1, parameter2,
+                         downsample = TRUE, phase = "sampling",
+                         chain = NULL) {
 
   # check inputs
   assert_class(x, "drjacoby_output")
@@ -551,4 +552,41 @@ plot_cor_mat <- function(x, show = NULL, phase = "sampling", param_names = NULL)
                                   name = "correlation") +
     ggplot2::xlab("") + ggplot2::ylab("")
   
+}
+
+#------------------------------------------------
+#' @title Produce scatterplots between multiple parameters
+#'
+#' @description Uses \code{ggpairs} function from the \code{GGally} package to
+#'   produce scatterplots between all named parameters.
+#'
+#' @inheritParams plot_trace
+#'
+#' @importFrom GGally ggpairs wrap 
+#' @export
+plot_pairs <- function(x, show = NULL, hide = NULL) {
+  
+  # avoid "no visible binding" note
+  chain <- NULL
+  
+  # subsample posterior draws
+  param_draws <- sample_chains(x, sample_n = 1e3, keep_chain_index = TRUE)
+  
+  # get parameter names and apply show and hide conditions
+  param_names <- setdiff(names(param_draws), c("chain", "sample"))
+  if (!is.null(show)) {
+    param_names <- intersect(param_names, show)
+  }
+  if (!is.null(hide)) {
+    param_names <- setdiff(param_names, hide)
+  }
+  if (length(param_names) == 0) {
+    stop("no parameters remaining after applying show and hide")
+  }
+  
+  # produce plot
+  param_draws |>
+    ggpairs(aes(col = as.factor(chain)),
+            columns = param_names,
+            lower = list(continuous = wrap("points", size = 0.5))) + theme_bw()
 }

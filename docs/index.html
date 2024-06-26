@@ -6,22 +6,21 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flexible Markov Chain Monte Carlo via Reparameterization • drjacoby</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="Flexible Markov Chain Monte Carlo via Reparameterization">
-<meta property="og:description" content="drjacoby is an R package for performing Bayesian inference via
-    Markov chain monte carlo (MCMC). In addition to being highly flexible it
-    implements some advanced techniques that can improve mixing in tricky
-    situations.">
+<meta property="og:description" content="drjacoby is an R package for performing Bayesian inference via Markov chain monte carlo (MCMC). In addition to being highly flexible it implements some advanced techniques that can improve mixing in tricky situations.">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -34,14 +33,14 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.5.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.5.4</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Vignettes
      
     <span class="caret"></span>
@@ -68,7 +67,7 @@
   </ul>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Checks
      
     <span class="caret"></span>
@@ -94,7 +93,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/mrc-ide/drjacoby">
+  <a href="https://github.com/mrc-ide/drjacoby" class="external-link">
     <span class="fa fa-github"></span>
      
   </a>
@@ -114,7 +113,7 @@
 
 <p style="font-size:50px">
 Dr. Jacoby <img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/R_ignore/images/logo3.png" height="120px" width="100px" align="right"></p>
-<p><a href="https://github.com/mrc-ide/drjacoby/actions"><img src="https://github.com/mrc-ide/drjacoby/workflows/master_build/badge.svg" alt="master build"></a> <a href="https://github.com/mrc-ide/drjacoby/actions"><img src="https://github.com/mrc-ide/drjacoby/workflows/develop_build/badge.svg" alt="develop build"></a> <a href="https://codecov.io/github/mrc-ide/drjacoby?branch=master"><img src="https://codecov.io/gh/mrc-ide/drjacoby/branch/master/graph/badge.svg" alt="Coverage status"></a></p>
+<p><a href="https://github.com/mrc-ide/drjacoby/actions" class="external-link"><img src="https://github.com/mrc-ide/drjacoby/workflows/master_build/badge.svg" alt="master build"></a> <a href="https://github.com/mrc-ide/drjacoby/actions" class="external-link"><img src="https://github.com/mrc-ide/drjacoby/workflows/develop_build/badge.svg" alt="develop build"></a> <a href="https://codecov.io/github/mrc-ide/drjacoby?branch=master" class="external-link"><img src="https://codecov.io/gh/mrc-ide/drjacoby/branch/master/graph/badge.svg" alt="Coverage status"></a></p>
 <p><br></p>
 <p><em>drjacoby</em> is a package for running flexible Markov chain Monte Carlo (MCMC) with minimal fiddling required by the user. The likelihood and the priors that go into the model can be written as either R or C++ functions, with the latter typically being much faster to run. Outputs are produced in a standardised format, and can be explored using a range of built in diagnostic plots and statistics.</p>
 <p style="text-align:center;">
@@ -122,47 +121,58 @@ Dr. Jacoby <img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/
 <p style="text-align:center;">
 <em>drjacoby</em> uses parallel tempering to “melt” the target distribution, <br>thereby allowing information to pass between well-separated peaks.
 </p>
-<p>There are many MCMC programs out there, including more far-reaching programs such as <a href="https://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/">WinBUGS</a>, <a href="http://mcmc-jags.sourceforge.net/">JAGS</a>, <a href="https://cran.r-project.org/web/packages/greta/vignettes/get_started.html">greta</a>, <a href="https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html">STAN</a>, and many more. These programs contain a wide variety of options for specifying complex models, and often run different flavours of MCMC such as Hamiltonian Monte Carlo (HMC). In contrast, <em>drjacoby</em> is tailored to a specific type of MCMC problem: those that <strong>mix poorly due to highly correlated and/or multi-modal posteriors</strong>, which can occur in both simple and complex models. If the posterior is particularly peaky then even methods like HMC may fail, meaning (unfortunately) no amount of STAN iterations will get us to the right answer. There are techniques available for dealing with this sort of problem, but they tend to be fairly advanced and tricky to implement. The aim of <em>drjacoby</em> is to bring these methods within reach of a non-specialist MCMC user, so that reliable results can be obtained without the need to code a custom MCMC program from scratch.</p>
-<p>After <a href="https://mrc-ide.github.io/drjacoby/articles/installation.html">installing</a> <em>drjacoby</em>, please take at look at the first <a href="https://mrc-ide.github.io/drjacoby/articles/example.html">example application</a> to get up and running.</p>
+<p>There are many MCMC programs out there, including more far-reaching programs such as <a href="https://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/" class="external-link">WinBUGS</a>, <a href="http://mcmc-jags.sourceforge.net/" class="external-link">JAGS</a>, <a href="https://cran.r-project.org/web/packages/greta/vignettes/get_started.html" class="external-link">greta</a>, <a href="https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html" class="external-link">STAN</a>, and many more. These programs contain a wide variety of options for specifying complex models, and often run different flavours of MCMC such as Hamiltonian Monte Carlo (HMC). In contrast, <em>drjacoby</em> is tailored to a specific type of MCMC problem: those that <strong>mix poorly due to highly correlated and/or multi-modal posteriors</strong>, which can occur in both simple and complex models. If the posterior is particularly peaky then even methods like HMC may fail, meaning (unfortunately) no amount of STAN iterations will get us to the right answer. There are techniques available for dealing with this sort of problem, but they tend to be fairly advanced and tricky to implement. The aim of <em>drjacoby</em> is to bring these methods within reach of a non-specialist MCMC user, so that reliable results can be obtained without the need to code a custom MCMC program from scratch.</p>
+<p>After <a href="https://mrc-ide.github.io/drjacoby/articles/installation.html" class="external-link">installing</a> <em>drjacoby</em>, please take at look at the first <a href="https://mrc-ide.github.io/drjacoby/articles/example.html" class="external-link">example application</a> to get up and running.</p>
 
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Browse source code at <br><a href="https://github.com/mrc-ide/drjacoby/">https://​github.com/​mrc-ide/​drjacoby/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/mrc-ide/drjacoby/issues">https://​github.com/​mrc-ide/​drjacoby/​issues</a>
-</li>
+<li><a href="https://github.com/mrc-ide/drjacoby/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/mrc-ide/drjacoby/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li>
-<a href="https://opensource.org/licenses/mit-license.php">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
-</li>
+<li><a href="LICENSE.html">Full license</a></li>
+<li><small><a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a></small></li>
 </ul>
 </div>
+
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing drjacoby</a></li>
+</ul>
+</div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Bob Verity <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Pete Winskill <br><small class="roles"> Author </small>  </li>
 </ul>
 </div>
 
+
+
   </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Bob Verity, Pete Winskill.</p>
+  <p></p>
+<p>Developed by Bob Verity, Pete Winskill.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
 </div>
 
       </footer>
@@ -170,6 +180,8 @@ Dr. Jacoby <img src="https://raw.githubusercontent.com/mrc-ide/drjacoby/master/
 
   
 
+
+  
 
   </body>
 </html>
