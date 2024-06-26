@@ -45,3 +45,5 @@ mcmc <- run_mcmc(data = list(x = x),
                  samples = 1e3)
 
 plot_trace(mcmc, show = "mu", phase = "burnin")
+
+plot_density(mcmc)

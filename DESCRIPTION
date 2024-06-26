@@ -27,7 +27,8 @@ Imports:
     cowplot,
     dplyr,
     magrittr,
-    GGally
+    GGally,
+    tidyr
 Suggests: 
     testthat,
     covr,

@@ -566,6 +566,9 @@ plot_cor_mat <- function(x, show = NULL, phase = "sampling", param_names = NULL)
 #' @export
 plot_pairs <- function(x, show = NULL, hide = NULL) {
   
+  # check inputs
+  assert_class(x, "drjacoby_output")
+  
   # avoid "no visible binding" note
   chain <- NULL
   
@@ -575,9 +578,11 @@ plot_pairs <- function(x, show = NULL, hide = NULL) {
   # get parameter names and apply show and hide conditions
   param_names <- setdiff(names(param_draws), c("chain", "sample"))
   if (!is.null(show)) {
+    assert_string(show)
     param_names <- intersect(param_names, show)
   }
   if (!is.null(hide)) {
+    assert_string(hide)
     param_names <- setdiff(param_names, hide)
   }
   if (length(param_names) == 0) {
@@ -589,4 +594,49 @@ plot_pairs <- function(x, show = NULL, hide = NULL) {
     ggpairs(aes(col = as.factor(chain)),
             columns = param_names,
             lower = list(continuous = wrap("points", size = 0.5))) + theme_bw()
+}
+
+#------------------------------------------------
+#' @title Produce density plots
+#'
+#' @description Density plots of all parameters. Use \code{show} and \code{hide}
+#'   to be more specific about which parameters to plot.
+#'
+#' @inheritParams plot_trace
+#'
+#' @importFrom tidyr pivot_longer
+#' @export
+plot_density <- function(x, show = NULL, hide = NULL) {
+  
+  # avoid "no visible binding" notes
+  value <- NULL
+  
+  # check inputs
+  assert_class(x, "drjacoby_output")
+  
+  # subsample posterior draws
+  param_draws <- sample_chains(x, sample_n = 1e3, keep_chain_index = FALSE)
+  
+  # get parameter names and apply show and hide conditions
+  param_names <- setdiff(names(param_draws), c("chain", "sample"))
+  if (!is.null(show)) {
+    assert_string(show)
+    param_names <- intersect(param_names, show)
+  }
+  if (!is.null(hide)) {
+    assert_string(hide)
+    param_names <- setdiff(param_names, hide)
+  }
+  if (length(param_names) == 0) {
+    stop("no parameters remaining after applying show and hide")
+  }
+  
+  # produce plot
+  param_draws |>
+    select(all_of(param_names)) |>
+    pivot_longer(cols = everything()) |>
+    ggplot(aes(x = value)) + theme_bw() +
+    geom_density(fill = "blue", alpha = 0.5) +
+    facet_wrap(~name, scales = "free") +
+    xlab("Parameter value") + ylab("Probability density")
 }
