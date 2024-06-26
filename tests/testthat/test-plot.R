@@ -40,13 +40,13 @@ test_that("plots do not produce errors", {
   expect_silent(plot_mc_acceptance(mcmc_out, chain = 1))
   expect_silent(plot_mc_acceptance(mcmc_out, x_axis_type = 2))
   
-  expect_silent(plot_par(mcmc_out, display = FALSE))
-  expect_silent(plot_par(mcmc_out, show = "mu", display = FALSE))
-  expect_silent(plot_par(mcmc_out, hide = "mu", display = FALSE))
-  expect_silent(plot_par(mcmc_out, phase = "both", display = FALSE))
+  expect_silent(plot_trace(mcmc_out, display = FALSE))
+  expect_silent(plot_trace(mcmc_out, show = "mu", display = FALSE))
+  expect_silent(plot_trace(mcmc_out, hide = "mu", display = FALSE))
+  expect_silent(plot_trace(mcmc_out, phase = "both", display = FALSE))
   
-  expect_silent(plot_cor(mcmc_out, parameter1 = "mu", parameter2 = "sigma"))
-  expect_silent(plot_cor(mcmc_out, parameter1 = "mu", parameter2 = "sigma", phase = "both"))
+  expect_silent(plot_scatter(mcmc_out, parameter1 = "mu", parameter2 = "sigma"))
+  expect_silent(plot_scatter(mcmc_out, parameter1 = "mu", parameter2 = "sigma", phase = "both"))
   
   expect_silent(plot_cor_mat(mcmc_out))
   expect_silent(plot_cor_mat(mcmc_out, show = c("mu", "sigma")))

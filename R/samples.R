@@ -9,32 +9,38 @@ quantile_95 <- function(x) {
 }
 
 #------------------------------------------------
-#' Sample N draws from all available chains
+#' Sample posterior draws from all available chains
 #'
-#' @param x an object of class \code{drjacoby_output}
-#' @param sample_n An integer number of samples
+#' @param x an object of class \code{drjacoby_output}.
+#' @param sample_n An integer number of samples.
+#' @param keep_chain_index if \code{TRUE} then the column giving the chain is
+#'   retained.
 #'
 #' @return A data.frame of posterior samples
 #' @export
-sample_chains <- function(x, sample_n) {
+sample_chains <- function(x, sample_n, keep_chain_index = FALSE) {
+  
+  # avoid "no visible binding" note
+  phase <- chain <- iteration <- logprior <- loglikelihood <- NULL
   
   # check inputs
   assert_class(x, "drjacoby_output")
   assert_pos_int(sample_n, zero_allowed = FALSE)
+  assert_single_logical(keep_chain_index)
   
-  # Join chains
-  all_chains <- dplyr::filter(x$output, .data$phase == "sampling") %>%
-    dplyr::select(-.data$chain, -.data$iteration, -.data$phase, -.data$logprior, -.data$loglikelihood)
-  assert_leq(sample_n, nrow(all_chains))
+  # join chains
+  all_chains <- x$output |>
+    filter(phase == "sampling") |>
+    select(-c(iteration, phase, logprior, loglikelihood))
+  if (!keep_chain_index) {
+    all_chains <- all_chains |>
+      select(-chain)
+  }
+  assert_leq(sample_n, nrow(all_chains), message = sprintf("sample_n cannot exceed the total number of samples over all chains (%s)", nrow(all_chains)))
   
-  # Sample chains
+  # sample chains
   sampled_chains <- all_chains[seq.int(1, nrow(all_chains), length.out = sample_n),, drop = FALSE]
   sampled_chains$sample <- 1:nrow(sampled_chains)
-  
-  # ESS
-  ess_est_sampled <- round(apply(sampled_chains[,1:(ncol(sampled_chains) - 1), drop = FALSE], 2, coda::effectiveSize))
-  message("Effective sample size of sample has range: ", min(ess_est_sampled),
-          " to ", max(ess_est_sampled), ". See function ess to estimate.")
   
   return(sampled_chains)
 }

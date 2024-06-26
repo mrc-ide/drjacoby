@@ -67,14 +67,14 @@ mcmc <- run_mcmc(data = data_list,
                  pb_markdown = TRUE)
 ```
 
-When we look at our MCMC output (using the `plot_par()` function) we can see that there are 2 chains, each of which contains a series of draws from the posterior. If we used multiple [temperature rungs](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) then these would also be duplicated over chains.
+When we look at our MCMC output (using the `plot_trace()` function) we can see that there are 2 chains, each of which contains a series of draws from the posterior. If we used multiple [temperature rungs](https://mrc-ide.github.io/drjacoby/articles/metropolis_coupling.html) then these would also be duplicated over chains.
 
 ```{r, fig.width=10, fig.height=4}
 # summarise output
 mcmc
 
 # compare mu over both chains
-plot_par(mcmc, "mu", phase = "both")
+plot_trace(mcmc, "mu", phase = "both")
 ```
 
 Running in parallel is only slightly more complex. Before running anything we need to know how many cores our machine has. You may know this number already, but if you don't then the `parallel` package has a handy function for detecting the number of cores for you:

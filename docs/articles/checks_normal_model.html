@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Normal model • drjacoby</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,14 +33,14 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">drjacoby</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.5.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.5.4</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Vignettes
      
     <span class="caret"></span>
@@ -65,7 +67,7 @@
   </ul>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Checks
      
     <span class="caret"></span>
@@ -91,7 +93,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/mrc-ide/drjacoby">
+  <a href="https://github.com/mrc-ide/drjacoby" class="external-link">
     <span class="fa fa-github"></span>
      
   </a>
@@ -106,61 +108,70 @@
 
       
 
-      </header><script src="checks_normal_model_files/header-attrs-2.10/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Normal model</h1>
-                        <h4 class="author">Bob Verity and Pete Winskill</h4>
+                        <h4 data-toc-skip class="author">Bob Verity and
+Pete Winskill</h4>
             
-            <h4 class="date">2021-12-16</h4>
+            <h4 data-toc-skip class="date">2024-06-26</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/master/vignettes/checks_normal_model.Rmd"><code>vignettes/checks_normal_model.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/mrc-ide/drjacoby/blob/HEAD/vignettes/checks_normal_model.Rmd" class="external-link"><code>vignettes/checks_normal_model.Rmd</code></a></small>
       <div class="hidden name"><code>checks_normal_model.Rmd</code></div>
 
     </div>
 
     
     
-<p><strong>Purpose:</strong> to compare <em>drjacoby</em> infered posterior distribution against the exact analytical solution for a very simple model.</p>
-<div id="model" class="section level2">
-<h2 class="hasAnchor">
-<a href="#model" class="anchor"></a>Model</h2>
-<p>A vector of data <code>x</code> drawn from a normal distribution with unknown mean <code>mu</code> and known variance of 1.0.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1e2</span>
-<span class="va">data_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code><span><span class="co">## Registered S3 method overwritten by 'GGally':</span></span>
+<span><span class="co">##   method from   </span></span>
+<span><span class="co">##   +.gg   ggplot2</span></span></code></pre>
+<p><strong>Purpose:</strong> to compare <em>drjacoby</em> infered
+posterior distribution against the exact analytical solution for a very
+simple model.</p>
+<div class="section level2">
+<h2 id="model">Model<a class="anchor" aria-label="anchor" href="#model"></a>
+</h2>
+<p>A vector of data <code>x</code> drawn from a normal distribution with
+unknown mean <code>mu</code> and known variance of 1.0.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1e2</span></span>
+<span><span class="va">data_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Likelihood and prior:</p>
 <p>Parameters dataframe:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">df_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define_params.html">define_params</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"mu"</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, max <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></code></pre></div>
-</div>
-<div id="mcmc" class="section level2">
-<h2 class="hasAnchor">
-<a href="#mcmc" class="anchor"></a>MCMC</h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>,
-                 df_params <span class="op">=</span> <span class="va">df_params</span>,
-                 loglike <span class="op">=</span> <span class="st">"loglike"</span>,
-                 logprior <span class="op">=</span> <span class="st">"logprior"</span>,
-                 burnin <span class="op">=</span> <span class="fl">1e3</span>,
-                 samples <span class="op">=</span> <span class="fl">1e5</span>,
-                 chains <span class="op">=</span> <span class="fl">10</span>,
-                 silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">df_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define_params.html">define_params</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"mu"</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, max <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div id="posterior-plots" class="section level2">
-<h2 class="hasAnchor">
-<a href="#posterior-plots" class="anchor"></a>Posterior plots</h2>
+<div class="section level2">
+<h2 id="mcmc">MCMC<a class="anchor" aria-label="anchor" href="#mcmc"></a>
+</h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># extract sampling draws</span>
-<span class="va">mu_draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html">subset</a></span><span class="op">(</span><span class="va">mcmc</span><span class="op">$</span><span class="va">output</span>, phase <span class="op">=</span> <span class="st">"sampling"</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span>
-
-<span class="co"># calculate analytical solution</span>
-<span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, l <span class="op">=</span> <span class="fl">1001</span><span class="op">)</span>
-<span class="va">fx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">dnorm</a></span><span class="op">(</span><span class="va">x</span>, mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">data_list</span><span class="op">$</span><span class="va">x</span><span class="op">)</span>, sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span><span class="op">)</span>
-
-<span class="co"># histogram and overlay analytical</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/hist.html">hist</a></span><span class="op">(</span><span class="va">mu_draws</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0.01</span><span class="op">)</span>, probability <span class="op">=</span> <span class="cn">TRUE</span>, col <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/lines.html">lines</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">fx</span>, col <span class="op">=</span> <span class="fl">2</span>, lwd <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_mcmc.html">run_mcmc</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>,</span>
+<span>                 df_params <span class="op">=</span> <span class="va">df_params</span>,</span>
+<span>                 loglike <span class="op">=</span> <span class="st">"loglike"</span>,</span>
+<span>                 logprior <span class="op">=</span> <span class="st">"logprior"</span>,</span>
+<span>                 burnin <span class="op">=</span> <span class="fl">1e3</span>,</span>
+<span>                 samples <span class="op">=</span> <span class="fl">1e5</span>,</span>
+<span>                 chains <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                 silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="posterior-plots">Posterior plots<a class="anchor" aria-label="anchor" href="#posterior-plots"></a>
+</h2>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># extract sampling draws</span></span>
+<span><span class="va">mu_draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">mcmc</span><span class="op">$</span><span class="va">output</span>, phase <span class="op">=</span> <span class="st">"sampling"</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span></span></code></pre></div>
+<pre><code><span><span class="co">## Warning: In subset.data.frame(mcmc$output, phase = "sampling") :</span></span>
+<span><span class="co">##  extra argument 'phase' will be disregarded</span></span></code></pre>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># calculate analytical solution</span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, l <span class="op">=</span> <span class="fl">1001</span><span class="op">)</span></span>
+<span><span class="va">fx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="va">x</span>, mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">data_list</span><span class="op">$</span><span class="va">x</span><span class="op">)</span>, sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># histogram and overlay analytical</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">mu_draws</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0.01</span><span class="op">)</span>, probability <span class="op">=</span> <span class="cn">TRUE</span>, col <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">fx</span>, col <span class="op">=</span> <span class="fl">2</span>, lwd <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
 <p><img src="checks_normal_model_files/figure-html/unnamed-chunk-5-1.png" width="576"></p>
 </div>
   </div>
@@ -176,11 +187,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Bob Verity, Pete Winskill.</p>
+  <p></p>
+<p>Developed by Bob Verity, Pete Winskill.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
 </div>
 
       </footer>
@@ -188,6 +201,8 @@
 
   
 
+
+  
 
   </body>
 </html>

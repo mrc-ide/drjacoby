@@ -44,4 +44,6 @@ mcmc <- run_mcmc(data = list(x = x),
                  burnin = 1e3,
                  samples = 1e3)
 
-plot_par(mcmc, show = "mu", phase = "burnin")
+plot_trace(mcmc, show = "mu", phase = "burnin")
+
+plot_density(mcmc)
