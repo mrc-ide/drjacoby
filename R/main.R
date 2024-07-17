@@ -610,6 +610,58 @@ deploy_chain <- function(args) {
 }
 
 #------------------------------------------------
+#' @title Tune mcmc rungs
+#'
+#' @description Takes a completed mcmc object that has been run with parallel
+#'   tempering, and uses the acceptance rates to recalculate the optimal number
+#'   and distribution of rungs.
+#'   
+#' @param x an object of class \code{drjacoby_output}, with the MCMC completed
+#'   and run with parallel tempering over multiple rungs.
+#' @param target_acceptance the target acceptance rate between rungs. Higher
+#'   values will lead to more rungs being needed.
+#'
+#' @importFrom stats approx
+#' @export
+
+tune_rungs <- function(x, target_acceptance = 0.23) {
+  
+  # avoid "no visible binding" note
+  link <- value <- NULL
+  
+  # check inputs
+  assert_class(x, "drjacoby_output")
+  assert_neq(length(x$diagnostics$mc_accept), 1, message = "run_mcmc() must have been run with multiple temperature rungs")
+  assert_single_bounded(target_acceptance)
+  
+  # get acceptance rates and check all non-zero
+  acceptance <- x$diagnostics$mc_accept |>
+    group_by(link) |>
+    summarise(value = mean(value)) |>
+    pull(value)
+  
+  assert_gr(acceptance, 0, message = "acceptance rates must be positive for all pairs of rungs")
+  n_rungs <- length(acceptance) + 1
+  
+  # calculate cumulative barrier Lambda
+  Lambda <- sum(1 - acceptance)
+  
+  # calculate new number of rungs
+  n_rungs_new <- ceiling(Lambda / (1 - target_acceptance)) + 1
+  
+  # calculate new distribution of rungs by linear interpolation
+  beta_old <- x$parameters$beta_manual
+  y_old <- c(0, cumsum(1 - acceptance))
+  #plot(beta_old, y_old)
+  y_new <- seq(0, Lambda, l = n_rungs_new)
+  result <- approx(y_old, beta_old, xout = y_new)
+  #points(result$y, result$x, col = 2)
+  beta_new <- result$y
+  
+  return(beta_new)
+}
+
+#------------------------------------------------
 # update progress bar
 # pb_list = list of progress bar objects
 # name = name of this progress bar
@@ -625,5 +677,7 @@ update_progress <- function(pb_list, name, i, max_i, close = TRUE) {
   }
 }
 
+#------------------------------------------------
 # Deal with user input cpp not being defined
 globalVariables(c("create_xptr"))
+
