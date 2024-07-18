@@ -42,7 +42,17 @@ mcmc <- run_mcmc(data = list(x = x),
                  loglike = r_loglike,
                  logprior = r_logprior,
                  burnin = 1e3,
-                 samples = 1e3)
+                 samples = 1e3,
+                 chains = 2,
+                 beta_manual = beta_tuned)
+
+plot_mc_acceptance(mcmc)
+
+beta_tuned
+
+beta_tuned
+
+beta_tuned <- interleave_with_halfway(beta_tuned)
 
 plot_trace(mcmc, show = "mu", phase = "burnin")
 
